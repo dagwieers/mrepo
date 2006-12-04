@@ -1,22 +1,22 @@
 #!/bin/bash
 #
-# Init script for Depo distribution server.
+# Init script for mrepo distribution server.
 #
 # Written by Dag Wieers <dag@wieers.com>.
 #
 # chkconfig: 2345 90 10
-# description: Depo distribution server.
+# description: mrepo distribution server.
 #
-# processname: depo
-# config: /etc/depo.conf
+# processname: mrepo
+# config: /etc/mrepo.conf
 
 source /etc/rc.d/init.d/functions
 
-[ -x /usr/bin/depo ] || exit 1
+[ -x /usr/bin/mrepo ] || exit 1
 
 ### Default variables
-SYSCONFIG="/etc/sysconfig/depo"
-YAMCONFIG="/etc/depo.conf"
+SYSCONFIG="/etc/sysconfig/mrepo"
+YAMCONFIG="/etc/mrepo.conf"
 
 ### Read configuration
 [ -r "$SYSCONFIG" ] && source "$SYSCONFIG"
@@ -24,12 +24,12 @@ YAMCONFIG="/etc/depo.conf"
 [ -r "$YAMCONFIG" ] || exit 1
 
 RETVAL=0
-prog="depo"
-desc="Depo Distribution Server"
+prog="mrepo"
+desc="meepo Distribution Server"
 
 start() {
 	echo -n $"Starting $desc ($prog): "
-	depo -q -c $YAMCONFIG
+	mrepo -q -c $YAMCONFIG
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && success || failure
 	echo
@@ -39,7 +39,7 @@ start() {
 
 stop() {
 	echo -n $"Shutting down $desc ($prog): "
-	depo -q --umount -c $YAMCONFIG
+	mrepo -q --umount -c $YAMCONFIG
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && success || failure
 	echo

@@ -1,5 +1,5 @@
 * 0.8.3svn - ... - released 22/10/2006
-- Renamed Yam to Depo (Matthew Hannigan)
+- Renamed Yam to mrepo (Matthew Hannigan)
 - Fix a bug in the relpath() function when common part is not a path (Jason Kim)
 - Do not copy the comps.xml from the ISO when the target os-comps.xml exists (Jason Kim)
 - Fixed a problem when locking during a dry-run (David Lutterkort)

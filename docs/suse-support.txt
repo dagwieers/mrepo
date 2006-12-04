@@ -63,8 +63,8 @@ Yast2 has its own logic to create these directories and if you have to
 install SLES8 or SLES9, it's better to make use of the Yast2 functionality.
 (Yes, this means you're once again locked into something SuSE specific)
 
-Depo will not support SLES until they clean up their act or someone sends me
-an acceptable patch for Depo. The current SLES support stays unfinished like
+mrepo will not support SLES until they clean up their act or someone sends me
+an acceptable patch for mrepo. The current SLES support stays unfinished like
 it is.
 
 Based on the above information, you are of course free to perform the

@@ -1,13 +1,13 @@
-Configuring dnsmasq to work with Depo
-=====================================
+Configuring dnsmasq to work with mrepo
+======================================
 
-To set up depo with dnsmasq, put the following lines in /etc/dnsmasq.conf:
+To set up mrepo with dnsmasq, put the following lines in /etc/dnsmasq.conf:
 
 	### Red Hat Enterprise 3 for x86
-	dhcp-boot=/depo/rhel3as-i386/pxelinux.0,emyn,10.0.0.1
+	dhcp-boot=/mrepo/rhel3as-i386/pxelinux.0,emyn,10.0.0.1
 
 	### Fedora Core 2 for x86
-	#dhcp-boot=/depo/fc2-i386/pxelinux.0,emyn,10.0.0.1
+	#dhcp-boot=/mrepo/fc2-i386/pxelinux.0,emyn,10.0.0.1
 
 The syntax is:
 
@@ -19,7 +19,7 @@ IP address with DHCP, add the MAC-address and hostname/ip-address to
 
 	/etc/hosts:
 	127.0.0.1	localhost
-	10.0.0.1	depo
+	10.0.0.1	mrepo
 	10.0.0.10	host1
 	10.0.0.11	host2
 

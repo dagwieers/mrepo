@@ -30,7 +30,7 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 + Add YaST/YOU support (both for mirroring as providing metadata, seems impossible ?)
 
 ### Reporting utility
-+ Logwatch configuration for Depo
++ Logwatch configuration for mrepo
 + Mail out new updates or removals per distribution and per repository
 
 ### Configuration
@@ -43,7 +43,7 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 	iso = file:///mnt/iso/*.iso
 	iso = fedora/fc$release-$arch/FC-$release-$arch-disc?.iso"
 
-+ Add more working distributions to /etc/depo.conf.d/
++ Add more working distributions to /etc/mrepo.conf.d/
 
 ### Usability
 + Create information about repository-updates in HEADER.shtml/README.shtml
@@ -56,11 +56,11 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 + Allow to add external html generators (repoview, repojanitor)
 
 ### Documentation
-+ Add a depo and depo.conf manpage
++ Add a mrepo and mrepo.conf manpage
 + Add a gensystemid and rhnget manpage
 + Add documentation on how to configure clients
 + Add integration/documentation with ISC dhcpd
-+ Add documentation about chaining Depo servers
++ Add documentation about chaining mrepo servers
 + Comment the code more (pydoc strings)
 + ZeroConf support (or documentation)
 + Comply with PEP8: http://www.python.org/dev/peps/pep-0008/
@@ -73,7 +73,7 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 
 ### Bugs
 + yum-arch stumbles on broken symlinks (https://devel.linux.duke.edu/bugzilla/show_bug.cgi?id=280)
-+ Correct file permissions/ownerships of packages in /var/depo (add umask option)
++ Correct file permissions/ownerships of packages in /var/mrepo (add umask option)
 + Improve debugging output for pxelinux and /tftpboot/
 
 ### RHNget tool / RHN support
@@ -87,13 +87,13 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 + Implement better channel support (a way to use _all_ channels)
 + Allow for listing packages instead of downloading (--dry-run ?)
 
-### Depocfg tool / generate a configuration for clients (Chandan Dutta Chowdhury)
+### mrepocfg tool / generate a configuration for clients (Chandan Dutta Chowdhury)
 + The tool should accept a URL as an argument
 + Should have a list (-l) option to list the different distributions
 + Should have a target (-t) option to specify the configuration output format (apt/yum/smart)
 + It scans the URL given and looks for know repository metadata
 
-### Depogen tool / repository metadata
+### mrepogen tool / repository metadata
 + Replaces genbasedir, createrepo and yum-arch
 + Creates rsyncable bzip2 and gzip data
 + Uses 1 cachedir for all generation
@@ -108,18 +108,18 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
     if repo is provided, create symlinks in dirname() for RPMS.repo
 + Also see: http://people.redhat.com/laroche/pyrpm/
 
-### Depomenu tool / remote installation
+### mrepomenu tool / remote installation
 + Create small curses tool to manage systems / MAC-addresses / profiles (kickstart)
 + Generate remote syslinux menu to boot any of the available dists
 + Look into providing bootsplash like SuSE
-+ Generate a dnsmasq-depo.conf if dnsmasq is installed/running(?)
++ Generate a dnsmasq-mrepo.conf if dnsmasq is installed/running(?)
 + Add default kickstart integration (files/location)
 + Add default AutoYast integration (help needed)
 + Adapt to make Mandrake/SuSE work too (help needed)
 + Add CSM support
 
-### Depopxe tool
+### mrepopxe tool
 + Generates necessary PXE config-files and allow for 3rd party boot-images
 
-### Depousb tool
+### mrepousb tool
 + Create a bootable USB stick and allow for 3rd party boot-images

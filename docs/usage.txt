@@ -1,111 +1,111 @@
-Usage information for Depo and a description of the options and config file
-===========================================================================
+Usage information for mrepo and a description of the options and config file
+============================================================================
 
-depo is used to create a repository on your server from multiple sources.
+mrepo is used to create a repository on your server from multiple sources.
 
 
 Finding help on the command line
 --------------------------------
-depo -h
-usage: depo [-g] [-q] [-u] [-v] [-c config] dist1 dist2-arch
+mrepo -h
+usage: mrepo [-g] [-q] [-u] [-v] [-c config] dist1 dist2-arch
 Set up a distribution server from ISO files
 
-Depo options:
+mrepo options:
   -c, --config=file     specify alternative configfile
-  -g, --generate        generate Depo repositories
+  -g, --generate        generate mrepo repositories
   -q, --quiet           minimal output
   -u, --update          fetch OS updates
-  -v, --verbose         increase verbosity (only Depo info)
+  -v, --verbose         increase verbosity (only mrepo info)
   -vv, -vvv             increase verbosity more
       --unmount         unmount distributions
 
 
-When you first run Depo, do:
+When you first run mrepo, do:
 
-	depo -v
+	mrepo -v
 
 This will show you what it is doing. You may add extra -v at any time
-to see more of Depo's internals.
+to see more of mrepo's internals.
 
-	depo -vvv
+	mrepo -vvv
 
-Now, you may want to change the default depo.conf to your needs and
+Now, you may want to change the default mrepo.conf to your needs and
 add or remove distributions and/or repositories. If you have ISO
 images of any of the distributions you want to mirror, mention them
-too like in the examples, and copy them over to /var/depo/iso
+too like in the examples, and copy them over to /var/mrepo/iso
 (You can also decide to put them per distribution/arch)
 
-The default directory structure that Depo uses is explained in
+The default directory structure that mrepo uses is explained in
 README.dirs
 
-Depo by default will mount as many ISO files as possible. If you
+mrepo by default will mount as many ISO files as possible. If you
 have problems with the maximum number of loop devices, please read
 README.loop
 
-Depo can also download the distribution RPM packages if you want to,
+mrepo can also download the distribution RPM packages if you want to,
 if you did not specify any ISO images it will download any os or core
 repositories that you have specified. To do that, do
 
-	depo -u
+	mrepo -u
 or
-	depo -uv
+	mrepo -uv
 
 To finally generate a complete working repository based on the
 repositories, you need to issues:
 
-	depo -g
+	mrepo -g
 or
-	depo -gv
+	mrepo -gv
 
-This will look for all the necessary packages in /var/depo (srcdir) and
-symlink them to /var/www/depo (wwwdir). /var/www/depo can also be removed
+This will look for all the necessary packages in /var/mrepo (srcdir) and
+symlink them to /var/www/mrepo (wwwdir). /var/www/mrepo can also be removed
 at any time and should not contain any files you have put there yourself.
 
 To start off from scratch, first unmount the ISO images by doing:
 
-	depo --unmount
+	mrepo --unmount
 
-and then remove /var/www/depo completely. This should never be needed,
+and then remove /var/www/mrepo completely. This should never be needed,
 but can be done after you played around or when removing components.
 
 If you want to update only a part of your repository, you can select
 the distributions by doing:
 
-	depo -ugv fc2
+	mrepo -ugv fc2
 or
-	depo -ugv fc2-i386
+	mrepo -ugv fc2-i386
 or even
-	depo -ugv fc2-i386 fc1-x86_64
+	mrepo -ugv fc2-i386 fc1-x86_64
 
-If you want to have multiple setups of Depo running on a single system
+If you want to have multiple setups of mrepo running on a single system
 (say one of your users wants its own setup), you can specify an
 alternative config file, by doing:
 
-	depo -c /home/dag/depo.conf
+	mrepo -c /home/dag/mrepo.conf
 
 In that case the user may want to use another srcdir and wwwdir.
 
-Finally, you can see if everything worked, by looking at /var/www/depo
-(wwwdir) or by surfing to http://localhost/depo/. For more information
+Finally, you can see if everything worked, by looking at /var/www/mrepo
+(wwwdir) or by surfing to http://localhost/mrepo/. For more information
 about web-access and configuration, see README.web
 
 
-The depo.conf file
------------------
-depo.conf file holds all the information depo uses to find the repos such
-as distribution information and URLs to the repos.  depo.conf is essentially
+The mrepo.conf file
+-------------------
+mrepo.conf file holds all the information mrepo uses to find the repos such
+as distribution information and URLs to the repos.  mrepo.conf is essentially
 divided into three areas.  main, repos, and dist.
 
-The main area is your main configuration for depo.
-Example from default depo.conf:
+The main area is your main configuration for mrepo.
+Example from default mrepo.conf:
 
 	[main]
-	srcdir=/var/depo
-	wwwdir=/var/www/depo
+	srcdir=/var/mrepo
+	wwwdir=/var/www/mrepo
 	metadata=apt repomd
 	arch=i386
 
-The srcdir is where depo will download and store the files for your repo
+The srcdir is where mrepo will download and store the files for your repo
 
 The wwwdir is the location as to where your users for your repo will actually
 get the files from. These are symbolic links to the srcdir.
@@ -116,7 +116,7 @@ defined the default used if nothing is specified per distribution.
 arch is a list of the default architectures, i.e.  i386, x86_64.
 This will set it globally but can be configured per distro.
 
-The distro area of depo.conf is the heart of depo.conf it is where you can
+The distro area of mrepo.conf is the heart of mrepo.conf it is where you can
 specify the exact distribution and URLs to download from. Let me demonstrate
 with a little example:
 
@@ -140,28 +140,28 @@ Other tags you can include per section are:
 	arch = is set to one or more architectures available for this distribution ($arch)
 	iso = is set to one or more globs matching the distributions ISO images
 
-Any other entries are considered to be repositories. Depo will assume that
+Any other entries are considered to be repositories. mrepo will assume that
 repositories called 'os', 'core' and 'updates' are base system repositories
-and these will be updated with Depo option -u . os and core repositories will
+and these will be updated with mrepo option -u . os and core repositories will
 be ignored when ISO images are available.
 
-Other entries are considered extra (3rd party) repositories. Depo will create
-a separate directory for each of these in /var/depo/$dist-$arch/$repo
+Other entries are considered extra (3rd party) repositories. mrepo will create
+a separate directory for each of these in /var/mrepo/$dist-$arch/$repo
 The LHS part can also be used in the RHS as variable $repo
 
 Other special variables include:
 
-	$srcdir	is set to the srcdir variable from depo.conf
+	$srcdir	is set to the srcdir variable from mrepo.conf
 	$dist 	is set to the distribution section name (eg. fc2)
 	$arch	is set to the architecture within this section context
 	$nick 	is set to $dist-$arch within this section context
 	$repo 	is set to the current repo-name within this repo context
 
-Depo can use several types of protocols or URL identifiers:
+mrepo can use several types of protocols or URL identifiers:
 
 	<empty>		- use the directory in $srcdir/$dist-$arch/$repo
-	depo://		- handled by depo, equivalent to file://$srcdir/
-	file://		- handled by depo, symlink to other directory containing RPMS
+	mrepo://	- handled by mrepo, equivalent to file://$srcdir/
+	file://		- handled by mrepo, symlink to other directory containing RPMS
 	fish://		- handled by lftp
 	ftp://		- handled by mirrordir or lftp
 	http://		- handled by lftp

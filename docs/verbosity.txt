@@ -1,31 +1,31 @@
-How to make Depo more (or less) verbose
-=======================================
+How to make mrepo more (or less) verbose
+========================================
 
-Depo has 2 options to influence what it prints.
+mrepo has 2 options to influence what it prints.
 
   -q, --quiet           minimal output
   -v, --verbose         increase verbosity
   -vv, -vvv, -vvvv..    increase verbosity more
 
-To make Depo only print essential messages (but be quiet when everything
+To make mrepo only print essential messages (but be quiet when everything
 is ok), use -q/--quiet
 
-To make Depo report more about what it is doing, you can provide -v multiple
+To make mrepo report more about what it is doing, you can provide -v multiple
 times. Here's what it means:
 
 	options		level	description
 	"""""""		"""""	"""""""""""
 	-q		0	be quiet if no problems
-	(no options)	1	print depo progress (normal)
-	-v		2	print depo progress (detailed)
-	-vv		3	print depo progress (detailed) + print helper-program output (normal)
-	-vvv		4	print depo progress (detailed) + print helper-program output (detailed)
-	-vvvv		5	print depo progress (debug)    + print helper-program output (detailed)
-	-vvvvv		6	print depo progress (debug)    + print helper-program output (debug)
+	(no options)	1	print mrepo progress (normal)
+	-v		2	print mrepo progress (detailed)
+	-vv		3	print mrepo progress (detailed) + print helper-program output (normal)
+	-vvv		4	print mrepo progress (detailed) + print helper-program output (detailed)
+	-vvvv		5	print mrepo progress (debug)    + print helper-program output (detailed)
+	-vvvvv		6	print mrepo progress (debug)    + print helper-program output (debug)
 
 Not all helper-programs have options to increase verbosity or enable debugging.
 
-Currently it is not possible to have Depo (or its tools) print out what files
+Currently it is not possible to have mrepo (or its tools) print out what files
 are new and what files have been deleted. It's hard to do this tool-independent,
 though there are other implementations that are possible (inotify,
 directory-listing).

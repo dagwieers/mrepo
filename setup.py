@@ -30,23 +30,23 @@ except ImportError:
 	from distutils.core import setup
 
 setup(
-	name = 'depo',
+	name = 'mrepo',
 	version = '0.8.4svn',
 	description = 'RPM repository mirroring tool',
 	author = 'Dag Wieers',
 	author_email ='dag@wieers.com',
-	url = "http://dag.wieers.com/home-made/depo/",
-	scripts=['depo', 'gensystemid'],
+	url = "http://dag.wieers.com/home-made/mrepo/",
+	scripts=['mrepo', 'gensystemid'],
 	data_files=[
-		('/etc', ['config/depo.conf']),
-		('/etc/init.d', ['config/depo']),
-		('/etc/httpd/conf.d', ['config/httpd/depo.conf']),
-		('/var/cache/depo', []),
-		('/var/www/depo', []),
-		('/var/depo/all/local', []),
-		('/usr/share/depo/html', ['html/HEADER.index.shtml', 'html/HEADER.repo.shtml', 'html/README.index.shtml', 'html/README.repo.shtml']),
+		('/etc', ['config/mrepo.conf']),
+		('/etc/init.d', ['config/mrepo']),
+		('/etc/httpd/conf.d', ['config/httpd/mrepo.conf']),
+		('/var/cache/mrepo', []),
+		('/var/www/mrepo', []),
+		('/var/mrepo/all/local', []),
+		('/usr/share/mrepo/html', ['html/HEADER.index.shtml', 'html/HEADER.repo.shtml', 'html/README.index.shtml', 'html/README.repo.shtml']),
 	],
-	download_url = 'http://dag.wieers.com/home-made/depo/depo-0.8.1.tar.gz',
+	download_url = 'http://dag.wieers.com/home-made/mrepo/mrepo-0.8.4svn.tar.gz',
 	license = 'GPL',
 	platforms = 'Posix',
 	classifiers = [
@@ -59,7 +59,7 @@ setup(
 		'System :: Systems Administration',
 	],
 	long_description = '''
-Depo builds a local APT/Yum RPM repository from local ISO files, downloaded
+mrepo builds a local APT/Yum RPM repository from local ISO files, downloaded
 updates, and extra packages from RHN (Red Hat Network) and 3rd party
 repositories. It takes care of setting up the ISO files, downloading the
 RPMs, configuring HTTP access, and providing PXE/TFTP resources for remote

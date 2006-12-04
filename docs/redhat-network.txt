@@ -1,5 +1,5 @@
-Using RHN support in Depo
-=========================
+Using RHN support in mrepo
+==========================
 
 Requirements
 ------------
@@ -10,24 +10,24 @@ another up2date package (eg. Fedora Core).
 
 RHN systemid creation
 ---------------------
-For each distribution you want to add to Depo, you need to have a valid
+For each distribution you want to add to mrepo, you need to have a valid
 RHN systemid. You can create a systemid (provided you have the correct
 entitlements to do so) by using the gensystemid tool that comes with
-depo, eg.
+mrepo, eg.
 
 ---
-gensystemid -r 4AS -a x86_64 /var/depo/rhel4as-x86_64
+gensystemid -r 4AS -a x86_64 /var/mrepo/rhel4as-x86_64
 ----
 
-The tool will create a new system called <hostname>-4AS-x86_64-depo,
+The tool will create a new system called <hostname>-4AS-x86_64-mrepo,
 register this system on RHN and create a systemid file in 
-/var/depo/rhel4as-x86_64
+/var/mrepo/rhel4as-x86_64
 
 
 RHN configuration
 -----------------
 Having done that, you can enable multiple channels for this systemid
-on the RHN website. And then configure depo to use these channels, eg.
+on the RHN website. And then configure mrepo to use these channels, eg.
 
 ----
 [rhel4as]
@@ -43,7 +43,7 @@ rhaps = rhns:///rhel-4-as-i386-rhaps-2
 rhds = rhns:///rhel-4-as-i386-rhds-2.1
 ----
 
-After that, depo should be able to successfully log on and download
+After that, mrepo should be able to successfully log on and download
 all packages for the configured channels.
 
 
@@ -58,11 +58,11 @@ and I have personally been several times in the situation that I needed
 to download x86_64 or ppc packages for a system that I have entitlements
 for but is simply not allowed to connect to the Internet.
 
-The gensystemid tool that comes with Depo will help you with creating
-valid systemids for Depo, eg.
+The gensystemid tool that comes with mrepo will help you with creating
+valid systemids for mrepo, eg.
 
 ----
-gensystemid -r 4AS -a x86_64 /var/depo/rhel4as-x86_64
+gensystemid -r 4AS -a x86_64 /var/mrepo/rhel4as-x86_64
 ----
 
 You can manage your systems on the RHN website afterwards.
@@ -72,7 +72,7 @@ WARNING: For yet unknown reasons, you have to be root to run gensystemid.
 
 Downloading from unsubscribed channels
 --------------------------------------
-You can let Depo subscribe to the necessary channels, unfortunately this
+You can let mrepo subscribe to the necessary channels, unfortunately this
 requires your RHN username and password. You can provide these in
 the main section, like:
 
@@ -82,10 +82,10 @@ rhnlogin = username:password
 ----
 
 Or you can supply them to rhnget at the appropriate time. Unfortunately since
-rhnget is a seperate tool invoked by Depo, you may need to provide this
+rhnget is a seperate tool invoked by mrepo, you may need to provide this
 information several times (every time you need to subscribe to a new channel).
 
-You can also choose to only provide the username in /etc/depo.conf and provide
+You can also choose to only provide the username in /etc/mrepo.conf and provide
 the password interactively.
 
 ----
@@ -93,17 +93,17 @@ the password interactively.
 rhnlogin = username
 ----
 
-Of course if you put the password in /etc/depo.conf, you need to protect it.
+Of course if you put the password in /etc/mrepo.conf, you need to protect it.
 You may want to do:
 
 ----
-chmod og= /etc/depo.conf
-chown root.root /etc/depo.conf
+chmod og= /etc/mrepo.conf
+chown root.root /etc/mrepo.conf
 ----
 
 Since you only need the username/password to subscribe to new channels
 (only the very first time you access them) you may wish to remove the
-login information from depo.conf after that.
+login information from mrepo.conf after that.
 
 You can also log on manually to the RHN website to subscribe your system
 to the channels you require.
@@ -114,13 +114,13 @@ Configuring up2date sources
 If you encounter the following message:
 
 	Traceback (most recent call last):
-	  File "/usr/bin/depo", line 1364, in ?
+	  File "/usr/bin/mrepo", line 1364, in ?
 	    main()
-	  File "/usr/bin/depo", line 1247, in main
+	  File "/usr/bin/mrepo", line 1247, in main
 	    mirror(dist.repos[repo], srcdir, dist)
-	  File "/usr/bin/depo", line 819, in mirror
+	  File "/usr/bin/mrepo", line 819, in mirror
 	    mirrorrhn(url, path, dist)
-	  File "/usr/bin/depo", line 1099, in mirrorrhn
+	  File "/usr/bin/mrepo", line 1099, in mirrorrhn
 	    package_list, type = rpcServer.doCall(repos.listPackages, channel, None, None)
 	  File "/usr/share/rhn/up2date_client/rpcServer.py", line 316, in doCall
 	    ret = apply(method, args, kwargs)
@@ -134,7 +134,7 @@ you need to configure up2date by adding or enabling the following line in
 	up2date default
 
 Especially on a system that wasn't using RHN or on CentOS this is a manual
-change you have to make. Depo doesn't really care, but the up2date
+change you have to make. mrepo doesn't really care, but the up2date
 implementation it is using simply requires it.
 
 
@@ -191,8 +191,8 @@ You can simply get the same effect with the following script, clean.sh:
 #!/bin/bash
 
 dists=$*
-srcdir=/var/depo
-wwwdir=/var/www/depo
+srcdir=/var/mrepo
+wwwdir=/var/www/mrepo
 
 if [ -z "$dists" ]; then
         cd $srcdir
@@ -220,15 +220,15 @@ done
 ----
 
 Run this script when you download new RHEL ISO files and make these available
-in Depo, but before downloading any updates from RHN.
+in mrepo, but before downloading any updates from RHN.
 
 ----
-depo --umount
+mrepo --umount
 ### Download new ISO files
-### Change /etc/depo.conf to change the iso=
-depo -v
+### Change /etc/mrepo.conf to change the iso=
+mrepo -v
 ./clean.sh
-depo -uvg
+mrepo -uvg
 ----
 
 This will free up some space by symlinking duplicate RPM packages from the ISO
@@ -250,7 +250,7 @@ In this case, the authentication is not done using SSL either !
 Using Red Hat satellite servers
 -------------------------------
 You can override the hardcoded RHN server by specifying it in the URL.
-If it is not specified, Depo will assume a default value of
+If it is not specified, mrepo will assume a default value of
 xmlrpc.rhn.redhat.com
 
 So the following two lines are identical:
@@ -298,7 +298,7 @@ A useful list of RHN references:
 	RHbz 179721: [RFE] No documentation for (RHN) up2date XMLRPC API methods
 	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=179721
 
-And how to configure Depo for RHN access:
+And how to configure mrepo for RHN access:
 
 	Installing YAM 0.8.0 on Red Hat Enterprise Linux 4
 	http://wiki.garylaw.net/doku.php?id=technical:unix:linux:yam

@@ -10,10 +10,10 @@ localstatedir = /var
 httpddir = $(sysconfdir)/httpd/conf.d
 initrddir = $(sysconfdir)/rc.d/init.d
 
-cachedir = $(localstatedir)/cache/depo
-htmldir = $(datadir)/depo/html
-srcdir = $(localstatedir)/depo
-wwwdir = $(localstatedir)/www/depo
+cachedir = $(localstatedir)/cache/mrepo
+htmldir = $(datadir)/mrepo/html
+srcdir = $(localstatedir)/mrepo
+wwwdir = $(localstatedir)/www/mrepo
 
 
 all: .txt

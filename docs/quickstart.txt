@@ -33,18 +33,18 @@ Do the following steps to get started (real) fast.
 
   1. Start with collecting the existing ISO files you have of the
      different distributions you want to put into a repository.
-     Put these into your $srcdir (normally /var/depo), eg:
+     Put these into your $srcdir (normally /var/mrepo), eg:
 
-		/var/depo/fc3-i386/
+		/var/mrepo/fc3-i386/
 
 
-  2. Edit /etc/depo.conf and add for each distribution a new section
-     like the examples given in the default depo.conf, depo-complex.conf
-     or depo-example.conf
+  2. Edit /etc/mrepo.conf and add for each distribution a new section
+     like the examples given in the default mrepo.conf, mrepo-complex.conf
+     or mrepo-example.conf
 
-     You can add a distribution section to a new file in /etc/depo.conf.d/
+     You can add a distribution section to a new file in /etc/mrepo.conf.d/
 
-		eg. /etc/depo.conf.d/fc3-i386.conf
+		eg. /etc/mrepo.conf.d/fc3-i386.conf
 
      See the examples in the documentation as a reference.
 
@@ -52,11 +52,11 @@ Do the following steps to get started (real) fast.
   3. If you want to add your own custom packages to one or all of
      the repositories, you have 2 options.
 
-     a. Add them to /var/depo/<distro>-<arch>/local/
+     a. Add them to /var/mrepo/<distro>-<arch>/local/
 
-		eg. /var/depo/fc3-i386/local/
+		eg. /var/mrepo/fc3-i386/local/
 
-	or add them to /var/depo/all/local/ to add them to all.
+	or add them to /var/mrepo/all/local/ to add them to all.
 
      b. Specify the directory of your choice in a new repository,
 	eg. called 'myrepo'
@@ -76,49 +76,49 @@ Do the following steps to get started (real) fast.
         repositories.
 
 
-  4. Now run Depo with no actions to see if the ISO files are mounted
+  4. Now run mrepo with no actions to see if the ISO files are mounted
      and all your configuration options have been used:
 
-	depo -vv
+	mrepo -vv
 
-     Then run Depo to update the repositories:
+     Then run mrepo to update the repositories:
 
-	depo -uvv
+	mrepo -uvv
 
-     Then generate the Depo repositories by doing:
+     Then generate the mrepo repositories by doing:
 
-	depo -gvv
+	mrepo -gvv
 
-     Now look in $wwwdir (normally /var/www/depo) or surf to
-     http://localhost/depo/ to see if everything is the way you wanted.
+     Now look in $wwwdir (normally /var/www/mrepo) or surf to
+     http://localhost/mrepo/ to see if everything is the way you wanted.
 
 
   5. Next time you can do directly
 
-	depo -ug
+	mrepo -ug
      or
-	depo -ugv
+	mrepo -ugv
 
      and all steps will be performed in one phase.
 
 
-  6. If you're removing distributions from the depo.conf file and
+  6. If you're removing distributions from the mrepo.conf file and
      you want to remove the ISOs to gain diskspace. Remember that
      Linux will not release diskspace for files that are still
      accessed (like a loop-mounted ISO file). You're best bet is
      to first unmount the ISOs:
 
-	depo -vv --umount
+	mrepo -vv --umount
 
      then remove or comment the distributions and mount again:
 
-	depo -vv
+	mrepo -vv
 
   7. When you're adding new distributions, it's sufficient to just
-     run Depo again. It will automatically mount everything that is
+     run mrepo again. It will automatically mount everything that is
      not already mounted. You can always remount/reset by doing:
 
-	depo -vv --remount
+	mrepo -vv --remount
 
 ---
 Please send me improvements to this document.

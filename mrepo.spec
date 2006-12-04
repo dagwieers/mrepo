@@ -1,19 +1,19 @@
-# $Id: depo.spec 2103 2004-08-26 10:38:07Z dag $
+# $Id: mrepo.spec 2103 2004-08-26 10:38:07Z dag $
 # Authority: dag
 # Upstream: Dag Wieers <dag$wieers,com>
 
 Summary: Tool to set up a Yum/Apt mirror from various sources (ISO, RHN, rsync, http, ftp, ...)
-Name: depo
+Name: mrepo
 Version: 0.8.3svn
 Release: 1
 License: GPL
 Group: System Environment/Base
-URL: http://dag.wieers.com/home-made/depo/
+URL: http://dag.wieers.com/home-made/mrepo/
 
 Packager: Dag Wieers <dag@wieers.com>
 Vendor: Dag Apt Repository, http://dag.wieers.com/apt/
 
-Source: http://dag.wieers.com/home-made/depo/depo-%{version}.tar.bz2
+Source: http://dag.wieers.com/home-made/mrepo/mrepo-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 BuildArch: noarch
@@ -22,7 +22,7 @@ Requires: python >= 2.0, createrepo
 Obsoletes: yam <= %{version}
 
 %description
-Depo builds a local Apt/Yum RPM repository from local ISO files,
+mrepo builds a local Apt/Yum RPM repository from local ISO files,
 downloaded updates and extra packages from RHN and 3rd party
 repositories.
 
@@ -31,32 +31,32 @@ the repository structure and meta-data, enables HTTP access to
 the repository and creates a directory-structure for remote
 network installations using PXE/TFTP.
 
-Depo supports ftp, http, sftp, rsync, rhn and other download methods.
+mrepo supports ftp, http, sftp, rsync, rhn and other download methods.
 
-With Depo, you can enable your laptop or a local server to provide
+With mrepo, you can enable your laptop or a local server to provide
 updates for the whole network and provide the proper files to
 allow installations via the network.
 
 %prep
 %setup
 
-%{__perl} -pi.orig -e 's|^(VERSION)\s*=\s*.+$|$1 = "%{version}"|' depo
+%{__perl} -pi.orig -e 's|^(VERSION)\s*=\s*.+$|$1 = "%{version}"|' mrepo
 
-%{__cat} <<EOF >config/depo.cron
-### Enable this if you want Depo to daily synchronize
+%{__cat} <<EOF >config/mrepo.cron
+### Enable this if you want mrepo to daily synchronize
 ### your distributions and repositories at 2:30am.
-#30 2 * * * root /usr/bin/depo -q -ug
+#30 2 * * * root /usr/bin/mrepo -q -ug
 EOF
 
-%{__cat} <<EOF >config/depo.conf
-### Configuration file for Depo
+%{__cat} <<EOF >config/mrepo.conf
+### Configuration file for mrepo
 
-### The [main] section allows to override Depo's default settings
-### The depo-example.conf gives an overview of all the possible settings
+### The [main] section allows to override mrepo's default settings
+### The mrepo-example.conf gives an overview of all the possible settings
 [main]
-srcdir = /var/depo
-wwwdir = /var/www/depo
-confdir = /etc/depo.conf.d
+srcdir = /var/mrepo
+wwwdir = /var/www/mrepo
+confdir = /etc/mrepo.conf.d
 arch = i386
 
 mailto = root@localhost
@@ -65,7 +65,7 @@ smtp-server = localhost
 #rhnlogin = username:password
 
 ### Any other section is considered a definition for a distribution
-### You can put distribution sections in /etc/depo.conf.d/
+### You can put distribution sections in /etc/mrepo.conf.d/
 ### Examples can be found in the documentation at:
 ###     %{_docdir}/%{name}-%{version}/dists/.
 EOF
@@ -78,15 +78,15 @@ EOF
 
 %preun
 if [ $1 -eq 0 ]; then
-	/service depo stop &>/dev/null || :
-        /sbin/chkconfig --del depo
+	/service mrepo stop &>/dev/null || :
+        /sbin/chkconfig --del mrepo
 fi
 
 %post
-/sbin/chkconfig --add depo
+/sbin/chkconfig --add mrepo
 
 #%postun
-#/sbin/service depo condrestart &>/dev/null || :
+#/sbin/service mrepo condrestart &>/dev/null || :
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -94,19 +94,19 @@ fi
 %files
 %defattr(-, root, root, 0755)
 %doc AUTHORS ChangeLog COPYING README THANKS TODO WISHLIST config/* docs/
-%config(noreplace) %{_sysconfdir}/cron.d/depo
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/depo.conf
-%config(noreplace) %{_sysconfdir}/logrotate.d/depo
-%config(noreplace) %{_sysconfdir}/depo.conf
-%config(noreplace) %{_sysconfdir}/depo.conf.d/
-%config %{_initrddir}/depo
+%config(noreplace) %{_sysconfdir}/cron.d/mrepo
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/mrepo.conf
+%config(noreplace) %{_sysconfdir}/logrotate.d/mrepo
+%config(noreplace) %{_sysconfdir}/mrepo.conf
+%config(noreplace) %{_sysconfdir}/mrepo.conf.d/
+%config %{_initrddir}/mrepo
 %{_bindir}/gensystemid
 %{_bindir}/rhnget
-%{_bindir}/depo
-%{_datadir}/depo/
-%{_localstatedir}/cache/depo/
-%{_localstatedir}/www/depo/
-%{_localstatedir}/depo/
+%{_bindir}/mrepo
+%{_datadir}/mrepo/
+%{_localstatedir}/cache/mrepo/
+%{_localstatedir}/www/mrepo/
+%{_localstatedir}/mrepo/
 
 %changelog
 * Sun Oct 22 2006 Dag Wieers <dag@wieers.com> - 0.8.3svn-1

@@ -101,7 +101,7 @@ class Options:
 			print 'gensystemid: Architecture not supplied, using system architecture %s' % self.arch
 
 		if not self.hostname:
-			self.hostname = '%s-%s-%s-depo' % (os.uname()[1].split('.')[0], self.rhnrelease, lowarch(self.arch))
+			self.hostname = '%s-%s-%s-mrepo' % (os.uname()[1].split('.')[0], self.rhnrelease, lowarch(self.arch))
 
 		try:
 			checkrelease(self.rhnrelease, self.arch)

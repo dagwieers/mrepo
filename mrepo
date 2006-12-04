@@ -45,7 +45,7 @@ for scheme in ('rhn', 'rhns'):
 
 class Options:
 	def __init__(self, args):
-		self.configfile = '/etc/depo.conf'
+		self.configfile = '/etc/mrepo.conf'
 		self.dists = []
 		self.rhnrelease = None
 		self.force = False
@@ -64,14 +64,14 @@ class Options:
 				('config=', 'dist=', 'dryrun', 'force', 'generate', 'help', 'quiet', 'repo',
 				'remount', 'type=', 'umount', 'unmount', 'update', 'verbose', 'version', 'extras'))
 		except getopt.error, exc:
-			print 'depo: %s, try depo -h for a list of all the options' % str(exc)
+			print 'mrepo: %s, try mrepo -h for a list of all the options' % str(exc)
 			sys.exit(1)
 
 		for opt, arg in opts:
 			if opt in ('-c', '--config'):
 				self.configfile = os.path.abspath(arg)
 			elif opt in ('-d', '--dist'):
-				print 'depo: the use of -d or --dist as an option is deprecated, use the argument list'
+				print 'mrepo: the use of -d or --dist as an option is deprecated, use the argument list'
 				self.dists = self.dists + arg.split(',')
 			elif opt in ('-f', '--force'):
 				self.force = True
@@ -102,11 +102,11 @@ class Options:
 				self.version()
 				sys.exit(0)
 			elif opt in ('-x', '--extras'):
-				print 'depo: the use of -x or --extras is deprecated, use -u and -r instead'
+				print 'mrepo: the use of -x or --extras is deprecated, use -u and -r instead'
 				self.update = True
 
 		if not self.types:
-			self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn', 'rhns', 'rsync', 'sftp', 'depo']
+			self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn', 'rhns', 'rsync', 'sftp', 'mrepo']
 
 		for arg in args:
 			self.dists = self.dists + arg.split(',')
@@ -119,7 +119,7 @@ class Options:
 			print 'Using configfile %s' % self.configfile
 
 	def version(self):
-		print 'depo %s' % VERSION
+		print 'mrepo %s' % VERSION
 		print 'Written by Dag Wieers <dag@wieers.com>'
 		print
 		print 'platform %s/%s' % (os.name, sys.platform)
@@ -128,15 +128,15 @@ class Options:
 		print 'build revision $Rev$'
 
 	def usage(self):
-		print 'usage: depo [options] dist1 [dist2-arch ..]'
+		print 'usage: mrepo [options] dist1 [dist2-arch ..]'
 
 	def help(self):
 		print '''Set up a distribution server from ISO files
 
-Depo options:
+mrepo options:
   -c, --config=file       specify alternative configfile
   -f, --force             force repository generation
-  -g, --generate          generate Depo repositories
+  -g, --generate          generate mrepo repositories
   -n, --dry-run           show what would have been done
   -q, --quiet             minimal output
   -r, --repo=repo1,repo2  restrict action to specific repositories
@@ -151,18 +151,18 @@ class Config:
 	def __init__(self):
 		self.read(op.configfile)
 
-		self.cachedir = self.getoption('main', 'cachedir', '/var/cache/depo')
-		self.lockdir = self.getoption('main', 'lockdir', '/var/cache/depo')
-		self.confdir = self.getoption('main', 'confdir', '/etc/depo.conf.d')
-		self.htmldir = self.getoption('main', 'htmldir', '/usr/share/depo/html')
+		self.cachedir = self.getoption('main', 'cachedir', '/var/cache/mrepo')
+		self.lockdir = self.getoption('main', 'lockdir', '/var/cache/mrepo')
+		self.confdir = self.getoption('main', 'confdir', '/etc/mrepo.conf.d')
+		self.htmldir = self.getoption('main', 'htmldir', '/usr/share/mrepo/html')
 		self.pxelinux = self.getoption('main', 'pxelinux', '/usr/lib/syslinux/pxelinux.0')
-		self.srcdir = self.getoption('main', 'srcdir', '/var/depo')
-		self.tftpdir = self.getoption('main', 'tftpdir', '/tftpboot/depo')
-		self.wwwdir = self.getoption('main', 'wwwdir', '/var/www/depo')
-		self.logfile = self.getoption('main', 'logfile', '/var/log/depo.log')
+		self.srcdir = self.getoption('main', 'srcdir', '/var/mrepo')
+		self.tftpdir = self.getoption('main', 'tftpdir', '/tftpboot/mrepo')
+		self.wwwdir = self.getoption('main', 'wwwdir', '/var/www/mrepo')
+		self.logfile = self.getoption('main', 'logfile', '/var/log/mrepo.log')
 
 		self.mailto = self.getoption('main', 'mailto', None)
-		self.mailfrom = self.getoption('main', 'mailfrom', 'depo@%s' % os.uname()[1])
+		self.mailfrom = self.getoption('main', 'mailfrom', 'mrepo@%s' % os.uname()[1])
 		self.smtpserver = self.getoption('main', 'smtp-server', 'localhost')
 
 		self.arch = self.getoption('main', 'arch', 'i386')
@@ -519,15 +519,15 @@ class Repo:
 					mirrorlftp(url, self.srcdir)
 				elif s in ('file', ''):
 					mirrorfile(url, self.srcdir)
-				elif s in ('depo', ):
-					mirrordepo(url, self.srcdir)
+				elif s in ('mrepo', ):
+					mirrormrepo(url, self.srcdir)
 				elif s in ('mc', ):
 					mirrormirrordir(url, self.srcdir)
 				elif s in ('rhn', 'rhns'):
 					mirrorrhnget(url, self.srcdir, self.dist)
 				else:
 					error(2, 'Scheme %s:// not implemented yet (in %s)' % (s, url))
-			except DepoMirrorException, e:
+			except mrepoMirrorException, e:
 				error(0, 'Mirroring failed for %s with message:\n  %s' % (url, e.value))
 				exitcode = 2
 		if not self.url:
@@ -681,7 +681,7 @@ class Repo:
 					self.repoview()
 				elif md not in metadata: 
 					error(0, 'The %s index is unknown.' % md)
-		except DepoGenerateException, e:
+		except mrepoGenerateException, e:
 			error(0, 'Generating repo failed for %s with message:\n  %s' % (self.name, e.value))
 			exitcode = 2
 		
@@ -689,7 +689,7 @@ class Repo:
 	def repomd(self):
 		"Create a repomd repository"
 		if not cf.cmd['createrepo']:
-			raise DepoGenerateException('Command createrepo is not found. Skipping.')
+			raise mrepoGenerateException('Command createrepo is not found. Skipping.')
 		opts = ' ' + cf.createrepooptions
 		if op.force:
 			opts = ' --pretty'
@@ -712,7 +712,7 @@ class Repo:
 			info(2, '%s: Create repomd repository for %s' % (self.dist.nick, self.name))
 			ret = run('%s %s %s' % (cf.cmd['createrepo'], repoopts, self.wwwdir))
 			if ret:
-				raise(DepoGenerateException('%s failed with return code: %s' % (cf.cmd['createrepo'], ret)))
+				raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['createrepo'], ret)))
 
 	def yum(self):
 		"Create a (old-style) yum repository"
@@ -733,7 +733,7 @@ class Repo:
 			info(2, '%s: Create (old-style) yum repository for %s' % (self.dist.nick, self.name))
 			ret = run('%s %s -l %s' % (cf.cmd['yumarch'], opts, self.wwwdir))
 			if ret:
-				raise(DepoGenerateException('%s failed with return code: %s' % (cf.cmd['yumarch'], ret)))
+				raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['yumarch'], ret)))
 
 	def apt(self):
 		"Create an (old-style) apt repository"
@@ -779,7 +779,7 @@ class Repo:
 #		else:
 		ret = run('%s %s --flat --bloat --bz2only --partial %s %s' % (cf.cmd['genbasedir'], opts, self.dist.dir, self.name))
 		if ret:
-			raise(DepoGenerateException('%s failed with return code: %s' % (cf.cmd['genbasedir'], ret)))
+			raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['genbasedir'], ret)))
 
 	def repoview(self):
 		"Create a repoview index"
@@ -797,11 +797,11 @@ class Repo:
 			title = '%s repository for %s' % (self.name, self.dist.nick)
 			ret = run('%s %s --title="%s" %s' % (cf.cmd['repoview'], opts, title, self.wwwdir))
 			if ret:
-				raise(DepoGenerateException('%s failed with return code: %s' % (cf.cmd['repoview'], ret)))
-#			url = 'http://depo/%s/RPMS.%s/' % (self.dist.nick, self.name)
+				raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['repoview'], ret)))
+#			url = 'http://mrepo/%s/RPMS.%s/' % (self.dist.nick, self.name)
 #			ret = run('%s %s --url="%s" %s' % (cf.cmd['repoview'], opts, url, self.wwwdir))
 #			if ret:
-#				raise(DepoGenerateException('%s failed with return code: %s' % (cf.cmd['repoview'], ret)))
+#				raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['repoview'], ret)))
 
 class Set:
 	def __init__(self):
@@ -831,13 +831,13 @@ class Set:
 	def __len__(self):
 		return len(self.list)
 
-class DepoMirrorException(Exception):
+class mrepoMirrorException(Exception):
 	def __init__(self, value):
 		self.value = value
 	def __str__(self):
 		return repr(self.value)
 
-class DepoGenerateException(Exception):
+class mrepoGenerateException(Exception):
 	def __init__(self, value):
 		self.value = value
 	def __str__(self):
@@ -863,7 +863,7 @@ def writesha1(file, sha1sum=None):
 def error(level, str):
 	"Output error message"
 	if level <= op.verbose:
-		sys.stderr.write('depo: %s\n' % str)
+		sys.stderr.write('mrepo: %s\n' % str)
 
 def info(level, str):
 	"Output info message"
@@ -976,7 +976,7 @@ def symlink(src, dst):
 	elif os.path.isfile(dst):
 		if os.path.samefile(src, dst):
 			return
-		os.rename(dst, dst+'.depobak')
+		os.rename(dst, dst+'.mrepobak')
 ### Not using filecmp increases speed with 15%
 #	if os.path.isfile(dst) and filecmp.cmp(src, dst) == 0:
 
@@ -1071,7 +1071,7 @@ def mirrorrsync(url, path):
 
 	ret = run('%s %s %s %s' % (cf.cmd['rsync'], opts, url, path), dryrun=True)
 	if ret:
-		raise(DepoMirrorException('Failed with return code: %s' % ret))
+		raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 def mirrormirrordir(url, path):
 	"Mirror everything from a ftp:// or mc:// URL"
@@ -1097,7 +1097,7 @@ def mirrormirrordir(url, path):
 
 	ret = run("%s %s '%s' '%s'" % (cf.cmd['mirrordir'], opts, url, path), dryrun=True)
 	if ret:
-		raise(DepoMirrorException('Failed with return code: %s' % ret))
+		raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 
 def mirrorlftp(url, path):
@@ -1133,7 +1133,7 @@ def mirrorlftp(url, path):
 
 	ret = run('%s %s -c \'%s mirror %s %s %s\'' % (cf.cmd['lftp'], opts, cmds, mirroropts, url, path), dryrun=True)
 	if ret:
-		raise(DepoMirrorException('Failed with return code: %s' % ret))
+		raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 def mirrorfile(url, path):
 	"Mirror everything from a file:// URL by symlinking"
@@ -1151,9 +1151,9 @@ def mirrorfile(url, path):
 #			if os.path.isfile(iso):
 #				print 'Please mount %s to %s' % (iso, path)
 
-def mirrordepo(url, path):
-	"Mirror everything from a local Depo mirror by symlinking"
-	pathname = url.replace('depo://', '')
+def mirrormrepo(url, path):
+	"Mirror everything from a local mrepo mirror by symlinking"
+	pathname = url.replace('mrepo://', '')
 	basename = os.path.basename(url)
 	symlink(os.path.join(cf.srcdir, pathname), os.path.join(path, basename))
 
@@ -1197,7 +1197,7 @@ def mirrorrhnget(url, path, dist):
 
 	ret = run("%s %s '%s' '%s'" % (cf.cmd['rhnget'], opts, url, path), dryrun=True)
 	if ret:
-		raise(DepoMirrorException('Failed with return code: %s' % ret))
+		raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 def hardlink(srcdir):
 	info(1, 'Hardlinking duplicate packages in %s.' % srcdir)
@@ -1250,7 +1250,7 @@ def mail(subject, msg):
 		import smtplib
 		smtp = smtplib.SMTP(cf.smtpserver)
 #		server.set_debuglevel(1)
-		msg = 'Subject: [depo] %s\n\n%s' % (subject, msg)
+		msg = 'Subject: [mrepo] %s\n\n%s' % (subject, msg)
 		for email in cf.mailto.split():
 			smtp.sendmail(cf.mailfrom, email, 'To: %s\n%s' % (email, msg))
 		smtp.quit()
@@ -1309,7 +1309,7 @@ def main():
 
 	sumnew = 0
 	sumremoved = 0
-	msg = 'The following changes to Depo\'s repositories on %s have been made:' % os.uname()[1]
+	msg = 'The following changes to mrepo\'s repositories on %s have been made:' % os.uname()[1]
 
 	### Mounting and mirroring available distributions/repositories
 	for dist in dists:

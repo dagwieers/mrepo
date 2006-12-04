@@ -249,7 +249,7 @@ def rhnlogin(url, path, force=False):
 	cfg['proxyPassword'] = ''
 	cfg["sslCACert"] = '/usr/share/rhn/RHNS-CA-CERT'
 
-	### Override the version if forced in Depo configuration (to allow single systemid usage)
+	### Override the version if forced in mrepo configuration (to allow single systemid usage)
 	if op.rhnrelease:
 		cfg['versionOverride'] = op.rhnrelease
 	else:

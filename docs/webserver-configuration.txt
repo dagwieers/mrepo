@@ -1,32 +1,32 @@
-How to configure you Web server for Depo
-========================================
+How to configure you Web server for mrepo
+=========================================
 
 If you have apache, this package should already have done a
-good job by installing the default Depo configuration file as:
+good job by installing the default mrepo configuration file as:
 
-	/etc/httpd/conf.d/depo.conf
+	/etc/httpd/conf.d/mrepo.conf
 
 Now, you probably want to change the default to prevent people
-from accessing your Depo website, or because you have another
+from accessing your mrepo website, or because you have another
 domain-name or simply because you don't want the generic
-/depo/-Alias.
+/mrepo/-Alias.
 
 The config file provided is just a default that helps to set
 up your initial environment and it is there to be adapted.
-It uses by default the hostname 'depo' and if you define 'depo'
+It uses by default the hostname 'mrepo' and if you define 'mrepo'
 as a name on your local network, it may work without change.
 
 For browsing and remote network installations via HTTP the
 webserver can be accessed at:
 
-	http://localhost/depo/
+	http://localhost/mrepo/
 or
-	http://depo/
+	http://mrepo/
 
 If you want to enable HTTP authentication to prevent people
-accessing your Depo repository, look at
+accessing your mrepo repository, look at
 
-	/etc/httpd/conf.d/depo.conf
+	/etc/httpd/conf.d/mrepo.conf
 
 And adapt to your needs. More information about HTTP
 authentication and Apache can be found at:
