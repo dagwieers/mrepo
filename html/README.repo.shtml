@@ -1,0 +1,4 @@
+<!-- <!--#echo var="SERVER_SOFTWARE" --> at <!--#echo var="SERVER_NAME" --> Port <!--#echo var="SERVER_PORT" --><br> -->
+<b>Powered by <a href="http://dag.wieers.com/home-made/depo/">Depo</a>.</b>
+Written by <a href="http://dag.wieers.com/">Dag Wieers</a>.
+Repository updated on <!--#flastmod file=".title" -->

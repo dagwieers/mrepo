@@ -1,0 +1,191 @@
+Usage information for Depo and a description of the options and config file
+===========================================================================
+
+depo is used to create a repository on your server from multiple sources.
+
+
+Finding help on the command line
+--------------------------------
+depo -h
+usage: depo [-g] [-q] [-u] [-v] [-c config] dist1 dist2-arch
+Set up a distribution server from ISO files
+
+Depo options:
+  -c, --config=file     specify alternative configfile
+  -g, --generate        generate Depo repositories
+  -q, --quiet           minimal output
+  -u, --update          fetch OS updates
+  -v, --verbose         increase verbosity (only Depo info)
+  -vv, -vvv             increase verbosity more
+      --unmount         unmount distributions
+
+
+When you first run Depo, do:
+
+	depo -v
+
+This will show you what it is doing. You may add extra -v at any time
+to see more of Depo's internals.
+
+	depo -vvv
+
+Now, you may want to change the default depo.conf to your needs and
+add or remove distributions and/or repositories. If you have ISO
+images of any of the distributions you want to mirror, mention them
+too like in the examples, and copy them over to /var/depo/iso
+(You can also decide to put them per distribution/arch)
+
+The default directory structure that Depo uses is explained in
+README.dirs
+
+Depo by default will mount as many ISO files as possible. If you
+have problems with the maximum number of loop devices, please read
+README.loop
+
+Depo can also download the distribution RPM packages if you want to,
+if you did not specify any ISO images it will download any os or core
+repositories that you have specified. To do that, do
+
+	depo -u
+or
+	depo -uv
+
+To finally generate a complete working repository based on the
+repositories, you need to issues:
+
+	depo -g
+or
+	depo -gv
+
+This will look for all the necessary packages in /var/depo (srcdir) and
+symlink them to /var/www/depo (wwwdir). /var/www/depo can also be removed
+at any time and should not contain any files you have put there yourself.
+
+To start off from scratch, first unmount the ISO images by doing:
+
+	depo --unmount
+
+and then remove /var/www/depo completely. This should never be needed,
+but can be done after you played around or when removing components.
+
+If you want to update only a part of your repository, you can select
+the distributions by doing:
+
+	depo -ugv fc2
+or
+	depo -ugv fc2-i386
+or even
+	depo -ugv fc2-i386 fc1-x86_64
+
+If you want to have multiple setups of Depo running on a single system
+(say one of your users wants its own setup), you can specify an
+alternative config file, by doing:
+
+	depo -c /home/dag/depo.conf
+
+In that case the user may want to use another srcdir and wwwdir.
+
+Finally, you can see if everything worked, by looking at /var/www/depo
+(wwwdir) or by surfing to http://localhost/depo/. For more information
+about web-access and configuration, see README.web
+
+
+The depo.conf file
+-----------------
+depo.conf file holds all the information depo uses to find the repos such
+as distribution information and URLs to the repos.  depo.conf is essentially
+divided into three areas.  main, repos, and dist.
+
+The main area is your main configuration for depo.
+Example from default depo.conf:
+
+	[main]
+	srcdir=/var/depo
+	wwwdir=/var/www/depo
+	metadata=apt repomd
+	arch=i386
+
+The srcdir is where depo will download and store the files for your repo
+
+The wwwdir is the location as to where your users for your repo will actually
+get the files from. These are symbolic links to the srcdir.
+
+The metadata is a list of metadata repositories you want to create. This
+defined the default used if nothing is specified per distribution.
+
+arch is a list of the default architectures, i.e.  i386, x86_64.
+This will set it globally but can be configured per distro.
+
+The distro area of depo.conf is the heart of depo.conf it is where you can
+specify the exact distribution and URLs to download from. Let me demonstrate
+with a little example:
+
+	[fc3]
+	name = Fedora Core $release ($arch)
+	release = 3
+	arch = i386 x86_64
+	iso = FC$release-$arch-disc?.iso
+	core = rsync://ayo.freshrpms.net/pub/freshrpms/pub/freshrpms/ayo/fedora/linux/$release/$arch/RPMS.$repo/
+	updates = rsync://ayo.freshrpms.net/pub/freshrpms/pub/freshrpms/ayo/fedora/linux/$release/$arch/RPMS.$repo/
+	rpmforge = rsync://apt.sw.be/pub/freshrpms/pub/dag/fedora/$release/en/$arch/RPMS.dag/
+	freshrpms = rsync://ayo.freshrpms.net/pub/freshrpms/pub/freshrpms/ayo/fedora/linux/$release/$arch/RPMS.$repo/
+	newrpms = rsync://newrpms.sunsite.dk/projects/newrpms/www/htdocs/apt/redhat/en/$arch/fc$release/RPMS.$repo/
+
+The section name [fc3] is your dist tag and you can change it to fit your needs.  
+Other tags you can include per section are:
+
+	name = is a description for this distribution ($name)
+	release = is the release version of your distribution ($release)
+	metadata = is a list of metadata you want for this repo
+	arch = is set to one or more architectures available for this distribution ($arch)
+	iso = is set to one or more globs matching the distributions ISO images
+
+Any other entries are considered to be repositories. Depo will assume that
+repositories called 'os', 'core' and 'updates' are base system repositories
+and these will be updated with Depo option -u . os and core repositories will
+be ignored when ISO images are available.
+
+Other entries are considered extra (3rd party) repositories. Depo will create
+a separate directory for each of these in /var/depo/$dist-$arch/$repo
+The LHS part can also be used in the RHS as variable $repo
+
+Other special variables include:
+
+	$srcdir	is set to the srcdir variable from depo.conf
+	$dist 	is set to the distribution section name (eg. fc2)
+	$arch	is set to the architecture within this section context
+	$nick 	is set to $dist-$arch within this section context
+	$repo 	is set to the current repo-name within this repo context
+
+Depo can use several types of protocols or URL identifiers:
+
+	<empty>		- use the directory in $srcdir/$dist-$arch/$repo
+	depo://		- handled by depo, equivalent to file://$srcdir/
+	file://		- handled by depo, symlink to other directory containing RPMS
+	fish://		- handled by lftp
+	ftp://		- handled by mirrordir or lftp
+	http://		- handled by lftp
+	https://	- handled by lftp
+	mc://		- handled by mirrordir
+	rhn://		- handled by up2date python classes
+	rhns://		- handled by up2date python classes
+	rsync://	- handled by rsync
+	sftp://		- handled by lftp
+
+
+Metadata for repositories
+-------------------------
+Depending on what repositories you want to generate, you can install
+a combination of these packages:
+
+	keyword		description		package
+	"""""""		"""""""""""		"""""""
+	apt		for apt 0.5.15cnc	binary 'genbasedir' inside 'apt' package
+
+	yum		for yum < 2.4		binary 'yum-arch' inside 'yum' package
+
+	repomd		for apt >= 0.5.15lorg	binary 'createrepo' inside 'createrepo' package
+			and yum >= 2.4
+
+---
+Please send me improvements to this document.

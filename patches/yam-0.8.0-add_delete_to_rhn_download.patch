@@ -1,0 +1,107 @@
+From: Tim Verhoeven
+Date: Sat, 10 Jun 2006 15:21:01 +0200
+Subject: Yam : patch om deletes te doen bij downloads van rhn
+--- /usr/bin/yam	2006-03-10 12:17:38.000000000 +0100
++++ ./yam.new	2006-06-10 15:13:07.000000000 +0200
+@@ -16,6 +16,7 @@
+ 
+ import os, sys, glob, re, shutil, getopt, popen2
+ import ConfigParser, urlparse, sha, types
++import rpm, fnmatch
+ 
+ VERSION = "0.8.0"
+ 
+@@ -822,6 +823,14 @@
+ 			}
+ 	return None
+ 
++def rpmOutToStr(arg):
++	# Convert output from rpm headers to a string if needed
++    if type(arg) != types.StringType:
++    	# and arg is not None:
++        arg = str(arg)
++
++    return arg
++
+ def mirrorrhn(url, path, dist):
+ 	'Mirror a channel from RHN'
+ 	global cfg, loginInfo, rd, repoDirector, rpcServer
+@@ -875,9 +884,52 @@
+ 		error(0, 'Error listing packages from channel %s. Skipping.\n%s' % (label, e))
+ 		return
+ 
++	### Prepare directory listing, used to see if we need to delete anything
++
++	# Get listing of already present RPM packages
++	listing = os.listdir(path)
++	listing = fnmatch.filter(listing, '*rpm')
++	current_packages = []
++
++	# Initialize RPM transaction set to process the RPM packages
++	ts = rpm.ts()
++	ts.setVSFlags(-1)
++
++	# Pares each file and get filename, package name, epoch, version and release
++	for fname in listing:
++		try:
++			fd = os.open(os.path.join(path, fname), os.O_RDONLY)
++		except:
++			# ignore non-files
++			continue
++		# Read RPM header from the opened file
++		h = ts.hdrFromFdno(fd)
++		os.close(fd)
++
++		# strip the strings from header.
++		# XXX rpm.RPMTAG_FOO is slightly faster than 'foo', less readable
++		# XXX no matter what there's a bsearch on access
++		pname = rpmOutToStr(h['name'])
++		EVR = (rpmOutToStr(h['epoch']),rpmOutToStr(h['version']),rpmOutToStr(h['release']))
++		arch = h['arch']
++		del h		# XXX dump the header soonest, avoid bloat
++
++		# Add header info to the current_packages dict
++		#print 'Filename %s, packagename %s, arch %s, version %s' % (fname, pname, arch, EVR)
++		current_packages.append(dict([('fname', fname), ('pname', pname), ('arch', arch), ('EVR', EVR)]))
++
++	# Some cleanup
++	del listing
++
+ 	### Download packages from the packagelist
+ 	signal.signal(signal.SIGINT, signal.SIG_DFL)
+ 	for pkg in package_list:
++		# amount of packages to keep including the one that will be downloaded
++		keep = 2
++		# check if th keep variable is large enough
++		if keep < 1:
++			error(0, 'The keep variable is to small, current value is %d, minimum is 1' % (keep))
++			sys.exit(1)
+ 		### FIXME: Check if not already on ISO-file or repository as well
+ 		filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
+ 		if os.path.isfile(os.path.join(path, filename)):
+@@ -888,6 +940,25 @@
+ 			else:
+ 				info(4, 'File %s has wrong size (found: %s, expected: %s), refetching.' % (filename, stat.st_size, pkg[5]))
+ 				remove(os.path.join(path, filename))
++		# Get list of local packages on the filesystem for the current package
++		local_packages = [d for d in current_packages if d.get('pname', None)==pkg[0]]
++		# Sort list of local packages according to version (EVR) key
++		decorated = [(dict_['EVR'], dict_) for dict_ in local_packages]
++		decorated.sort(lambda x,y: rpm.labelCompare(x[0],y[0]))
++		local_packages = [dict_ for (key, dict_) in decorated]
++		# If we have more local packages we want to keep we are going to delete some
++		if (len(local_packages) + 1) > keep:
++			# Remove from the local_packages list the packages we don't want to delete
++			for i in range(keep - 1 ):
++				local_packages.pop()
++			# The actual delete
++			for pkg in local_packages:
++				file = pkg['fname']
++				if op.dryrun:
++					info(3, 'Not removing file %s' % (os.path.join(path,file)))
++				else:
++					info(3, 'Removing file %s' % (os.path.join(path,file)))
++					os.remove(os.path.join(path, file))
+ 		if op.dryrun:
+ 			info(3, 'Not downloading package %s' % filename)
+ 			continue

@@ -1,0 +1,124 @@
+Quickstart for the impatient
+============================
+
+Requisites:
+
+  Depending on what repositories you want to generate, you can install
+  a combination of these packages:
+
+	tool		package		provides
+	""""		"""""""		""""""""
+	genbasedir	apt		provides apt support
+	yum-arch	yum		provides yum support
+	createrepo	createrepo	provides repomd support (new yum, new apt)
+
+  Depending on what kind of sources you want to mirror, you can install
+  a combination of these packages:
+
+	tool		provides
+	""""		""""""""
+	rsync		provides rsync:// access
+	mirrordir	provides ftp:// and mc:// access
+	lftp		provides ftp://, http://, sftp:// fish://
+	up2date		provides rhn:// and rhns:// access
+
+  If you want to hardlink duplicate (downloaded) packages to save on
+  diskspace, you need to install:
+
+	hardlink++	(separate 'hardlink++' package)
+	hardlink	(part of the kernel-utils package)
+
+
+Do the following steps to get started (real) fast.
+
+  1. Start with collecting the existing ISO files you have of the
+     different distributions you want to put into a repository.
+     Put these into your $srcdir (normally /var/depo), eg:
+
+		/var/depo/fc3-i386/
+
+
+  2. Edit /etc/depo.conf and add for each distribution a new section
+     like the examples given in the default depo.conf, depo-complex.conf
+     or depo-example.conf
+
+     You can add a distribution section to a new file in /etc/depo.conf.d/
+
+		eg. /etc/depo.conf.d/fc3-i386.conf
+
+     See the examples in the documentation as a reference.
+
+
+  3. If you want to add your own custom packages to one or all of
+     the repositories, you have 2 options.
+
+     a. Add them to /var/depo/<distro>-<arch>/local/
+
+		eg. /var/depo/fc3-i386/local/
+
+	or add them to /var/depo/all/local/ to add them to all.
+
+     b. Specify the directory of your choice in a new repository,
+	eg. called 'myrepo'
+
+		[fc3-i386]
+		name = Fedora Core $release ($arch)
+		release = 3
+		.
+		.
+		myrepo = file:///var/ftp/pub/my-rpms/fc3/i386/
+
+	eg. you can rewrite this as:
+
+		myrepo = file:///var/ftp/pub/my-rpms/$dist/$arch/
+
+        This way you can specify an unlimited number of custom
+        repositories.
+
+
+  4. Now run Depo with no actions to see if the ISO files are mounted
+     and all your configuration options have been used:
+
+	depo -vv
+
+     Then run Depo to update the repositories:
+
+	depo -uvv
+
+     Then generate the Depo repositories by doing:
+
+	depo -gvv
+
+     Now look in $wwwdir (normally /var/www/depo) or surf to
+     http://localhost/depo/ to see if everything is the way you wanted.
+
+
+  5. Next time you can do directly
+
+	depo -ug
+     or
+	depo -ugv
+
+     and all steps will be performed in one phase.
+
+
+  6. If you're removing distributions from the depo.conf file and
+     you want to remove the ISOs to gain diskspace. Remember that
+     Linux will not release diskspace for files that are still
+     accessed (like a loop-mounted ISO file). You're best bet is
+     to first unmount the ISOs:
+
+	depo -vv --umount
+
+     then remove or comment the distributions and mount again:
+
+	depo -vv
+
+  7. When you're adding new distributions, it's sufficient to just
+     run Depo again. It will automatically mount everything that is
+     not already mounted. You can always remount/reset by doing:
+
+	depo -vv --remount
+
+---
+Please send me improvements to this document.

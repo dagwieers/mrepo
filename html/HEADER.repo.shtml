@@ -1,0 +1,18 @@
+<h2>Depo RPM Mirror of <!--#include virtual=".title" --></h2>
+<!-- <b><!--#include virtual=".timestamp" --></b> -->
+
+<u>Network installation</u>: Select "HTTP installation method" &raquo; "<!--#echo var="SERVER_NAME" -->" &raquo; "<!--#echo var="REQUEST_URI" -->" during installation<br>
+
+<!-- To install Red Hat from the network, select the <b>HTTP installation method</b> and then specify for Web site name: <b><!--#echo var="SERVER_NAME" --></b> or <b><!--#echo var="SERVER_ADDR" --></b> and as Red Hat directory: <b><!--#echo var="REQUEST_URI" --></b>.<br> -->
+
+<u>Apt configuration</u>: Add "rpm http://<!--#echo var="SERVER_NAME" --> <!--#echo var="REQUEST_URI" --> os updates <i>repo1 repo2 ...</i>" to /etc/apt/sources.list<br>
+
+<!-- The configuration of this Apt repository is:
+<nobr><b>rpm http://<!--#echo var="SERVER_NAME" --> <!--#echo var="REQUEST_URI" --> <i>os</i> <i>updates</i> <i>extras</i> <i>&lt;repo&gt;</i></b></nobr><br> -->
+
+<u>Yum configuration</u>: Add "baseurl=http://<!--#echo var="SERVER_NAME" --><!--#echo var="REQUEST_URI" -->RPMS.<i>repo</i>" to /etc/yum.conf<br>
+
+<!-- The configuration of this Yum repository is:
+<nobr><b>baseurl=http://<!--#echo var="SERVER_NAME" --><!--#echo var="REQUEST_URI" -->RPMS.<i>&lt;repo&gt;</i></b></nobr><br> -->
+
+<!-- For more information see the <b>Depo</b> documentation or the <a href="http://dag.wieers.com/home-made/depo/"><b>Depo</b> website</a>. -->

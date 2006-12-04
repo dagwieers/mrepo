@@ -1,0 +1,222 @@
+From: Alexander Bergolth
+Date: Sun, 14 May 2006 01:37:32 +0200
+Subject: [tools] yam patch: synchronize symlinks rather than deleting and recreating them
+
+From: Alexander 'Leo' Bergolth
+Date: Mon, 19 Jun 2006 23:06:58 +0200
+Subject: Re: [tools] yam patch: synchronize symlinks rather than deleting and recreating them
+--- yam.orig	2006-05-13 23:05:41.024640140 +0200
++++ yam	2006-05-14 01:16:06.984394796 +0200
+@@ -14,6 +14,7 @@
+ ### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ ### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
+ 
++from __future__ import generators # for Python 2.2
+ import os, sys, glob, re, shutil, getopt, popen2, socket
+ import ConfigParser, urlparse, sha, types, traceback
+ 
+@@ -512,16 +513,80 @@
+ 		symlink(os.path.join(cf.htmldir, 'HEADER.repo.shtml'), os.path.join(self.dir, 'HEADER.shtml'))
+ 		symlink(os.path.join(cf.htmldir, 'README.repo.shtml'), os.path.join(self.dir, 'README.shtml'))
+ 
+-	def link(self, srcdir, repo):
+-		"Symlink all RPM packages that match a given arch"
+-		info(5, '%s: Symlink %s packages from %s' % (self.nick, repo, srcdir))
+-		mkdir(os.path.join(self.dir, 'RPMS.' + repo))
+-		mkdir(os.path.join(self.dir, 'RPMS.all'))
+-		os.path.walk(srcdir, rpmlink, (self, repo))
+-
+-	def clean(self, repo):
+-		info(5, '%s: Removing %s' % (self.nick, repo))
+-		remove(glob.glob(os.path.join(self.dir, 'RPMS.' + repo, '*.rpm')))
++        def linksync(self, srcdir):
++            # dist.linksync(os.path.join(cf.srcdir, dist.nick))
++            repos = self.repos.keys()
++            repos.sort()
++            allsrcdirs = []
++            for repo in repos:
++                reposrcdir = os.path.join(srcdir, self.nick, repo)
++                if not (repo in ['os', 'core'] and self.isos()):
++                    self.linksyncrepo(repo, reposrcdir)
++                    allsrcdirs.append(reposrcdir)
++
++            if self.isos():
++                srcdirs = [ os.path.join(self.dir, disc) for disc in self.discs ]
++                self.linksyncrepo('os', *srcdirs)
++                self.repos['os'] = None
++                allsrcdirs.extend(srcdirs)
++
++            ### Link custom local packages
++            reposrcdir = os.path.join(srcdir, self.nick, 'local')
++            if os.path.exists(reposrcdir):
++                self.linksyncrepo('local', reposrcdir)
++                allsrcdirs.append(reposrcdir)
++
++            reposrcdir = os.path.join(srcdir, 'all', 'local')
++            if os.path.exists(reposrcdir):
++                self.linksyncrepo('local', reposrcdir)
++                allsrcdirs.append(reposrcdir)
++
++            self.linksyncrepo('all', *allsrcdirs)
++
++        def linksyncrepo(self, repo, *srcdirs):
++            srcfiles = listrpms(*srcdirs)
++            srcfiles.sort()
++
++            destdir = os.path.join(self.dir, 'RPMS.' + repo)
++            info(4, 'creating links in %s to directories %s' % ( destdir, srcdirs ))
++            mkdir(os.path.join(self.dir, 'RPMS.' + repo))
++            
++            destfiles = listrpms(destdir)
++            # destfiles are tuples of (link, link target)
++            readlink = os.readlink
++            def linkdest(file):
++                try:
++                    return (file, readlink(file))
++                except OSError:
++                    return (file, False)
++            destfiles = map(linkdest, destfiles)
++            destfiles.sort(lambda x, y: cmp(x[1], y[1]))
++
++            for srcfile, destfile, tid in synciter(srcfiles, destfiles,
++                                                   keyb = lambda f: f[1]): # link target
++                if srcfile is None:
++                    # delete the link
++                    linkfile, target = destfile
++                    # info(5, 'Remove link: %s' % ( linkfile, ))
++                    if not op.dryrun:
++                        os.unlink(linkfile)
++                if destfile is None:
++                    # create a new link
++                    linkname = os.path.join(destdir, os.path.basename(srcfile))
++                    # for RPMS.all
++                    if os.path.exists(linkname):
++                        # file or non-broken symlink
++                        info(3, "File %s in more than one repo!" %\
++                             ( os.path.basename(linkname), ))
++                    else:
++                        if os.path.islink(linkname):
++                            # broken symlink
++                            if not op.dryrun:
++                                os.unlink(linkname)
++                        #info(5, 'Link: %s, %s' % ( srcfile, linkname ))
++                        if not op.dryrun:
++                            os.symlink(srcfile, linkname)
++
+ 
+ def sha1dir(dir):
+ 	"Return sha1sum of a directory"
+@@ -1000,6 +1065,71 @@
+ 	symlink(cf.htmldir + '/HEADER.index.shtml', cf.wwwdir + '/HEADER.shtml')
+ 	symlink(cf.htmldir + '/README.index.shtml', cf.wwwdir + '/README.shtml')
+ 
++
++class NoneIterator(object):
++    "Iterator with an additional nextNone method"
++    def __init__(self, o):
++        self.iterator = iter(o)
++    def __iter__(self):
++        return self
++    def next(self):
++        return self.iterator.next()
++    def nextNone(self):
++        "returns None instead of raising StopIteration at the end"
++        try:
++            return self.iterator.next()
++        except StopIteration:
++            return None
++
++def synciter(a, b, key = None, keya = None, keyb = None):
++    if key is None:
++        key = lambda x: x
++    if keya is None:
++        keya = key
++    if keyb is None:
++        keyb = key
++    ai = NoneIterator(a)
++    anext = ai.nextNone
++    bi = NoneIterator(b)
++    bnext = bi.nextNone
++    aelem = anext()
++    belem = bnext()
++    while not ((aelem is None) or (belem is None)):
++        akey = keya(aelem)
++        bkey = keyb(belem)
++        if akey == bkey:
++            yield aelem, belem, akey
++            aelem = anext()
++            belem = bnext()
++        elif akey > bkey:
++            # belem missing in a
++            yield None, belem, bkey
++            belem = bnext()
++        elif bkey > akey:
++            # aelem missing in b
++            yield aelem, None, akey
++            aelem = anext()
++    # rest
++    while aelem is not None:
++        akey = key(aelem)
++        yield aelem, None, akey
++        aelem = anext()
++    while belem is not None:
++        bkey = key(belem)
++        yield None, belem, bkey
++        belem = bnext()
++
++def listrpms(*dirs):
++    rpms = []
++    listdir = os.listdir
++    pathjoin = os.path.join
++    for dir in dirs:
++        files = filter(lambda f: f.endswith('.rpm'), listdir(dir))
++        files = [ pathjoin(dir, f) for f in files ]
++        rpms.extend(files)
++    return rpms
++
++
+ def main():
+ 	### Check availability of commands
+ 	for cmd in cf.cmd.keys():
+@@ -1057,40 +1187,8 @@
+ 			info(1, '%s: Generating %s meta-data' % (dist.nick, dist.name))
+ 			dist.html()
+ 
+-			info(2, '%s: Cleaning repositories' % dist.nick)
+-			dist.clean('all')
+-			if dist.isos():
+-				dist.clean('os')
+-			for repo in dist.repos.keys():
+-				dist.clean(repo)
+-			dist.clean('local')
+-
+ 			info(2, '%s: Symlinking packages' % dist.nick)
+-			for repo in dist.repos.keys():
+-				srcdir = os.path.join(cf.srcdir, dist.nick, repo)
+-				if repo in ['os', 'core']:
+-					if not dist.isos():
+-						dist.link(srcdir, repo)
+-				else:
+-					dist.link(srcdir, repo)
+-
+-			if dist.isos():
+-				for disc in dist.discs:
+-					dist.link(os.path.join(dist.dir, disc), 'os')
+-					dist.repos['os'] = None
+-
+-			### FIXME: should remove identical files from cf.srcdir + '/updates/' + dist + '/*.rpm'
+-			### Maybe add a hardlink utility for cleaning up afterwards
+-	#		os.remove(cf.srcdir + '/updates/' + dist + '/' + os.path.basename(file))
+-
+-			### Link custom local packages
+-			srcdir = os.path.join(cf.srcdir, dist.nick, 'local')
+-			if os.path.exists(srcdir):
+-				dist.link(srcdir, 'local')
+-
+-			srcdir = os.path.join(cf.srcdir, 'all', 'local')
+-			if os.path.exists(srcdir):
+-				dist.link(srcdir, 'local')
++                        dist.linksync(cf.srcdir)
+ 
+ 			info(2, '%s: Creating metadata' % dist.nick)
+ 			### Check for updated repositories

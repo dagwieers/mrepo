@@ -1,0 +1,38 @@
+Configuring Depo for selinux
+----------------------------
+The most simple way to make Depo work on selinux is to map the Depo
+documentroot to the httpd context.
+
+You can do this by doing:
+
+	chcon -Rh --reference /var/www/html /var/www/depo
+
+
+Another way is to create the file
+/etc/selinux/targeted/src/policy/file_contexts/misc/local.fc,
+with the following content:
+
+	/var/depo(/.*)? system_u:object_r:httpd_sys_content_t
+
+Afterwards recompile the policy by doing:
+
+	make -C /etc/selinux/targeted/src load
+
+And apply the context by doing:
+
+	restorecon -R /var/depo
+
+I'd like this to be done by default, either from the RPM package or by the
+system itself. Depo could be told to do this as well but I'm not sure if
+this is the proper way to handle selinux.
+
+
+Slightly more complicated selinux contribution
+----------------------------------------------
+David Hampton contributed a slightly more complicated selinux configuration
+that defines its own Depo objects and context, you can find those files in
+the patches/ directory. SElinux improvements are welcome (as well as
+information on how to standardize 
+
+---
+Please send me improvements to this document.

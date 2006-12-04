@@ -1,0 +1,5 @@
+/var/log/depo.log {
+    missingok
+    notifempty
+    copytruncate
+}

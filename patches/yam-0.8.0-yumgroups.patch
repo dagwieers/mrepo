@@ -1,0 +1,69 @@
+From: Jason Kim <jkim@advance.net>
+Referer: http://lists.rpmforge.net/pipermail/tools/2005-April/000050.html
+
+The second change makes yam recognize new options in the distro sections 
+called '<repo>.group', which are group files located in srcdir/distro-arch. 
+The group files are then passed to createrepo with the -g option. We use yum 
+with groups a lot (both custom and standard), ie "yum groupinstall 
+'Administration Tools'", which doesn't work by default.
+
+For example:
+
+	[centos4-i386]
+	release = 4
+	os.group = os-comps.xml
+
+This would use the file 'os-comps.xml' in /var/yam/centos4-i386 for group info
+in createrepo for the 'os' repo. Of course this only makes sense if you're
+using createrepo for that distro.
+
+Index: yam
+===================================================================
+--- yam	(revision 4150)
++++ yam	(working copy)
+@@ -221,6 +221,8 @@
+ 							pass
+ 						elif option in ('metadata',):
+ 							setattr(self.dists[-1], option, self.cfg.get(section, option).split())
++						elif option.endswith('.group'):
++							self.dists[-1].groups[option[0:option.rfind('.group')]] = self.cfg.get(section, option)
+ 						else:
+ 							self.dists[-1].repos[option] = self.cfg.get(section, option)
+ 					self.dists[-1].rewrite()
+@@ -256,6 +258,7 @@
+ 		self.tag = self.dist
+ 		self.srcdir = srcdir
+ 		self.discs = ()
++		self.groups = {}
+ 
+ #	def __repr__(self):
+ #		for key, value in vars(self).iteritems():
+@@ -440,11 +443,15 @@
+ 			opts = opts + ' --cachedir "%s"' % cf.cachedir
+ 		for repo in self.newrepos:
+ 			repodir = os.path.join(self.dir, 'RPMS.' + repo)
++			groupopt = ''
++			if repo in self.groups.keys():
++				if os.path.isfile(os.path.join(repodir, 'yumgroups.xml')):
++					groupopt = ' -g yumgroups.xml'
+ 			if os.path.isdir(repodir):
+ 				if os.path.isdir(os.path.join(repodir, '.olddata')):
+ 					remove(os.path.join(repodir, '.olddata'))
+ 				info(2, '%s: Create new-style Yum repository for %s' % (self.nick, repo))
+-				run('%s %s %s' % (cf.cmd['createrepo'], opts, repodir))
++				run('%s %s %s' % (cf.cmd['createrepo'], opts + groupopt, repodir))
+ 
+ 	def repoview(self):
+ 		"Create a repoview index"
+@@ -1040,6 +1047,11 @@
+ 			dist.link(srcdir, 'local')
+ 
+ 		info(2, '%s: Creating metadata' % dist.nick)
++		### Copy custom yumgroups to linked repo dirs
++		for repo, groupfile in dist.groups.iteritems():
++			if os.path.isfile(os.path.join(dist.srcdir, dist.nick, groupfile)):
++				copy(os.path.join(dist.srcdir, dist.nick, groupfile), os.path.join(dist.dir, 'RPMS.' + repo, 'yumgroups.xml'))
++
+ 		### Check for updated repositories
+ 		dist.checkrepos()
+ 

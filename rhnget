@@ -1,0 +1,480 @@
+#!/usr/bin/python
+
+### This program is free software; you can redistribute it and/or modify
+### it under the terms of the GNU Library General Public License as published by
+### the Free Software Foundation; version 2 only
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU Library General Public License for more details.
+###
+### You should have received a copy of the GNU Library General Public License
+### along with this program; if not, write to the Free Software
+### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
+
+import os, sys, shutil, getopt, ConfigParser, urlparse, types
+import signal, xmlrpclib, getpass, glob
+
+if os.path.exists('/usr/share/rhn/') and os.path.exists('/usr/share/rhn/up2date_client/'):
+	sys.path.insert(0, '/usr/share/rhn/')
+	sys.path.insert(1, '/usr/share/rhn/up2date_client/')
+else:
+	die(1,'up2date is not installed. Aborting execution')
+
+from up2date_client import config, rpcServer, wrapperUtils, up2dateErrors, repoDirector
+from rhn import rpclib
+
+cfg = {}
+loginInfo = {}
+rd = None
+
+__version__ = "$Revision: 4786 $"
+# $Source$
+
+VERSION = '0.8.3svn'
+
+### Register rhn and rhns as a known schemes
+for scheme in ('rhn', 'rhns'):
+	urlparse.uses_netloc.insert(0, scheme)
+	urlparse.uses_query.insert(0, scheme)
+
+class Options:
+	def __init__(self, args):
+		self.dryrun = False
+		self.quiet = False
+		self.rhngetcleanup = False
+		self.rhngetdownloadall = False
+		self.rhngetsource = False
+		self.rhnpassword = None
+		self.rhnrelease = None
+		self.rhnusername = None
+		self.systemid = '/etc/sysconfig/rhn/systemid'
+		self.verbose = 1
+
+		try:
+			opts, args = getopt.getopt (args, 'hnqp:r:s:u:v',
+				('delete', 'download-all', 'dryrun', 'help', 'password=', 'quiet',
+				 'release=', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
+		except getopt.error, exc:
+			print 'rhnget: %s, try rhnget -h for a list of all the options' % str(exc)
+			sys.exit(1)
+
+		for opt, arg in opts:
+			if opt in ('--delete', ):
+				self.rhngetcleanup = True
+			elif opt in ('--download-all', ):
+				self.rhngetdownloadall = True
+			elif opt in ('-h', '--help'):
+				self.usage()
+				print
+				self.help()
+				sys.exit(0)
+			elif opt in ('-n', '--dry-run'):
+				self.dryrun = True
+			elif opt in ['-p', '--password']:
+				self.rhnpassword = arg
+			elif opt in ('-q', '--quiet'):
+				self.quiet = True
+			elif opt in ('-r', '--release'):
+				self.rhnrelease = arg
+			elif opt in ('--source', ):
+				self.rhngetsource = True
+			elif opt in ('-s', '--systemid'):
+				self.systemid = os.path.abspath(arg)
+			elif opt in ['-u', '--username']:
+				self.rhnusername = arg
+			elif opt in ('-v', '--verbose'):
+				self.verbose = self.verbose + 1
+			elif opt in ('--version', ):
+				self.version()
+				sys.exit(0)
+
+		if len(args) < 2:
+			self.usage()
+			print
+			self.help()
+			sys.exit(1)
+
+		self.uri = args[0]
+		self.destination = args[1]
+
+		if self.quiet:
+			self.verbose = 0
+
+		if self.verbose >= 3:
+			print 'Verbosity set to level %d' % (self.verbose - 1)
+
+	def version(self):
+		print 'rhnget %s' % VERSION
+		print 'Written by Dag Wieers <dag@wieers.com>'
+		print
+		print 'platform %s/%s' % (os.name, sys.platform)
+		print 'python %s' % sys.version
+		print
+		print 'build revision $Rev: 4786 $'
+
+	def usage(self):
+		print 'usage: rhnget [options] rhns://server/channel destination-path'
+
+	def help(self):
+		print '''Download packages from Red Hat Network (RHN)
+
+rhnget options:
+      --delete            delete files that are not on the sender side
+      --download-all      download all package versions available
+  -n, --dry-run           show what would have been done
+  -q, --quiet             minimal output
+  -r, --release=release   specify the RHN release (if different from the systemid)
+  -s, --systemid=file     systemid to use
+  -v, --verbose           increase verbosity
+  -vv, -vvv, -vvvv..      increase verbosity more
+'''
+
+class Set:
+	def __init__(self):
+		self.list = []
+
+	def add(self, input):
+		if input not in self.list:
+			self.list.append(input)
+    
+	def delete(self, input):
+		if input in self.list:
+			self.list.removed(input)
+    
+	def difference(self, other):
+		newlist = Set()
+		for element in self.list:
+			if element not in other.list:
+				newlist.add(element)
+		return newlist
+
+	def sort(self):
+		return self.list.sort()
+    
+	def __str__(self):
+		return '\n\t' + '\n\t'.join([element[0] for element in self.list])
+
+	def __len__(self):
+		return len(self.list)
+
+class MirrorException(Exception):
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return repr(self.value)
+
+def error(level, str):
+	"Output error message"
+	if level <= op.verbose:
+		sys.stderr.write('rhnget: %s\n' % str)
+
+def info(level, str):
+	"Output info message"
+	if level <= op.verbose:
+		sys.stdout.write('%s\n' % str)
+
+def die(ret, str):
+	"Print error and exit with errorcode"
+	error(0, str)
+	sys.exit(ret)
+
+def remove(file):
+	"Remove files or directories"
+	if isinstance(file, types.StringType):
+		if op.dryrun:
+			return
+		if os.path.islink(file):
+			os.unlink(file)
+		elif os.path.isdir(file):
+			try:
+				os.rmdir(file)
+			except:
+				os.path.walk(file, removedir, ())
+				os.rmdir(file)
+		elif os.path.isfile(file) or os.path.islink(file):
+			os.unlink(file)
+	else:
+		for f in file:
+			remove(f)
+
+def removedir(void, dir, files):
+	for file in files:
+		remove(os.path.join(dir, file))
+
+def mkdir(path):
+	"Create a directory, and parents if needed"
+	if op.dryrun:
+		return
+	if os.path.islink(path):
+		os.unlink(path)
+	if not os.path.exists(path):
+		os.makedirs(path)
+
+def rhnlogin(url, path, force=False):
+	'Log on to RHN and return cfg, loginInfo and systemid'
+	global cfg, loginInfo, rd, config, rpcServer
+
+	### Look for the usual suspects
+	if os.path.isfile(op.systemid):
+		systemidpath = op.systemid
+	elif os.path.isfile('/etc/sysconfig/rhn/systemid'):
+		systemidpath = '/etc/sysconfig/rhn/systemid'
+	else:
+		info(1, 'No RHN systemid found, skipping download.')
+		return
+	info(3, 'Using RHN systemid from %s' % systemidpath)
+
+	systemid = open(systemidpath).read()
+
+	cfg['systemIdPath'] = systemidpath
+	cfg = config.initUp2dateConfig()
+	cfg['systemIdPath'] = systemidpath
+	cfg['storageDir'] = path
+	cfg['retrieveOnly'] = 1
+	cfg['keepAfterInstall'] = 1
+	cfg['noReboot'] = 1
+	cfg['useRhn'] = 1
+	cfg['showChannels'] = 1
+	cfg['showAvailablePackages'] = 1
+	cfg['isatty'] = 1
+	cfg['networkRetries'] = 3
+#	cfg['headerFetchCount'] = 20
+	cfg['enableProxy'] = 0
+	cfg['enableProxyAuth'] = 0
+	cfg['httpProxy'] = ''
+	cfg['proxyUser='] = ''
+	cfg['proxyPassword'] = ''
+	cfg["sslCACert"] = '/usr/share/rhn/RHNS-CA-CERT'
+
+	### Override the version if forced in Depo configuration (to allow single systemid usage)
+	if op.rhnrelease:
+		cfg['versionOverride'] = op.rhnrelease
+	else:
+		cfg['versionOverride'] = rpclib.xmlrpclib.loads(systemid)[0][0]['os_release']
+	info(3, 'Using RHN release %s' % cfg['versionOverride'])
+
+#	if op.arch:
+#		cfg['forceArch'] = '%s-redhat-linux' % op.arch
+
+	### Modify the logfile in case we have no rights to write in /var/log/up2date (non-root)
+	if os.access('/var/log/up2date', os.W_OK):
+		cfg['logFile'] = '/var/log/up2date'
+	else:
+		cfg['logFile'] = os.path.expanduser('~/up2date.log')
+
+	### If we're not targetting the default RHN server, change the location
+	rhnscheme, rhnserver, t, t, t, t = urlparse.urlparse(url)
+	if not rhnserver:
+		rhnserver = 'xmlrpc.rhn.redhat.com'
+
+	cfg['noSSLServerURL'] = 'http://%s/XMLRPC' % rhnserver
+	if rhnscheme == 'rhn':
+		cfg['serverURL'] = 'http://%s/XMLRPC' % rhnserver
+	else:
+		cfg['serverURL'] = 'https://%s/XMLRPC' % rhnserver
+
+	### Get proxy information from environment and set up2date config accordingly
+	proxy = None
+	if os.environ.has_key('http_proxy') and rhnscheme == 'rhn':
+		t, proxy, t, t, t, t = urlparse.urlparse(os.environ['http_proxy'])
+	elif os.environ.has_key('https_proxy') and rhnscheme == 'rhns':
+		t, proxy, t, t, t, t = urlparse.urlparse(os.environ['https_proxy'])
+	if proxy:
+		cfg['enableProxy'] = 1
+		cfg['httpProxy'] = proxy
+		info(4, 'Setting proxy for %s to %s' % (rhnscheme, proxy))
+		### FIXME: Implement proxy authentication
+#		if proxy.username and proxy.password:
+#			cfg['enableProxyAuth'] = 1
+#			cfg['proxyPassword'] = proxy.password
+#			cfg['proxyUser='] = proxy.username
+
+	### Set debugging information to something very high (there seems to be no granularity)
+	if op.verbose >= 3:
+		cfg['debug'] = 1
+
+	info(4, '\nBEFORE LOGIN: logininfo: %s\n' % loginInfo)
+	try:
+		server = rpcServer.getServer()
+		li = rpcServer.doCall(server.up2date.login, systemid)
+		loginInfo.update(li)
+	except rpclib.Fault, f:
+		error(1, 'Error logging in with systemid %s. %s' % (systemidpath, f.faultString))
+		return None
+	info(4, '\nAFTER LOGIN: logininfo: %s\n' % loginInfo)
+
+	return systemid
+
+def rhngetchannel(channels, label):
+	'Return the channel with given label, if found'
+	for c in channels:
+		if isinstance(c, types.ListType):
+			l, v = c[0], c[1]
+		else:
+			l, v = c['label'], c['version']
+		if l == label:
+			return {
+				'label': l,
+				'version': v,
+				'type': 'up2date',
+				'url': cfg['serverURL'],
+			}
+	return None
+
+def mirrorrhn(url, path):
+	'Mirror a channel from RHN'
+	global cfg, loginInfo, rd, repoDirector, rpcServer
+
+	t, t, label, t, t, t = urlparse.urlparse(url)
+	label = label.strip('/')
+
+	### Log on to RHN
+	systemid = rhnlogin(url, path)
+	if not systemid:
+		return
+
+	mkdir(cfg['storageDir'])
+
+	### Try to find a channel with label
+	channel = rhngetchannel(loginInfo.get('X-RHN-Auth-Channels'), label)
+	if not channel:
+#		raise(Exception('Error system not subscribe to channel %s, skipping.' % label))
+		if not op.rhnusername:
+			op.rhnusername = raw_input('RHN Username: ')
+
+		if op.rhnusername and not op.rhnpassword:
+			op.rhnpassword = getpass.getpass('RHN Password for user %s: ' % op.rhnusername)
+
+		if op.rhnusername and op.rhnpassword:
+		   	try:
+				server = rpcServer.getServer()
+				channels = rpcServer.doCall(server.up2date.subscribeChannels, systemid, (label,), op.rhnusername, op.rhnpassword)
+			except rpclib.Fault, f:
+				raise(Exception('Error subscribing to channel %s, skipping.%s' % (label, f.faultString)))
+			systemid = rhnlogin(url, path, force=True)
+			if not systemid:
+				return
+			info(4, '\nAFTER SUBSC: logininfo: %s\n' % loginInfo)
+			channel = rhngetchannel(loginInfo.get('X-RHN-Auth-Channels'), label)
+			if not channel:
+				raise(Exception('Failed to subscribe RHN id to channel %s, skipping.' % label))
+		else:
+			raise(Exception('No RHN username or password supplied. Please add channel %s on RHN website manually. Skipping.' % label))
+
+	### Download packagelist for this channel
+	try:
+		repos = repoDirector.initRepoDirector()
+	except xmlrpclib.Fault, f:
+		raise(MirrorException('Problem setting up XML communication for channel %s.\n%s' % (label, f.faultString)))
+		return
+	except up2dateErrors.ServerCapabilityError, e:
+		raise(MirrorException('Problem negotiating capabilities for channel %s.\n%s' % (label, e)))
+		return
+	try:
+		if op.rhngetdownloadall == True:
+			package_list, type = rpcServer.doCall(repos.listAllPackages, channel, None, None)
+		else:
+			package_list, type = rpcServer.doCall(repos.listPackages, channel, None, None)
+	except rpclib.Fault, f:
+		raise(MirrorException('Error listing packages from channel %s. Skipping. %s' % (label, f.faultString)))
+	except up2dateErrors.CommunicationError, e:
+		raise(MirrorException('Error listing packages from channel %s. Skipping.\n%s' % (label, e)))
+	except KeyError, e:
+		if e == "'up2date'":
+			raise(MirrorException('Missing up2date entry in /etc/sysconfig/rhn/sources.'))
+		else:
+			raise(MirrorException('Unknown error that needs more debugging occured with channel %s. Skipping.\n%s' % (label, e)))
+
+	### Download packages from the packagelist
+	signal.signal(signal.SIGINT, signal.SIG_DFL)
+	for pkg in package_list:
+		### FIXME: Check if not already on ISO-file or repository as well
+		filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
+
+		### If file (or symlink target) exists
+		if os.path.isfile(os.path.join(path, filename)):
+			stat = os.stat(os.path.join(path, filename))
+			if stat.st_size == int(pkg[5]):
+				info(3, 'File %s is already in %s' % (filename, path))
+				continue
+			else:
+				info(2, 'File %s has wrong size (found: %s, expected: %s), refetching.' % (filename, stat.st_size, pkg[5]))
+				remove(os.path.join(path, filename))
+
+		### If symlink target does not exist, remove symlink
+		elif os.path.islink(os.path.join(path, filename)):
+			remove(os.path.join(path, filename))
+
+		if op.dryrun:
+			info(1, 'Not downloading package %s' % filename)
+			continue
+		try:
+			if op.verbose <= 1:
+				rpcServer.doCall(repos.getPackage, pkg, None, None)
+			else:
+				rpcServer.doCall(repos.getPackage, pkg, wrapperUtils.printPkg, wrapperUtils.printRetrieveHash)
+		except rpclib.Fault, f:
+			error(0, 'rpcError: Error getting package %s from %s. %s' % (filename, label, f.faultString))
+		except TypeError, e:
+			error(0, 'TypeError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+		except up2dateErrors.CommunicationError, e:
+			error(0, 'CommunicationError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+
+	### Remove packages on the receiver side that are not on the sender side
+	if op.rhngetcleanup:
+
+		### Collect receiver side
+		receiver = Set()
+		for file in glob.glob(os.path.join(path, '*.rpm')):
+			if os.path.exists(file):
+				filename = os.path.basename(file)
+				size = os.stat(file).st_size
+				receiver.add( (filename, size) )
+		receiver.sort()
+
+		### Collect sender side
+		sender = Set()
+		for pkg in package_list:
+			filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
+			size = int(pkg[5])
+			sender.add( (filename, size) )
+		sender.sort()
+
+		### Remove difference between receiver and sender
+		cleanse = receiver.difference(sender)
+		for filename, size in cleanse.list:
+			info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, size))
+			remove(os.path.join(path, filename))
+
+def main():
+	try:
+		mirrorrhn(op.uri, op.destination)
+	except Exception, e:
+		die(1, e)
+
+### Unbuffered sys.stdout
+sys.stdout = os.fdopen(1, 'w', 0)
+sys.stderr = os.fdopen(2, 'w', 0)
+
+### Workaround for python <= 2.2.1
+try:
+     True, False
+except NameError:
+     True = 1
+     False = 0
+
+### Main entrance
+if __name__ == '__main__':
+	exitcode = 0
+
+	op = Options(sys.argv[1:])
+	try:
+		main()
+	except KeyboardInterrupt, e:
+		die(6, 'Exiting on user request')
+	sys.exit(exitcode)
+
+# vim:ts=4:sw=4

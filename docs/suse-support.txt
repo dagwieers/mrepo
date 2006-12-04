@@ -1,0 +1,79 @@
+How SuSE works and why I do not support it currently
+====================================================
+
+The main problem with SuSE is that they changed the way the filesystem
+had to be laid out too many times. SLES8 had its own way of doing things,
+the different other SuSE releases did it slightly different and now
+SLES9 has its own way of working.
+
+Let me explain how it should look like with SLES9 and SP1:
+
+        SUSE-CORE-Version-9/
+                CD1/
+        SUSE-SLES-9-Service-Pack-Version-1/
+                CD1/
+                CD2/
+                CD3/
+        SUSE-SLES-Version-9/
+                CD1/
+                CD2/
+                CD3/
+                CD4/
+                CD5/
+        boot -> SUSE-SLES-Version-9/CD1/boot
+        content -> SUSE-SLES-Version-9/CD1/content
+        control.xml -> SUSE-SLES-Version-9/CD1/control.xml
+        driverupdate -> SUSE-SLES-9-Service-Pack-Version-1/CD1/driverupdate
+        linux -> SUSE-SLES-9-Service-Pack-Version-1/CD1/linux
+        media.1 -> SUSE-SLES-Version-9/CD1/media.1
+        yast/
+                instorder
+                order
+
+The main problem is that the ISO itself does not provide the location
+where it is expected to be mounted. So this has to be hard-coded and
+one has to map these hardcoded paths with something that uniquely
+defines the ISO file.
+
+Then you also need to provide symlinks to certain files on different CDs.
+And you have to create the yast/instorder and yast/order files with the
+following content:
+
+        yast/instorder:
+                /SUSE-SLES-9-Service-Pack-Version-1/CD1
+                /SUSE-SLES-Version-9/CD1
+                /SUSE-CORE-Version-9/CD1
+
+        yast/order:
+                /SUSE-SLES-9-Service-Pack-Version-1/CD1 /SUSE-SLES-9-Service-Pack-Version-1/CD1
+                /SUSE-SLES-Version-9/CD1        /SUSE-SLES-Version-9/CD1
+                /SUSE-CORE-Version-9/CD1        /SUSE-CORE-Version-9/CD1
+
+The yast/instorder and yast/order files are leftovers from the
+UnitedLinux era.
+
+Since this was unknown when SP1 was not released, it is uncertain what
+is required when SP2 will be released. Additionally, with the 6 base
+CDs and the 3 SP1 CDs, you already need 9 CDs. When SP2 comes out, this
+might be 12 CDs, so we can expect SuSE to revise and redo the filesystem
+layout and creation of CDs at least once more. We can only hope they get
+it right the next time.
+
+Yast2 has its own logic to create these directories and if you have to
+install SLES8 or SLES9, it's better to make use of the Yast2 functionality.
+(Yes, this means you're once again locked into something SuSE specific)
+
+Depo will not support SLES until they clean up their act or someone sends me
+an acceptable patch for Depo. The current SLES support stays unfinished like
+it is.
+
+Based on the above information, you are of course free to perform the
+necessary tasks manually.
+
+More information about the SuSE Installation Server and Autoyast can be found
+at:
+
+	http://yast.suse.com/autoinstall/docs.html
+
+---
+Please send me improvements to this document.

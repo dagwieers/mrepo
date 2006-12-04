@@ -1,0 +1,62 @@
+Using Depo behind a proxy server
+================================
+
+If you're using Depo behind a proxy-server, you're out of luck for rsync
+support. Rsync has its own protocol that is not allowed through a normal
+proxy.
+
+FTP(S), HTTP(S) and RHN(S) network support however will work fine, if you
+configure one or some of the following environment variables:
+
+----
+export https_proxy="http://proxy:8080"
+export http_proxy="http://proxy:8080"
+export ftp_proxy="http://proxy:8080"
+export no_proxy="localhost,depo,webserver"
+----
+
+lftp will understand these environment variables and use them. However you
+can always override the lftp-options yourself and provide your own
+configuration, as well as, make a custom configuration in /etc/lftp.conf
+or ~/.lftprc
+
+
+Depo configuration
+------------------
+If you prefer not to set them as environment variables or are using Depo
+in a cron-job (where these variables are not set by default), you can
+add the configuration to /etc/depo.conf:
+
+----
+[main]
+no_proxy = localhost,depo,webserver
+ftp_proxy = http://10.1.2.3:8080
+http_proxy = http://10.1.2.3:8080
+https_proxy = http://10.1.2.3:8080
+----
+
+Depending on what protocols you are using.
+
+
+Picky HTTP proxies
+------------------
+There have been reports of people who cannot use Depo using lftp on http
+sites using their corporate HTTP proxy. This has to do with the fact
+that these proxies have problems with the HEAD command on http:// or
+ftp:// URLs. You can work around that by defining the following in your
+/etc/depo.conf:
+
+	lftp-commands = set hftp:use-head 0
+
+For more information about this setting, or other settings. Please
+consult the lftp(1) manual page and look at the *Settings* section.
+
+
+Other problems ?
+----------------
+If you have specific requirements or can't make Depo work under certain
+circumstances, let me know. We can look at the use-case and see if it is
+worthwhile to make an exception (or bugfix) for your scenario.
+
+---
+Please send me improvements to this document.

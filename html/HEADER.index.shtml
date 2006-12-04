@@ -1,0 +1,6 @@
+<h1>Depo RPM Mirror on <!--#echo var="SERVER_NAME" --> (<!--#echo var="SERVER_ADDR" -->)</h1>
+
+The subdirectories below are created and managed by <b>Depo</b>. They contain
+RPM repositories for use with Smart, up2date, Apt and Yum, directories to
+allow for remote network installs, as well as ISO files for people to
+download and burn to disc.

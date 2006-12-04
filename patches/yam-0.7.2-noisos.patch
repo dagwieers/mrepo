@@ -1,0 +1,65 @@
+From: Inertia <technoyippie$gmail,com>
+
+Patch is something that was just bugging the hell out of me :)  It
+adds a 'cache' to the determination of a dists 'isos' so that it doesn't
+calculate the values every time.  I did this simply because it was
+bugging me that I would see the message 'no isos found' more than once
+during a run.  I also increased the verbosity necessary for that message
+to show up, but that's just my personal preference.
+
+--- ./yam.orig	2005-03-13 16:00:38.833252094 -0600
++++ ./yam	2005-03-13 16:00:47.771127013 -0600
+@@ -259,29 +259,31 @@
+ 
+ 	def isos(self):
+ 		"Return a list of existing ISO files"
+-		isos=[]
+-		if self.iso:
+-			for file in self.iso.split(' '):
+-				absfile = file
+-				if not os.path.isabs(file):
+-					absfile = os.path.join(cf.srcdir, self.nick, file)
+-				list = glob.glob(absfile)
+-				if not list:
+-					absfile = os.path.join(cf.srcdir, self.name, file)
++		if '_isos' not in dir(self):
++			isos=[]
++			if self.iso:
++				for file in self.iso.split(' '):
++					absfile = file
++					if not os.path.isabs(file):
++						absfile = os.path.join(cf.srcdir, self.nick, file)
+ 					list = glob.glob(absfile)
+-				if not list:
+-					absfile = os.path.join(cf.srcdir, 'iso', file)
+-					list = glob.glob(absfile)
+-				if not list:
+-					absfile = os.path.join(cf.srcdir, file)
+-					list = glob.glob(absfile)
+-				list.sort()
+-				for iso in list:
+-					if os.path.isfile(iso) and iso not in isos:
+-						isos.append(iso)
+-		if not isos:
+-			info(1, '%s: No ISO files found !' % self.nick)
+-		return isos
++					if not list:
++						absfile = os.path.join(cf.srcdir, self.name, file)
++						list = glob.glob(absfile)
++					if not list:
++						absfile = os.path.join(cf.srcdir, 'iso', file)
++						list = glob.glob(absfile)
++					if not list:
++						absfile = os.path.join(cf.srcdir, file)
++						list = glob.glob(absfile)
++					list.sort()
++					for iso in list:
++						if os.path.isfile(iso) and iso not in isos:
++							isos.append(iso)
++			if not isos:
++				info(4, '%s: No ISO files found !' % self.nick)
++			self._isos = isos
++		return self._isos
+ 
+ 	def mount(self):
+ 		"Loopback mount all ISOs"

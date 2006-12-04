@@ -1,0 +1,52 @@
+From: Inertia <technoyippie$gmail,com>
+
+Patch adds support for 'mount-options' and 'umount-options' in the
+'main' section as well as an example usage in the yam-example.conf.  As
+you can see, it defaults to the current behavior so users shouldn't
+notice any difference.  If you look at the example, you can guess as to
+what I am using it for: to set the SELinux security context on the
+mounted files so that apache will be allowed to serve them.
+
+--- ./yam-example.conf.orig	2004-12-30 17:36:54.000000000 -0600
++++ ./yam-example.conf	2005-03-13 13:30:48.580102897 -0600
+@@ -34,6 +34,9 @@
+ umountcmd = /bin/umount
+ yumarchcmd = /usr/bin/yum-arch
+ 
++mount-options = -o loop,context=user_u:object_r:httpd_sys_content_t
++umount-options =
++
+ ## What repository metadata do you want to generate ?
+ apt = yes
+ createrepo = yes
+--- ./yam.orig	2005-03-13 13:30:48.509112015 -0600
++++ ./yam	2005-03-13 13:31:16.807477340 -0600
+@@ -161,6 +161,10 @@
+ 		self.cmd['umount'] = self.getoption('main', 'umountcmd', '/bin/umount')
+ 		self.cmd['yumarch'] = self.getoption('main', 'yumarchcmd', '/usr/bin/yum-arch')
+ 
++		self.cmdopts = {}
++		self.cmdopts['mount'] = self.getoption('main', 'mount-options', '-o loop')
++		self.cmdopts['umount'] = self.getoption('main', 'umount-options', None)
++
+ 		self.lftpbwlimit = self.getoption('main', 'lftp-bandwidth-limit', None)
+ 		self.lftpcleanup = not self.getoption('main', 'lftp-cleanup', 'yes') in disable
+ 		self.lftpexcldebug = not self.getoption('main', 'lftp-exclude-debug', 'yes') in disable
+@@ -312,7 +316,7 @@
+ 				mkdir(mount)
+ 				if not os.path.ismount(mount):
+ 					info(2, '%s: Mount ISO %s to %s' % (self.nick, os.path.basename(iso), mount))
+-					run('%s -o loop %s %s' % (cf.cmd['mount'], iso, mount))
++					run('%s %s %s %s' % (cf.cmd['mount'], cf.cmdopts['mount'], iso, mount))
+ 		return discs
+ 	
+ 	def umount(self):
+@@ -328,7 +332,7 @@
+ 				die(5, 'umount command not %s' % cf.cmd['umount'])
+ 			if os.path.ismount(mount):
+ 				info(2, '%s: Unmount ISO %s from %s' % (self.nick, os.path.basename(iso), mount))
+-				run('%s %s' % (cf.cmd['umount'], mount))
++				run('%s %s %s' % (cf.cmd['umount'], cf.cmdopts['umount'], mount))
+ 
+ 	def apt(self):
+ 		"Create an Apt repository"

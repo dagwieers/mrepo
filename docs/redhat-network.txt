@@ -1,0 +1,307 @@
+Using RHN support in Depo
+=========================
+
+Requirements
+------------
+For RHN support to work, you need to install the up2date package
+that comes with your RHEL distribution. It may not work with
+another up2date package (eg. Fedora Core).
+
+
+RHN systemid creation
+---------------------
+For each distribution you want to add to Depo, you need to have a valid
+RHN systemid. You can create a systemid (provided you have the correct
+entitlements to do so) by using the gensystemid tool that comes with
+depo, eg.
+
+---
+gensystemid -r 4AS -a x86_64 /var/depo/rhel4as-x86_64
+----
+
+The tool will create a new system called <hostname>-4AS-x86_64-depo,
+register this system on RHN and create a systemid file in 
+/var/depo/rhel4as-x86_64
+
+
+RHN configuration
+-----------------
+Having done that, you can enable multiple channels for this systemid
+on the RHN website. And then configure depo to use these channels, eg.
+
+----
+[rhel4as]
+name = Red Hat Advanced Server $release U2 ($arch)
+release = 4
+arch = i386
+iso = RHEL4-U2-i386-AS-disc?.iso
+updates = rhns:///rhel-i386-as-4
+extras = rhns:///rhel-i386-as-4-extras
+hwcert = rhns:///rhel-i386-as-4-hwcert
+sdk = rhns:///rhel-i386-as-4-sdk
+rhaps = rhns:///rhel-4-as-i386-rhaps-2
+rhds = rhns:///rhel-4-as-i386-rhds-2.1
+----
+
+After that, depo should be able to successfully log on and download
+all packages for the configured channels.
+
+
+Creating systemids for different dists/archs
+--------------------------------------------
+Previously it was not possible to generate a new systemid for a
+dist/arch without installing a system, connecting it to the Internet
+and then register on RHN.
+
+A lot of companies simply do not allow servers to have internet access
+and I have personally been several times in the situation that I needed
+to download x86_64 or ppc packages for a system that I have entitlements
+for but is simply not allowed to connect to the Internet.
+
+The gensystemid tool that comes with Depo will help you with creating
+valid systemids for Depo, eg.
+
+----
+gensystemid -r 4AS -a x86_64 /var/depo/rhel4as-x86_64
+----
+
+You can manage your systems on the RHN website afterwards.
+
+WARNING: For yet unknown reasons, you have to be root to run gensystemid.
+
+
+Downloading from unsubscribed channels
+--------------------------------------
+You can let Depo subscribe to the necessary channels, unfortunately this
+requires your RHN username and password. You can provide these in
+the main section, like:
+
+----
+[main]
+rhnlogin = username:password
+----
+
+Or you can supply them to rhnget at the appropriate time. Unfortunately since
+rhnget is a seperate tool invoked by Depo, you may need to provide this
+information several times (every time you need to subscribe to a new channel).
+
+You can also choose to only provide the username in /etc/depo.conf and provide
+the password interactively.
+
+----
+[main]
+rhnlogin = username
+----
+
+Of course if you put the password in /etc/depo.conf, you need to protect it.
+You may want to do:
+
+----
+chmod og= /etc/depo.conf
+chown root.root /etc/depo.conf
+----
+
+Since you only need the username/password to subscribe to new channels
+(only the very first time you access them) you may wish to remove the
+login information from depo.conf after that.
+
+You can also log on manually to the RHN website to subscribe your system
+to the channels you require.
+
+
+Configuring up2date sources
+---------------------------
+If you encounter the following message:
+
+	Traceback (most recent call last):
+	  File "/usr/bin/depo", line 1364, in ?
+	    main()
+	  File "/usr/bin/depo", line 1247, in main
+	    mirror(dist.repos[repo], srcdir, dist)
+	  File "/usr/bin/depo", line 819, in mirror
+	    mirrorrhn(url, path, dist)
+	  File "/usr/bin/depo", line 1099, in mirrorrhn
+	    package_list, type = rpcServer.doCall(repos.listPackages, channel, None, None)
+	  File "/usr/share/rhn/up2date_client/rpcServer.py", line 316, in doCall
+	    ret = apply(method, args, kwargs)
+	  File "/usr/share/rhn/up2date_client/repoDirector.py", line 21, inlistPackages
+	    return self.handlers[channel['type']].listPackages(channel, msgCallback, progressCallback)
+	KeyError: 'up2date'
+
+you need to configure up2date by adding or enabling the following line in
+/etc/sysconfig/rhn/sources
+
+	up2date default
+
+Especially on a system that wasn't using RHN or on CentOS this is a manual
+change you have to make. Depo doesn't really care, but the up2date
+implementation it is using simply requires it.
+
+
+List of RHN channels
+--------------------
+For a complete and up-to-date list of available channels, check the RHN
+website. This list has been compiled with only EL2.1, EL3, EL4 and
+i386, x86_64 archs.
+
+	RHEL4
+		rhel-$arch-XX-4
+		rhel-$arch-XX-4-beta
+		rhel-$arch-XX-4-extras
+		rhel-$arch-XX-4-extras-beta
+		rhel-$arch-as-4-hwcert			(only for as)
+		rhel-$arch-XX-4-sdk
+		rhel-4-XX-$arch-rhaps-2
+		rhel-4-XX-$arch-rhaps-2-beta
+		rhel-4-XX-$arch-rhds-2.1
+		rhel-4-XX-$arch-rhds-2.1-beta
+
+
+	RHEL3
+		rhel-$arch-XX-3
+		rhel-$arch-XX-3-beta
+		rhel-$arch-XX-3-devsuite
+		rhel-$arch-XX-3-devsuite-beta
+		rhel-$arch-XX-3-extras
+		rhel-$arch-XX-3-extras-beta
+		rhel-$arch-as-3-hwcert			(only for as)
+		rhel-3-XX-i386-rhaps-1			(only for i386)
+		rhel-3-XX-$arch-rhaps-beta
+		rhel-3-XX-i386-rhds-2			(only for i386)
+
+	RHEL2.1
+		redhat-advanced-server-i386		(only for as)
+		redhat-ent-linux-i386-es-2.1		(only for es)
+		rhel-i386-XX-2.1-beta
+
+Where XX = as or es
+
+Please send updates on these.
+
+
+Ignore packages you already have elsewhere
+------------------------------------------
+This is possible, although hard to implement currently. I could check
+whether the file exists on one of the ISOs (or in the RPMS/ directory),
+but I prefer to implement this after a redesign.
+
+You can simply get the same effect with the following script, clean.sh:
+
+----
+#!/bin/bash
+
+dists=$*
+srcdir=/var/depo
+wwwdir=/var/www/depo
+
+if [ -z "$dists" ]; then
+        cd $srcdir
+        dists=rhel[2-4][aew]s-*
+        cd -
+fi
+
+for dist in $dists; do
+        echo "Cleaning up $dist"
+
+	### Remove dangling links
+	for link in $(find "$srcdir/$dist/updates" -type l); do
+		if [ ! -r "$(readlink $link)" ]; then
+			rm -f $link
+		fi
+	done
+
+	### Relink existing files
+        for rpm in $wwwdir/$dist/disc?/RedHat/RPMS/*.rpm; do
+                file="$(basename $rpm)"
+                dstfile="$srcdir/$dist/updates/$file"
+                ln -sf "$rpm" "$dstfile"
+        done
+done
+----
+
+Run this script when you download new RHEL ISO files and make these available
+in Depo, but before downloading any updates from RHN.
+
+----
+depo --umount
+### Download new ISO files
+### Change /etc/depo.conf to change the iso=
+depo -v
+./clean.sh
+depo -uvg
+----
+
+This will free up some space by symlinking duplicate RPM packages from the ISO
+files on top of the RPM packages on disk. As a side-effect it will also prevent
+the new updates from being downloaded.  You can also remove _all_ packages from
+the updates repository prior to doing this.
+
+
+rhn:// and rhns:// URL schemes
+------------------------------
+The default scheme for RHN is rhns:// (HTTPS), but it was reported that
+in some cases (related to proxies or firewalls) the HTTPS connections
+fail, so there is a need to allow for HTTP connections. You can specify
+this by using the rhn:// scheme instead of rhns://
+
+In this case, the authentication is not done using SSL either !
+
+
+Using Red Hat satellite servers
+-------------------------------
+You can override the hardcoded RHN server by specifying it in the URL.
+If it is not specified, Depo will assume a default value of
+xmlrpc.rhn.redhat.com
+
+So the following two lines are identical:
+
+	updates = rhns:///rhel-i386-as-4
+	updates = rhns://xmlrpc.rhn.redhat.com/rhel-i386-as-4
+
+And you can use a satellite server by doing:
+
+	updates = rhns://your.own.satellite/rhel-i386-as-4
+
+(Please let me know if this works or not !)
+
+
+Using a single systemid
+-----------------------
+You can experiment with using a single systemid for multiple dists
+using the rhnrelease option:
+ 
+----
+[rhel3as]
+rhnrelease = 3AS
+----
+
+This way you override the OS release that is in the systemid file.
+
+This works across the same entitlement. Eg. when you have an Advanced
+Server entitlement, you can download from 2.1AS, 3AS and 4AS channels.
+But not from the ES or WS channels and not from different architectures.
+
+
+RHN documentation and references
+--------------------------------
+A useful list of RHN references:
+
+	Red Hat: RHN XMLRPC API
+	https://rhn.redhat.com/rpc/api/errata/
+
+	kickstart-list: RHN XMLRPC API
+	https://www.redhat.com/archives/kickstart-list/2005-December/msg00021.html
+
+	RHbz 162210: [RFE] New up2date command-line options
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=162210
+
+	RHbz 179721: [RFE] No documentation for (RHN) up2date XMLRPC API methods
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=179721
+
+And how to configure Depo for RHN access:
+
+	Installing YAM 0.8.0 on Red Hat Enterprise Linux 4
+	http://wiki.garylaw.net/doku.php?id=technical:unix:linux:yam
+
+---
+Please send me improvements to this document.

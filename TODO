@@ -1,0 +1,125 @@
+### Disclaimer
+This is my TODO list. If you're interested in one of these features, there
+are 3 options. Either wait for someone to implement it, sponsor someone
+to implement it or implement it yourself.
+
+If you want to implement something, please contact me first so that we can
+discuss acceptable implementations. In some cases I haven't thought about
+it too deeply, but for others I know exactly what I require.
+
+If you have other nice ideas that you think would be an improvement, please
+contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
+
+
+### Back-end support
++ Add libcurl support and (optionally?) make it the default 
++ NFS support enable by default, using autofs (waiting for Serge Sterckx)
++ Add support for SRPM files (just put them into one directory /SRPMS)
++ Allow to symlink the whole ISO disc in order to replace package-lists
++ Check files that do not match the regexp and compare filename to rpm headers
++ Make rsync/lftp download requests from the same server into 1 request (hardlinks)
++ Use mirrorlist option from .repo files as a source (for http)
++ Autocreate yum .repo files and apt .list files to be used by local clients
++ Add support for other remote synchronising tools (sitecopy, wget)
++ Check for existence of packages on ISOs (updates vs os), especially for RHN downloads
+
+### Repository metadata
++ Create anaconda-style metadata for booting an updated installation
++ Complain when a required tool is not available
++ Add URPMI and Red Carpet support (help needed)
++ Add YaST/YOU support (both for mirroring as providing metadata, seems impossible ?)
+
+### Reporting utility
++ Logwatch configuration for Depo
++ Mail out new updates or removals per distribution and per repository
+
+### Configuration
++ Allow to specify rsync/lftp options on a per distribution basis (see ~/.lftp/rc)
++ Get rid of iso= and allow each repo to include ISOs (eg. file:///mnt/iso/*.iso)
+  This would be very useful to have a separate gfs, lacd, rhaps, rhds2 CD repo
++ Allow the following ISO definitions:
+
+	iso = http://mirror.centos.org/pub/centos/$release/isos/$arch/CentOS-$release-$arch-bin?of3.iso
+	iso = file:///mnt/iso/*.iso
+	iso = fedora/fc$release-$arch/FC-$release-$arch-disc?.iso"
+
++ Add more working distributions to /etc/depo.conf.d/
+
+### Usability
++ Create information about repository-updates in HEADER.shtml/README.shtml
++ Add selinux support
+
+### Web front-end (see repoview)
++ Improve SHTML output (more condensed and useful information)
++ New website should contain nice logo, menu and help
++ New website should contain also remote boot info, repo information and new RPMs
++ Allow to add external html generators (repoview, repojanitor)
+
+### Documentation
++ Add a depo and depo.conf manpage
++ Add a gensystemid and rhnget manpage
++ Add documentation on how to configure clients
++ Add integration/documentation with ISC dhcpd
++ Add documentation about chaining Depo servers
++ Comment the code more (pydoc strings)
++ ZeroConf support (or documentation)
++ Comply with PEP8: http://www.python.org/dev/peps/pep-0008/
+
+### Internal python
++ Improve the copy/symlink/rename functions, using exceptions
++ Mirroring code should be in a separate class
++ File-operations may need to go to a separate class, use shutil ? (needs python 2.3)
++ Improve the remove and symlink stage (combine the check of existing links with creating and removing)
+
+### Bugs
++ yum-arch stumbles on broken symlinks (https://devel.linux.duke.edu/bugzilla/show_bug.cgi?id=280)
++ Correct file permissions/ownerships of packages in /var/depo (add umask option)
++ Improve debugging output for pxelinux and /tftpboot/
+
+### RHNget tool / RHN support
++ Fix the 'cached' logininfo which causes old channel information to be present - Fixed when using unique systemids ?
++ Re-authenticate after X-RHN-Auth-Expire-Offset (3600sec) to prevent SSL handshake failures after timeout
++ Allow rhnget to create new systems (register) in RHN on demand (gensystemid functionality)
++ Handle channel subscription one way or the other
++ Reimplement using python xmlrpc instead of up2date
++ Allow to download packages based on a glob (--include, --exclude)
++ Add a --source option to allow for downloading source-packages
++ Implement better channel support (a way to use _all_ channels)
++ Allow for listing packages instead of downloading (--dry-run ?)
+
+### Depocfg tool / generate a configuration for clients (Chandan Dutta Chowdhury)
++ The tool should accept a URL as an argument
++ Should have a list (-l) option to list the different distributions
++ Should have a target (-t) option to specify the configuration output format (apt/yum/smart)
++ It scans the URL given and looks for know repository metadata
+
+### Depogen tool / repository metadata
++ Replaces genbasedir, createrepo and yum-arch
++ Creates rsyncable bzip2 and gzip data
++ Uses 1 cachedir for all generation
++ Writes out all repository metadata in 1 cycle
++ Complains when files are damaged or unsigned
++ Creates a directory checksum to check for changes
++ Allow to generate x revisions of older packages (default to 2)
++ Self-contained (1 single file) but usable as module
++ Works on python 2.2.3 (RHEL3)
++ Understands directory layout, ie.
+    if RPMS.repo is provided, use it as a base for all metadata
+    if repo is provided, create symlinks in dirname() for RPMS.repo
++ Also see: http://people.redhat.com/laroche/pyrpm/
+
+### Depomenu tool / remote installation
++ Create small curses tool to manage systems / MAC-addresses / profiles (kickstart)
++ Generate remote syslinux menu to boot any of the available dists
++ Look into providing bootsplash like SuSE
++ Generate a dnsmasq-depo.conf if dnsmasq is installed/running(?)
++ Add default kickstart integration (files/location)
++ Add default AutoYast integration (help needed)
++ Adapt to make Mandrake/SuSE work too (help needed)
++ Add CSM support
+
+### Depopxe tool
++ Generates necessary PXE config-files and allow for 3rd party boot-images
+
+### Depousb tool
++ Create a bootable USB stick and allow for 3rd party boot-images

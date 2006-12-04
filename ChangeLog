@@ -1,0 +1,226 @@
+* 0.8.3svn - ... - released 22/10/2006
+- Renamed Yam to Depo (Matthew Hannigan)
+- Fix a bug in the relpath() function when common part is not a path (Jason Kim)
+- Do not copy the comps.xml from the ISO when the target os-comps.xml exists (Jason Kim)
+- Fixed a problem when locking during a dry-run (David Lutterkort)
+- Improved a lot of dist configs
+- Added proxy support to rhnget (no need anymore to tweak /etc/sysconfig/rhn/up2date)
+- Remove obsolete RHN packages (rhnget-cleanup/--delete option)
+- Added mailfrom directive to overwrite the sender address for mail reports (Jason Kim)
+- Hardcoded xmlrpc.rhn.redhat.com in rhnget (Matt Hyclak)
+- Fixed a problem when symlink to an existing dangling symlink
+- Suppress backtrace and print Exception error within rhnget
+
+* 0.8.3 - Van Eyck - released 15/10/2006
+- Fixed a problem with specific python versions (Justin B Hochstetler)
+- Fixed the non-functional -r option
+- Apply -r option to repository generation as well
+- Fixed leftover repo name reference (Justin B Hochstetler)
+- Added disabled directive to make a distribution permanently inactive
+- Added logging updates to /var/log/yam
+- Output changes to repositories and when very verbose show packages
+- Added yam.logrotate for rotating the yam logfile
+- Mail out repository changes if mailto directive is set
+- Fixed a bug in Dist() refering to a not-yet-existing cf variable (Gareth Armstrong)
+- Fixed leftover dist name reference (Gareth Armstrong)
+- Make yam reusable by other python scripts (Oliver Falk)
+- Added alpha architecture (Oliver Falk)
+- Change some informational messages to error messages to improve output
+- Added --type directive to match repos by type (method)
+- Moved the RHN code out of Yam, created new rhnget tool
+- Fixed a problem that caused a directory where file:/// was used (Gareth Armstrong)
+
+* 0.8.2 - Finally fixed - released 19/09/2006
+- Use exec in conjunction with system()
+- Fixed permission on cron entry
+- Fixed a problem with samefile() and symlink() (Gareth Armstrong)
+- Added createrepo-options directive (Gareth Armstrong)
+- Added rhn-download-all directive to install all available updates from RHN
+- Removed repo 'local' as a special case, if you need it define it as 'local ='
+- Don't create the repo srcdir since it might be a symlink (Gareth Armstrong)
+- Create Repo class and moved repository-related functionality to this class
+- Fixed groupfile option of createrepo (Bowie Bailey)
+- Fix repoview creation
+
+* 0.8.1 - Long overdue - released 22/08/2006
+- Added gensystemid to installation (Ian Forde)
+- gensystemid now checks if the release and arch combo is RHN correct
+- Small file re-organisation to please distutils
+- Allow for architecture in section name (eg. [rhel4as-i386]) (Alexander Bergolth)
+- Skip metadata generation by default for repository 'all'
+- Write out apt release-files to facilitate apt-pinning (Alexander Bergolth)
+- Make use of os.system() instead of os.popen() (Alexander Bergolth)
+- Take advantage of mirror-command return codes (Alexander Bergolth)
+- Make use of Exception handling for mirror-commands
+- Added comps.xml handling for repositories (and handle the ISO case) (Gareth Armstrong, Jason Kim)
+- Handle arguments and deprecate the -d option
+- Fixed yam.spec to refer to config/*.conf (Matthew Hannigan)
+- Improved sha1sum to consider filesize changes as well
+- Renamed createrepo metadata to repomd metadata
+- Sort repositories by name
+- Improved README.proxy to detail the problem with cron jobs and http_proxy (Brendon Martino)
+- Fixed typo in documentation (basegendir -> genbasedir) (Marc Herbert)
+- Added default cronjob to package
+- Fixed a recent bug where dangling symlinks were not properly removed
+- Moved documentation (README.* to seperate doc/ directory)
+- Sort the distributions in the order provided on the commandline
+- Added default --update option to createrepo (updates instead of rebuilding a repository)
+- Simplified clean/symlink code
+- Consider for each repo packages in $(srcdir)/all/$(repo) (like repo local used to work)
+- Default metadata formats are now set to repomd and repoview
+- Reintroduced -r/--repo option to narrow down to a specific repository
+- Removed -x/--extras option as it is obsoleted by a combination of -u and -r
+- Sort the list of distributions yam processes
+- Added 'dist' and 'rpm' targets to Makefile (Matthew Hannigan)
+- Symlinks are now created as relative symlinks instead of absolute ones
+- Implemented variable substition as defined in section [variables] (Alexander Bergolth)
+- Fixed a cornercase where a dangling symlink was not removed prior to downloading using RHN
+- Prettify createrepo output
+- Fixed a bug with joining yam:// references (Henning Markussen)
+- Initial attempt to comply with PEP8
+- Improved debug output to understand where Yam is looking for ISO files (Frederik Kaputa)
+- Improved finding ISO files
+- Added locking support so that running multiple Yam instances is possible
+- Added /etc/yam.conf.d/ to allow configuration components to reside in seperate files
+- Added distribution template config files for RHEL, CentOS and FC
+- Make seperate createrepo cachedir for dist/repo (Craig Trader)
+- Added no_proxy, ftp_proxy, http_proxy and https_proxy configuration directives
+- Changed Yam cron job to reside in /etc/cron.d/yam to simplify and make more flexible
+
+* 0.8.0 - Meerenhof - released 09/03/2006
+- Allow to specify metadata per distribution (Jason Kim)
+- Get rid of apt, createrepo and yum options in [main], replaced by metadata option
+- Fixed description for EL4 and FC3 in httpd config file (Ian Forde)
+- Removed [repos] support
+- Changed regexp to .+[\._]i386.rpm$, allowing rpm apt cache (Franky Van Liedekerke)
+- Added repoindex option to create a repository index
+- Changed default rsync options from '-aHL' to '-rtHL' (David Zambonini)
+- Mount ISO images as read-only (David Zambonini)
+- Options lftpoptions and rsyncoptions now overwrite the defaults
+- Added architectures ppc64pseries and ppc64iseries to ppc (Tim Verhoeven)
+- Added lftp-mirror-options config option
+- Fixed a bug with the metadata config option (Alain Rykaert)
+- Added cachedir config option (used by createrepo as md5 cache)
+- Fixed a small bug in fetching updates
+- Added RHN support
+- Added RHN channel subscription support
+- Removed the -r option from the usage info (Gary Law)
+- Fixed RPM package uninstall script problem (Matthew Hannigan)
+- Fixed bug in lftp rate limiting (Matthew Hannigan)
+- Improved lftp debugging output when -vvvv
+- Added mirrordir support for ftp access
+- Added routines to check if a repository has been updated using a directory sha1sum
+- Added -f/--force to force metadata generation
+- Improved quiet and verbose output
+- Now use rhns:// scheme for SSL requests and rhn:// for normal HTTP requests
+- Renamed RPMS/ to RPMS.all/ to simplify yam code and generate repository for it
+- Added repoview index support as metadata
+- Added -n/--dry-run option for testing purposes
+- Added README.selinux (David Zambonini)
+- Added selinux context mount options when selinux is enforced
+- Adapted regexp to support SuSE ISOs better (Gareth Armstrong)
+- Changed regexp to .+[\._-]i386.rpm$, allowing improper RPM filenames (Gareth Armstrong)
+- Show untransferred files for RHN in -n/--dry-run mode (Alain Rykaert)
+
+* 0.7.3 - released 25/03/2005
+- Added ia64 support (Gareth Armstrong)
+- Use chkconfig to enable Yam in SPEC file (Bert de Bruijn)
+- Fixed a typo in the CentOS sample in yam-complex.conf (Doug Dionne)
+- Made a distinction between info messages and error messages
+- Fixed lftp method regarding use of '-I' and '-X' options (Ian Alexander)
+- Check for $(DESTDIR) macro in Makefile (Ian Alexander)
+- Added makefile, mount-options and noisos patches (Ian Alexander)
+- Added selinux configuration for Yam (David Hampton)
+- Fixed a bug that caused not all ISOs to be handled (Gavin Carr)
+
+* 0.7.2 - released 31/12/2004
+- Enabled createrepo support by default
+- Added support for hardlink++
+- Added example config for Yellow Dog 4 (Jarod Wilson)
+- Complain when no ISO files are found, but continue (Jeff Pitman)
+- Complain when no repo metadata tools are installed, but continue (Jarod Wilson)
+- Added $srcdir as a possible option in yam.conf, ie. file://$srcdir/$nick/ (Jeff Pitman)
+- Added lftp-options and rsync-options so people can fine-tune (David Dollar)
+- Recurse yam:// links more than 1 level deep (David Dollar)
+- Documentation fixes (Dries Verachtert)
+- VirtualHost now only uses hostname 'yam', please define on your network or disable it
+
+* 0.7.1 - released 07/11/2004
+- Number the ISOs in the order they are listed (globs are sorted)
+- Look for ISOs in resp. $srcdir/$nick, $srcdir/$dist, $srcdir/iso and $srcdir
+- Added -r or --remount option to simplify resetting mounts
+- Small bugfixes for lftp and rsync options (Greg Cope)
+- Added --partial to the default rsync options (Andreas Mueller)
+
+* 0.7 - released 10/10/2004
+- Added shareiso config option (enabled by default)
+- Allow empty (URL-less) repositories (useful for placeholder repositories)
+- Added support for hardlinking duplicate RPMs (disabled by default)
+- Added lftp-bandwidth-limit and lftp-cleanup config options
+- Added lftp-timeout and rsync-timeout config options
+- Look for commands in the PATH environment now, if default is wrong
+- Added lftp parallel mirroring for fish, ftp, http, https and sftp
+- Added support for yam:// URLs
+- Improved handling of ISOs that are mounted multiple times
+- Get rid of os.tempname()
+
+* 0.6.1 - released 27/08/2004
+- Removed a silly debug message :)
+- Fixed an unknown variable in Dist.taglink()
+- Fixed a bug in handling tags
+- Made [dist] the default tag
+- Fixed a bug in handling [repos]
+- Now each repo can hold a list of URLs (useful to list a local and a remote repo, or merge 2 repos)
+
+* 0.6 - released 25/08/2004
+- Fixed the default example httpd config file
+- Added a check to see if any metadata tools are installed
+- Smartly sort the available ISOs, still keep the preferred order
+- Added extra debugging information to --version
+- Run external commands much better and print on errors
+- Added examples of IP or hostname based restriction and HTTP authentication
+- Make use of os.path.join() and urlparse()
+- Fixed a bug that skipped metadata generation for os-packages from ISOs (reported by James Norris)
+- Intercept user input and exit when asked
+- Fix for mounting SuSE ISO images to CD? directories
+
+* 0.5 - released 19/08/2004
+- Skipped a 0.4 release to indicate this is an important update.
+- Rewrote most of the code to allow for smoother dist/arch configuration
+- Fixed rsync exclude problem (Bert de Bruijn)
+- Added more rsync options, to limit bandwidth and keep old packages
+- Option -d is much more useful now
+- file:/// support added
+- Better handling of external commands
+- Verbosity output improved (-v or -vv)
+
+* 0.4 - released 16/08/2004
+- Added noarch by default to all dists
+- Added i?86 to all x86_64 dists
+- Make i?86 the default (when omitted)
+- Directory restructured, /mnt/iso is now /var/yam, ISOs go into /var/yam/iso
+- Added createrepo (new-style Yum) support
+- Don't ignore dists when ISOs are not around
+- Added rsync-support
+- Disable most examples by default (since ISOs are no longer needed)
+- If no ISOs are found, try downloading os packages
+- Fixed /usr/lib problem on x86_64 (Dries Verachtert)
+- Added documentation about loop devices, see README.loop (Jeff Pitman)
+- Make Yam work on python <= 2.2.1 (Dhawal Doshy)
+- Improved symlinking code
+- Added example yam.conf
+- Split extras directory into separate local directory (see README.dirs)
+- Added 0 as special repotag (see README.naming)
+
+* 0.3 - released 21/05/2004
+- Remove dangling symlinks (crashes yum/apt)
+- Improved symlinking code
+- Add -g/--generate and --unmount options for more fine-grained commands
+- Added Yam httpd configuration for Apache
+- Added serverside HTML pages and file-descriptions
+- Added ISO-directory in repository
+- Added information to integrate with dnsmasq (on-going), see README.dnsmasq
+- Added SYSV script to automatically mount on boot and unmount on shutdown
+
+* 0.2 - released 14/05/2004
+- Initial public release

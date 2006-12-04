@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Init script for Depo distribution server.
+#
+# Written by Dag Wieers <dag@wieers.com>.
+#
+# chkconfig: 2345 90 10
+# description: Depo distribution server.
+#
+# processname: depo
+# config: /etc/depo.conf
+
+source /etc/rc.d/init.d/functions
+
+[ -x /usr/bin/depo ] || exit 1
+
+### Default variables
+SYSCONFIG="/etc/sysconfig/depo"
+YAMCONFIG="/etc/depo.conf"
+
+### Read configuration
+[ -r "$SYSCONFIG" ] && source "$SYSCONFIG"
+
+[ -r "$YAMCONFIG" ] || exit 1
+
+RETVAL=0
+prog="depo"
+desc="Depo Distribution Server"
+
+start() {
+	echo -n $"Starting $desc ($prog): "
+	depo -q -c $YAMCONFIG
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && success || failure
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Shutting down $desc ($prog): "
+	depo -q --umount -c $YAMCONFIG
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && success || failure
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  reload)
+	reload
+	;;
+  condrestart)
+	[ -e /var/lock/subsys/$prog ] && restart
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|condrestart}"
+	RETVAL=1
+esac
+
+exit $RETVAL
