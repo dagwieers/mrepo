@@ -1,4 +1,4 @@
-* 0.8.4svn - Sint-Jacobsplein - released 13/12/2006
+* 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
 - Fix a bug in the relpath() function when common part is not a path (Jason Kim)
 - Do not copy the comps.xml from the ISO when the target os-comps.xml exists (Jason Kim)
