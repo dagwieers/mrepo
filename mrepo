@@ -21,7 +21,7 @@ import time
 __version__ = "$Revision$"
 # $Source$
 
-VERSION = '0.8.3svn'
+VERSION = '0.8.4'
 
 archs = {
 	'alpha': ('alpha', 'alphaev5', 'alphaev56', 'alphaev6', 'alphaev67'),

@@ -33,7 +33,7 @@ rd = None
 __version__ = "$Revision: 4786 $"
 # $Source$
 
-VERSION = '0.8.3svn'
+VERSION = '0.8.4'
 
 ### Register rhn and rhns as a known schemes
 for scheme in ('rhn', 'rhns'):

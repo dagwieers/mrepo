@@ -31,7 +31,6 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 
 ### Reporting utility
 + Logwatch configuration for mrepo
-+ Mail out new updates or removals per distribution and per repository
 
 ### Configuration
 + Allow to specify rsync/lftp options on a per distribution basis (see ~/.lftp/rc)
@@ -76,15 +75,14 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 + Correct file permissions/ownerships of packages in /var/mrepo (add umask option)
 + Improve debugging output for pxelinux and /tftpboot/
 
-### RHNget tool / RHN support
+### rhnget tool / RHN support
 + Fix the 'cached' logininfo which causes old channel information to be present - Fixed when using unique systemids ?
 + Re-authenticate after X-RHN-Auth-Expire-Offset (3600sec) to prevent SSL handshake failures after timeout
 + Allow rhnget to create new systems (register) in RHN on demand (gensystemid functionality)
-+ Handle channel subscription one way or the other
 + Reimplement using python xmlrpc instead of up2date
 + Allow to download packages based on a glob (--include, --exclude)
 + Add a --source option to allow for downloading source-packages
-+ Implement better channel support (a way to use _all_ channels)
++ Implement better channel support (a way to use _all_ available channels)
 + Allow for listing packages instead of downloading (--dry-run ?)
 
 ### mrepocfg tool / generate a configuration for clients (Chandan Dutta Chowdhury)
