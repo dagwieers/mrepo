@@ -4,7 +4,7 @@
 
 Summary: Tool to set up a Yum/Apt mirror from various sources (ISO, RHN, rsync, http, ftp, ...)
 Name: mrepo
-Version: 0.8.4
+Version: 0.8.4svn
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -109,8 +109,12 @@ fi
 %{_localstatedir}/mrepo/
 
 %changelog
+* Sat Dec 30 2006 Dag Wieers <dag@wieers.com> - 0.8.4svn-1
+- Updated to release 0.8.4svn.
+
 * Wed Dec 13 2006 Dag Wieers <dag@wieers.com> - 0.8.4-1
 - Updated to release 0.8.4.
+- Package renamed from yam to mrepo.
 
 * Sun Oct 15 2006 Dag Wieers <dag@wieers.com> - 0.8.3-1
 - Updated to release 0.8.3.

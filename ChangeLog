@@ -1,3 +1,6 @@
+* 0.8.4svn - ... - released 30/12/2006
+- Fixed a few typos (Ian Forde)
+
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
 - Fix a bug in the relpath() function when common part is not a path (Jason Kim)

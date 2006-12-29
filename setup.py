@@ -31,7 +31,7 @@ except ImportError:
 
 setup(
 	name = 'mrepo',
-	version = '0.8.4',
+	version = '0.8.4svn',
 	description = 'RPM repository mirroring tool',
 	author = 'Dag Wieers',
 	author_email ='dag@wieers.com',
@@ -46,7 +46,7 @@ setup(
 		('/var/mrepo/all/local', []),
 		('/usr/share/mrepo/html', ['html/HEADER.index.shtml', 'html/HEADER.repo.shtml', 'html/README.index.shtml', 'html/README.repo.shtml']),
 	],
-	download_url = 'http://dag.wieers.com/home-made/mrepo/mrepo-0.8.4.tar.gz',
+	download_url = 'http://dag.wieers.com/home-made/mrepo/mrepo-0.8.4svn.tar.gz',
 	license = 'GPL',
 	platforms = 'Posix',
 	classifiers = [
