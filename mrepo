@@ -275,15 +275,18 @@ class Config:
 					dist = Dist(distname, arch, self)
 					dist.arch = arch
 					dist.metadata = self.metadata.split()
+					dist.promoteepoch = True
 					for option in self.cfg.options(section):
 						if option in ('iso', 'name', 'release', 'repo', 'rhnrelease'):
 							setattr(dist, option, self.cfg.get(section, option))
 						elif option in ('arch', 'dist'):
 							pass
 						elif option in ('disabled',):
-							dist.enabled = setattr(dist, option, self.cfg.get(section, option)) not in disable
+							dist.enabled = self.cfg.get(section, option) not in disable
 						elif option in ('metadata',):
 							setattr(dist, option, self.cfg.get(section, option).split())
+						elif option in ('promoteepoch',):
+							dist.promoteepoch = self.cfg.get(section, option) not in disable
 						else:
 							dist.repos.append(Repo(option, self.cfg.get(section, option), dist, self))
 
@@ -697,6 +700,8 @@ class Repo:
 			opts = ' --quiet' + opts
 		elif op.verbose >= 4:
 			opts = ' -v' + opts
+		if not self.dist.promoteepoch:
+			opts = opts + ' -n'
 		if os.path.isdir(self.wwwdir):
 			repoopts = opts
 			if cf.cachedir:
