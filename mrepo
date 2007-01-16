@@ -284,7 +284,7 @@ class Config:
 						elif option in ('arch', 'dist'):
 							pass
 						elif option in ('disabled',):
-							dist.enabled = self.cfg.get(section, option) not in disable
+							dist.enabled = self.cfg.get(section, option) in disable
 						elif option in ('metadata',):
 							setattr(dist, option, self.cfg.get(section, option).split())
 						elif option in ('promoteepoch',):
