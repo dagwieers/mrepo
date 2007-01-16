@@ -275,6 +275,7 @@ class Config:
 					dist = Dist(distname, arch, self)
 					dist.arch = arch
 					dist.metadata = self.metadata.split()
+					dist.enabled = True
 					dist.promoteepoch = True
 					for option in self.cfg.options(section):
 						if option in ('iso', 'name', 'release', 'repo', 'rhnrelease'):
@@ -295,7 +296,7 @@ class Config:
 
 					self.alldists.append(dist)
 
-					if not dist.disabled:
+					if dist.enabled:
 						self.dists.append(dist)
 					else:
 						info(5, '%s: %s is disabled' % (dist.nick, dist.name))
