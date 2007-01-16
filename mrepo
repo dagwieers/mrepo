@@ -168,6 +168,8 @@ class Config:
 		self.arch = self.getoption('main', 'arch', 'i386')
 		self.metadata = self.getoption('main', 'metadata', 'repomd repoview')
 
+		self.shareiso = self.getoption('main', 'shareiso', 'yes') not in disable
+
 		self.quiet = self.getoption('main', 'quiet', 'no') not in disable
 		if op.verbose == 1 and self.quiet:
 			op.verbose = 0
@@ -187,16 +189,13 @@ class Config:
 		self.cmd['lftp'] = self.getoption('main', 'lftpcmd', '/usr/bin/lftp')
 		self.cmd['mirrordir'] = self.getoption('main', 'mirrordircmd', '/usr/bin/mirrordir')
 		self.cmd['mount'] = self.getoption('main', 'mountcmd', '/bin/mount')
-		self.cmd['repoview'] = self.getoption('main', 'repoview', '/usr/bin/repoview')
-		self.cmd['rhnget'] = self.getoption('main', 'rhnget', '/usr/bin/rhnget')
+		self.cmd['repoview'] = self.getoption('main', 'repoviewcmd', '/usr/bin/repoview')
+		self.cmd['rhnget'] = self.getoption('main', 'rhngetcmd', '/usr/bin/rhnget')
 		self.cmd['rsync'] = self.getoption('main', 'rsynccmd', '/usr/bin/rsync')
 		self.cmd['umount'] = self.getoption('main', 'umountcmd', '/bin/umount')
 		self.cmd['yumarch'] = self.getoption('main', 'yumarchcmd', '/usr/bin/yum-arch')
 
-		self.mirrordircleanup = self.getoption('main', 'mirrordir-cleanup', 'yes') not in disable
-		self.mirrordirexcldebug = self.getoption('main', 'mirrordir-exclude-debug', 'yes') not in disable
-		self.mirrordirexclsrpm = self.getoption('main', 'mirrordir-exclude-srpm', 'yes') not in disable
-		self.mirrordiroptions = self.getoption('main', 'mirrordir-options', '')
+		self.createrepooptions = self.getoption('main', 'createrepo-options', '-p')
 
 		self.lftpbwlimit = self.getoption('main', 'lftp-bandwidth-limit', None)
 		self.lftpcleanup = self.getoption('main', 'lftp-cleanup', 'yes') not in disable
@@ -206,6 +205,11 @@ class Config:
 		self.lftpcommands = self.getoption('main', 'lftp-commands', '')
 		self.lftpmirroroptions = self.getoption('main', 'lftp-mirror-options', '-c -P')
 		self.lftptimeout = self.getoption('main', 'lftp-timeout', None)
+
+		self.mirrordircleanup = self.getoption('main', 'mirrordir-cleanup', 'yes') not in disable
+		self.mirrordirexcldebug = self.getoption('main', 'mirrordir-exclude-debug', 'yes') not in disable
+		self.mirrordirexclsrpm = self.getoption('main', 'mirrordir-exclude-srpm', 'yes') not in disable
+		self.mirrordiroptions = self.getoption('main', 'mirrordir-options', '')
 
 		self.rhnlogin = self.getoption('main', 'rhnlogin', None)
 		self.rhngetoptions = self.getoption('main', 'rhnget-options', '')
@@ -219,10 +223,7 @@ class Config:
 		self.rsyncoptions = self.getoption('main', 'rsync-options', '-rtHL --partial')
 		self.rsynctimeout = self.getoption('main', 'rsync-timeout', None)
 
-		self.createrepooptions = self.getoption('main', 'createrepo-options', '-p')
 		self.repoviewoptions = self.getoption('main', 'repoview-options', '')
-
-		self.shareiso = self.getoption('main', 'shareiso', 'yes') not in disable
 
 		self.alldists = []
 		self.dists = []
@@ -1114,7 +1115,7 @@ def mirrorlftp(url, path):
 	mkdir(path)
 
 	cmds = cf.lftpcommands + ';'
-#	cmds = 'set dns:fatal-timeout 5;'
+#	cmds = 'set dns:fatal-timeout 5'
 	if cf.lftptimeout:
 		cmds = cmds + ' set net:timeout %s;' % cf.lftptimeout
 	if cf.lftpbwlimit:

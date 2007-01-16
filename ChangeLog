@@ -2,6 +2,7 @@
 - Fixed a few typos (Ian Forde)
 - Added promoteepoch directive to disable it for older distributions (rhel2.1, rh7.3)
 - Fixed a problem with the disabled directive (disabled = no was ignored)
+- Cleaned up mrepo-example.conf (Gareth Armstrong)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
