@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, getopt, getpass
+import os, sys, getopt, getpass, urlpass
 
 sys.path.insert(0, "/usr/share/rhn/")
 sys.path.insert(1,"/usr/share/rhn/up2date_client")
@@ -189,6 +189,23 @@ def main():
 		cfg['logFile'] = '/var/log/up2date'
 	else:
 		cfg['logFile'] = os.path.expanduser('~/up2date.log')
+
+	### Get proxy information from environment and set up2date config accordingly
+	proxy = None
+	if os.environ.has_key('http_proxy'):
+		t, proxy, t, t, t, t = urlparse.urlparse(os.environ['http_proxy'])
+	elif os.environ.has_key('https_proxy'):
+		t, proxy, t, t, t, t = urlparse.urlparse(os.environ['https_proxy'])
+	if proxy:
+		cfg['enableProxy'] = 1
+		cfg['httpProxy'] = proxy
+		info(4, 'Setting proxy to %s' % proxy)
+		### FIXME: Implement proxy authentication
+#		if proxy.username and proxy.password:
+#			cfg['enableProxyAuth'] = 1
+#			cfg['proxyPassword'] = proxy.password
+#			cfg['proxyUser='] = proxy.username
+
 
 	if op.verbose >= 5:
 		cfg['debug'] = 10000
