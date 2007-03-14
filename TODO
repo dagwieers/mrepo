@@ -80,10 +80,8 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 + Re-authenticate after X-RHN-Auth-Expire-Offset (3600sec) to prevent SSL handshake failures after timeout
 + Allow rhnget to create new systems (register) in RHN on demand (gensystemid functionality)
 + Reimplement using python xmlrpc instead of up2date
-+ Allow to download packages based on a glob (--include, --exclude)
 + Add a --source option to allow for downloading source-packages
 + Implement better channel support (a way to use _all_ available channels)
-+ Allow for listing packages instead of downloading (--dry-run ?)
 
 ### mrepocfg tool / generate a configuration for clients (Chandan Dutta Chowdhury)
 + The tool should accept a URL as an argument

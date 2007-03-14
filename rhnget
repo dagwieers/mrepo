@@ -15,7 +15,7 @@
 ### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
 
 import os, sys, shutil, getopt, ConfigParser, urlparse, types
-import signal, xmlrpclib, getpass, glob
+import signal, xmlrpclib, getpass, glob, fnmatch
 
 if os.path.exists('/usr/share/rhn/') and os.path.exists('/usr/share/rhn/up2date_client/'):
 	sys.path.insert(0, '/usr/share/rhn/')
@@ -42,11 +42,12 @@ for scheme in ('rhn', 'rhns'):
 
 class Options:
 	def __init__(self, args):
+		self.cleanup = False
+		self.downloadall = False
 		self.dryrun = False
+		self.filter = None
+		self.list = None
 		self.quiet = False
-		self.rhngetcleanup = False
-		self.rhngetdownloadall = False
-		self.rhngetsource = False
 		self.rhnpassword = None
 		self.rhnrelease = None
 		self.rhnusername = None
@@ -54,23 +55,29 @@ class Options:
 		self.verbose = 1
 
 		try:
-			opts, args = getopt.getopt (args, 'hnqp:r:s:u:v',
-				('delete', 'download-all', 'dryrun', 'help', 'password=', 'quiet',
-				 'release=', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
+			opts, args = getopt.getopt (args, 'hlnqp:r:s:u:v',
+				('delete', 'download-all', 'dryrun', 'filter=', 'help', 'list', 'password=', 'quiet',
+				 'release=', 'systemid=', 'username=', 'verbose', 'version' ))
 		except getopt.error, exc:
 			print 'rhnget: %s, try rhnget -h for a list of all the options' % str(exc)
 			sys.exit(1)
 
 		for opt, arg in opts:
 			if opt in ('--delete', ):
-				self.rhngetcleanup = True
+				self.cleanup = True
 			elif opt in ('--download-all', ):
-				self.rhngetdownloadall = True
+				self.downloadall = True
+			elif opt in ('--filter', ):
+				self.filter = arg
+				self.downloadall = True
 			elif opt in ('-h', '--help'):
 				self.usage()
 				print
 				self.help()
 				sys.exit(0)
+			elif opt in ('-l', '--list'):
+				self.list = True
+				self.downloadall = True
 			elif opt in ('-n', '--dry-run'):
 				self.dryrun = True
 			elif opt in ['-p', '--password']:
@@ -79,8 +86,6 @@ class Options:
 				self.quiet = True
 			elif opt in ('-r', '--release'):
 				self.rhnrelease = arg
-			elif opt in ('--source', ):
-				self.rhngetsource = True
 			elif opt in ('-s', '--systemid'):
 				self.systemid = os.path.abspath(arg)
 			elif opt in ['-u', '--username']:
@@ -91,14 +96,18 @@ class Options:
 				self.version()
 				sys.exit(0)
 
-		if len(args) < 2:
+		if len(args) < 1:
 			self.usage()
 			print
 			self.help()
 			sys.exit(1)
 
 		self.uri = args[0]
-		self.destination = args[1]
+
+		if len(args) == 2:
+			self.destination = args[1]
+		else:
+			self.destination = os.getcwd()
 
 		if self.quiet:
 			self.verbose = 0
@@ -124,6 +133,8 @@ class Options:
 rhnget options:
       --delete            delete files that are not on the sender side
       --download-all      download all package versions available
+      --filter            filter packages based on regexp
+  -l, --list              list the available packages
   -n, --dry-run           show what would have been done
   -q, --quiet             minimal output
   -r, --release=release   specify the RHN release (if different from the systemid)
@@ -373,8 +384,9 @@ def mirrorrhn(url, path):
 	except up2dateErrors.ServerCapabilityError, e:
 		raise(MirrorException('Problem negotiating capabilities for channel %s.\n%s' % (label, e)))
 		return
+
 	try:
-		if op.rhngetdownloadall == True:
+		if op.downloadall == True:
 			package_list, type = rpcServer.doCall(repos.listAllPackages, channel, None, None)
 		else:
 			package_list, type = rpcServer.doCall(repos.listPackages, channel, None, None)
@@ -394,6 +406,16 @@ def mirrorrhn(url, path):
 		### FIXME: Check if not already on ISO-file or repository as well
 		filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
 
+		### Filter packagelist
+		if op.filter and not fnmatch.fnmatch(filename, op.filter):
+			info(4, 'Packages %s excluded by filter' % filename)
+			continue
+
+		### List only files if requested
+		if op.list:
+			info(0, filename)
+			continue
+
 		### If file (or symlink target) exists
 		if os.path.isfile(os.path.join(path, filename)):
 			stat = os.stat(os.path.join(path, filename))
@@ -411,6 +433,7 @@ def mirrorrhn(url, path):
 		if op.dryrun:
 			info(1, 'Not downloading package %s' % filename)
 			continue
+
 		try:
 			if op.verbose <= 1:
 				rpcServer.doCall(repos.getPackage, pkg, None, None)
@@ -424,7 +447,7 @@ def mirrorrhn(url, path):
 			error(0, 'CommunicationError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
 
 	### Remove packages on the receiver side that are not on the sender side
-	if op.rhngetcleanup:
+	if op.cleanup:
 
 		### Collect receiver side
 		receiver = Set()

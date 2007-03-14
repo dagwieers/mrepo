@@ -4,6 +4,7 @@
 - Fixed a problem with the disabled directive (disabled = no was ignored)
 - Cleaned up mrepo-example.conf (Gareth Armstrong)
 - gensystemid now uses proxy environment variables
+- rhnget can now --list and --filter packages (useful for searching/downloading)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
