@@ -5,6 +5,8 @@
 - Cleaned up mrepo-example.conf (Gareth Armstrong)
 - gensystemid now uses proxy environment variables
 - rhnget can now --list and --filter packages (useful for searching/downloading)
+- Added 5Server and 5Client products to gensystemid (Oliver Falk)
+- Added rhel5s.conf and rhel5c.conf (Oliver Falk)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
