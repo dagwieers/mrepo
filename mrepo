@@ -1161,8 +1161,13 @@ def mirrorfile(url, path):
 def mirrormrepo(url, path):
 	"Mirror everything from a local mrepo mirror by symlinking"
 	pathname = url.replace('mrepo://', '')
-	basename = os.path.basename(url)
-	symlink(os.path.join(cf.srcdir, pathname), os.path.join(path, basename))
+	while pathname.endswith('/'):
+		pathname = pathname[0:-1]
+	while path.endswith('/'):
+		path = pathname[0:-1]
+	symlink(os.path.join(cf.srcdir, pathname), path)
+#	basename = os.path.basename(pathname)
+#	symlink(os.path.join(cf.srcdir, pathname), os.path.join(path, basename))
 
 def mirrorrhnget(url, path, dist):
 	"Mirror everything from a rhn:// or rhns:// URL"
