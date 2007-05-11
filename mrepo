@@ -28,7 +28,7 @@ archs = {
 	'i386': ('i386', 'i486', 'i586', 'i686', 'athlon'),
 	'ia64': ('i386', 'i686', 'ia64'),
 	'ppc': ('ppc', 'ppc64', 'ppc64pseries', 'ppc64iseries'),
-	'x86_64': ('i386', 'i486', 'i586', 'i686', 'athlon', 'x86_64'),
+	'x86_64': ('i386', 'i486', 'i586', 'i686', 'athlon', 'x86_64', 'amd64'),
 	's390': ('s390', ),
 	's390x': ('s390x', ),
 }
@@ -754,7 +754,7 @@ class Repo:
 
 		### Write out /srcdir/nick/base/release
 		releasefile = os.path.join(self.dist.dir, 'base', 'release')
-		if not os.path.exists(releasefile):
+		if op.force or not os.path.exists(releasefile):
 			open(releasefile, 'w').write(
 				'Origin: %s\n'\
 				'Label: %s\n'\
@@ -769,7 +769,7 @@ class Repo:
 
 		### Write out /srcdir/nick/base/release.repo
 		releasefile = os.path.join(self.dist.dir, 'base', 'release.'+ self.name)
-		if not os.path.exists(releasefile):
+		if op.force or not os.path.exists(releasefile):
 			open(releasefile, 'w').write(
 				'Archive: %s\n'\
 				'Component: %s\n'\

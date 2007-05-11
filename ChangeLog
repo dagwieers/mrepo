@@ -7,6 +7,8 @@
 - rhnget can now --list and --filter packages (useful for searching/downloading)
 - Added 5Server and 5Client products to gensystemid (Oliver Falk)
 - Added rhel5s.conf and rhel5c.conf (Oliver Falk)
+- Added amd64 as alias for x86_64 to accomodate Sun's Java packages (Tom G. Christensen)
+- Option -f/--force now rewrites apt release files (Tom G. Christensen)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
