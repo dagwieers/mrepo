@@ -25,40 +25,40 @@ sys.exit(1)
 #ez_setup.use_setuptools()
 
 try:
-	from setuptools import setup
+    from setuptools import setup
 except ImportError:
-	from distutils.core import setup
+    from distutils.core import setup
 
 setup(
-	name = 'mrepo',
-	version = '0.8.4svn',
-	description = 'RPM repository mirroring tool',
-	author = 'Dag Wieers',
-	author_email ='dag@wieers.com',
-	url = "http://dag.wieers.com/home-made/mrepo/",
-	scripts=['mrepo', 'gensystemid'],
-	data_files=[
-		('/etc', ['config/mrepo.conf']),
-		('/etc/init.d', ['config/mrepo']),
-		('/etc/httpd/conf.d', ['config/httpd/mrepo.conf']),
-		('/var/cache/mrepo', []),
-		('/var/www/mrepo', []),
-		('/var/mrepo/all/local', []),
-		('/usr/share/mrepo/html', ['html/HEADER.index.shtml', 'html/HEADER.repo.shtml', 'html/README.index.shtml', 'html/README.repo.shtml']),
-	],
-	download_url = 'http://dag.wieers.com/home-made/mrepo/mrepo-0.8.4svn.tar.gz',
-	license = 'GPL',
-	platforms = 'Posix',
-	classifiers = [
-		'Internet :: WWW/HTTP :: Site Management',
-		'System :: Archiving :: Mirroring',
-		'System :: Archiving :: Packaging',
-		'System :: Installation/Setup',
-		'System :: Software Distribution',
-		'System :: Software Distribution Tools',
-		'System :: Systems Administration',
-	],
-	long_description = '''
+    name = 'mrepo',
+    version = '0.8.4svn',
+    description = 'RPM repository mirroring tool',
+    author = 'Dag Wieers',
+    author_email ='dag@wieers.com',
+    url = "http://dag.wieers.com/home-made/mrepo/",
+    scripts=['mrepo', 'gensystemid'],
+    data_files=[
+        ('/etc', ['config/mrepo.conf']),
+        ('/etc/init.d', ['config/mrepo']),
+        ('/etc/httpd/conf.d', ['config/httpd/mrepo.conf']),
+        ('/var/cache/mrepo', []),
+        ('/var/www/mrepo', []),
+        ('/var/mrepo/all/local', []),
+        ('/usr/share/mrepo/html', ['html/HEADER.index.shtml', 'html/HEADER.repo.shtml', 'html/README.index.shtml', 'html/README.repo.shtml']),
+    ],
+    download_url = 'http://dag.wieers.com/home-made/mrepo/mrepo-0.8.4svn.tar.gz',
+    license = 'GPL',
+    platforms = 'Posix',
+    classifiers = [
+        'Internet :: WWW/HTTP :: Site Management',
+        'System :: Archiving :: Mirroring',
+        'System :: Archiving :: Packaging',
+        'System :: Installation/Setup',
+        'System :: Software Distribution',
+        'System :: Software Distribution Tools',
+        'System :: Systems Administration',
+    ],
+    long_description = '''
 mrepo builds a local APT/Yum RPM repository from local ISO files, downloaded
 updates, and extra packages from RHN (Red Hat Network) and 3rd party
 repositories. It takes care of setting up the ISO files, downloading the
@@ -70,7 +70,7 @@ distributions from a laptop without the need for CD media or floppies, but
 is equally suitable for an organization's centralized update server.
 
 Depending on the use it may require:
-	apt, up2date, yum, createrepo, repoview, hardlink and/or hardlink++
+    apt, up2date, yum, createrepo, repoview, hardlink and/or hardlink++
 ''',
 )
 
