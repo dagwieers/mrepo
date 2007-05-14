@@ -695,6 +695,25 @@ class Repo:
         "Create a repomd repository"
         if not cf.cmd['createrepo']:
             raise mrepoGenerateException('Command createrepo is not found. Skipping.')
+
+        ### Find the createrepo version we are using (due to groupfile usage changes)
+        createrepo_version = None
+        groupfilename = 'RPMS.%s/comps.xml' % self.name
+        try:
+            sys.path.append("/usr/share/createrepo")
+            import genpkgmetadata
+            createrepo_version = genpkgmetadata.__version__
+            sys.path.remove("/usr/share/createrepo")
+            del genpkgmetadata
+        except:
+            pass
+
+        ### If version < 0.4.6, then use the old createrepo behaviour
+        if not createrepo_version:
+            error(0, '%s: Version of createrepo could not be found. Assuming newer than 0.4.6.' % self.dist.nick)
+        elif vercmp(createrepo_version, '0.4.6') < 0:
+            groupfilename = 'comps.xml'
+
         opts = ' ' + cf.createrepooptions
         if op.force:
             opts = ' --pretty'
@@ -715,7 +734,7 @@ class Repo:
             groupfile = os.path.join(cf.srcdir, self.dist.nick, self.name + '-comps.xml')
             if os.path.isfile(groupfile):
                 symlink(groupfile, os.path.join(self.wwwdir, 'comps.xml'))
-                repoopts = repoopts + ' --groupfile "RPMS.%s/comps.xml"' % self.name
+                repoopts = repoopts + ' --groupfile "%s"' % groupfilename
             info(2, '%s: Create repomd repository for %s' % (self.dist.nick, self.name))
             ret = run('%s %s %s' % (cf.cmd['createrepo'], repoopts, self.wwwdir))
             if ret:
@@ -754,7 +773,7 @@ class Repo:
 
         ### Write out /srcdir/nick/base/release
         releasefile = os.path.join(self.dist.dir, 'base', 'release')
-        if op.force or not os.path.exists(releasefile):
+        if not os.path.exists(releasefile):
             open(releasefile, 'w').write(
                 'Origin: %s\n'\
                 'Label: %s\n'\
@@ -769,7 +788,7 @@ class Repo:
 
         ### Write out /srcdir/nick/base/release.repo
         releasefile = os.path.join(self.dist.dir, 'base', 'release.'+ self.name)
-        if op.force or not os.path.exists(releasefile):
+        if not os.path.exists(releasefile):
             open(releasefile, 'w').write(
                 'Archive: %s\n'\
                 'Component: %s\n'\
@@ -938,6 +957,17 @@ def distsort(a, b):
             
 def reposort(a, b):
     return cmp(a.name, b.name)
+
+def vercmp(a, b):
+    al = a.split('.')
+    bl = b.split('.')
+    minlen = min(len(al), len(bl))
+    for i in range(1, minlen):
+        if cmp(al[i], bl[i]) < 0:
+            return -1
+        elif cmp(al[i], bl[i]) > 0:
+            return 1
+    return 0
 
 def symlinkglob(str, *targets):
     "Symlink files to multiple targets"

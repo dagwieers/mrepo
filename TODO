@@ -28,6 +28,7 @@ contact me as well. :) Send an email to: Dag Wieers <dag@wieers.com>
 + Complain when a required tool is not available
 + Add URPMI and Red Carpet support (help needed)
 + Add YaST/YOU support (both for mirroring as providing metadata, seems impossible ?)
++ Update Apt release info transparantly when mrepo config changes (Tom G. Christensen)
 
 ### Reporting utility
 + Logwatch configuration for mrepo
