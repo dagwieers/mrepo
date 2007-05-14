@@ -967,7 +967,7 @@ def vercmp(a, b):
             return -1
         elif cmp(al[i], bl[i]) > 0:
             return 1
-    return 0
+    return cmp(len(al), len(bl))
 
 def symlinkglob(str, *targets):
     "Symlink files to multiple targets"
