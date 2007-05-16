@@ -1014,15 +1014,15 @@ def symlink(src, dst):
         if os.path.samefile(src, dst):
             return
         os.rename(dst, dst+'.mrepobak')
+
 ### Not using filecmp increases speed with 15%
 #   if os.path.isfile(dst) and filecmp.cmp(src, dst) == 0:
 
     src = relpath(src, dst)
 
-    ### FIXME: This check should not be required
-    if not os.path.exists(dst):
+    if not os.path.isdir(os.path.dirname(dst)):
         mkdir(os.path.dirname(dst))
-        os.symlink(src, dst)
+    os.symlink(src, dst)
 
 def copy(src, dst):
     "Copy a file, force if dst exists"

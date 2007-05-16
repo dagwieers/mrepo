@@ -9,6 +9,7 @@
 - Added rhel5s.conf and rhel5c.conf (Oliver Falk)
 - Added amd64 as alias for x86_64 to accomodate Sun's Java packages (Tom G. Christensen)
 - Check whether version of createrepo is older than 0.4.6 (Francois Aucamp)
+- Check for directory when creating before symlinking into it (Bruno Cornec)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
