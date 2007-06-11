@@ -12,7 +12,7 @@
 ### You should have received a copy of the GNU Library General Public License
 ### along with this program; if not, write to the Free Software
 ### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
+### Copyright 2004-2007 Dag Wieers <dag@wieers.com>
 
 import os, sys, glob, re, shutil, getopt, popen2
 import ConfigParser, urlparse, sha, types, traceback
@@ -28,7 +28,7 @@ archs = {
     'i386': ('i386', 'i486', 'i586', 'i686', 'athlon'),
     'ia64': ('i386', 'i686', 'ia64'),
     'ppc': ('ppc', 'ppc64', 'ppc64pseries', 'ppc64iseries'),
-    'x86_64': ('i386', 'i486', 'i586', 'i686', 'athlon', 'x86_64', 'amd64'),
+    'x86_64': ('i386', 'i486', 'i586', 'i686', 'athlon', 'x86_64', 'amd64', 'ia32e'),
     's390': ('s390', ),
     's390x': ('s390x', ),
 }
@@ -121,6 +121,7 @@ class Options:
     def version(self):
         print 'mrepo %s' % VERSION
         print 'Written by Dag Wieers <dag@wieers.com>'
+        print 'Homepage at http://dag.wieers.com/home-made/mrepo/'
         print
         print 'platform %s/%s' % (os.name, sys.platform)
         print 'python %s' % sys.version

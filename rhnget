@@ -17,11 +17,14 @@
 import os, sys, shutil, getopt, ConfigParser, urlparse, types
 import signal, xmlrpclib, getpass, glob, fnmatch
 
-if os.path.exists('/usr/share/rhn/') and os.path.exists('/usr/share/rhn/up2date_client/'):
+if os.path.exists('/usr/share/mrepo/rhn/') and os.path.exists('/usr/share/mrepo/rhn/up2date_client/'):
+    sys.path.insert(0, '/usr/share/mrepo/rhn/')
+    sys.path.insert(1, '/usr/share/mrepo/rhn/up2date_client/')
+elif os.path.exists('/usr/share/rhn/') and os.path.exists('/usr/share/rhn/up2date_client/'):
     sys.path.insert(0, '/usr/share/rhn/')
     sys.path.insert(1, '/usr/share/rhn/up2date_client/')
 else:
-    die(1,'up2date is not installed. Aborting execution')
+    die(1,'up2date libraries are not installed. Aborting execution')
 
 from up2date_client import config, rpcServer, wrapperUtils, up2dateErrors, repoDirector
 from rhn import rpclib
