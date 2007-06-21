@@ -1264,12 +1264,12 @@ def rpmlink((dist, repo), dirpath, filelist):
     if archs.has_key(dist.arch):
         archlist.extend(archs[dist.arch])
     else:
-        archlist.extend(dist.arch)
+        archlist.append(dist.arch)
     for arch in archlist:
         regexp = re.compile('.+[\._-]' + arch + '\.rpm$')
         for file in filelist:
             src = os.path.join(dirpath, file)
-            if os.path.islink(src):
+            if os.path.islink(src) and os.path.isdir(src):
                 os.path.walk(src, rpmlink, (dist, repo))
             elif regexp.match(file, 1):
                 symlink(src, os.path.join(dist.dir, 'RPMS.' + repo))

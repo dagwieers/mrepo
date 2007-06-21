@@ -12,6 +12,7 @@
 - Check for directory when creating before symlinking into it (Bruno Cornec)
 - Allow the RHN/up2date code to live in /usr/share/mrepo/rhn/ (Frederic Pica)
 - Added arch ia32e as alias for x86_64
+- Fixed RPM links from a file:/// source (Gabe Johnson)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
