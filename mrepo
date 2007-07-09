@@ -257,7 +257,7 @@ class Config:
             if section in self.cfg.sections():
                 for option in self.cfg.options(section):
                     variables[option] = self.cfg.get(section, option)
-            
+
         for section in self.cfg.sections():
             if section in ('main', 'repos', 'variables', 'vars', 'DEFAULT'):
                 continue
@@ -405,8 +405,13 @@ class Dist:
         else:
             remove(os.path.join(self.dir, 'iso'))
         regexp = re.compile('.+[_-]CD[0-9]?\..+')
-        opts = '-o loop,ro'
-        if readfile('/selinux/enforce') == '1':
+        if cf.cmd['mount'].find('fuseiso') != -1:
+            opts = '-n'
+            extra_opts = '-oallow_other'
+        else:
+            opts = '-o loop,ro'
+            extra_opts = ''
+        if readfile('/selinux/enforce') == '1' and cf.cmd['mount'].find('fuseiso') == -1:
             opts = opts + ',context=system_u:object_r:httpd_sys_content_t'
         for iso in self.isos:
             if cf.shareiso:
@@ -433,9 +438,9 @@ class Dist:
                 mkdir(mount)
                 if not os.path.ismount(mount):
                     info(2, '%s: Mount ISO %s to %s' % (self.nick, os.path.basename(iso), mount))
-                    run('%s %s %s %s' % (cf.cmd['mount'], opts, iso, mount))
+                    run('%s %s %s %s %s' % (cf.cmd['mount'], opts, iso, mount, extra_opts))
         return discs
-    
+
     def umount(self):
         "Umount all mounted ISOs"
         discnr = 0
@@ -661,7 +666,7 @@ class Repo:
                 error(0, '%s: Existing lock %s found owned by another process with pid %s. This should NOT happen.' % (self.dist.nick, lockfile, pid))
         else:
             error(0, '%s: Lockfile %s does not exist. Cannot unlock. Something fishy here ?' % (self.dist.nick, lockfile))
-    
+
     def createmd(self):
         metadata = ('apt', 'createrepo', 'repomd', 'repoview', 'yum')
         index = ('repoview',)
@@ -690,7 +695,6 @@ class Repo:
         except mrepoGenerateException, e:
             error(0, 'Generating repo failed for %s with message:\n  %s' % (self.name, e.value))
             exitcode = 2
-        
 
     def repomd(self):
         "Create a repomd repository"

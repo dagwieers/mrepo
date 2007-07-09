@@ -14,6 +14,7 @@
 - Added arch ia32e as alias for x86_64
 - Fixed RPM links from a file:/// source (Gabe Johnson)
 - Fixed a typo (rhns://) in the RHEL5 template (Bjoern Engels)
+- Added fuseiso support (as opposed to devloop) to allow +255 ISO and user mounts (Chandan Dutta Chowdhury)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
