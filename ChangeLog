@@ -15,6 +15,10 @@
 - Fixed RPM links from a file:/// source (Gabe Johnson)
 - Fixed a typo (rhns://) in the RHEL5 template (Bjoern Engels)
 - Added fuseiso support (as opposed to devloop) to allow +255 ISO and user mounts (Chandan Dutta Chowdhury)
+- Replace mrepo's Set() by one based on hashes or python's if available (Alexander Bergolth)
+- Get rid of variables named 'list' that override python's list() builtin (Alexander Bergolth)
+- Synchronize symlinks instead of deleting and recreating them (Alexander Bergolth)
+- Added unit tests (Alexander Bergolth)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)

@@ -14,6 +14,7 @@
 ### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ### Copyright 2004-2007 Dag Wieers <dag@wieers.com>
 
+from __future__ import generators # for Python 2.2
 import os, sys, glob, re, shutil, getopt, popen2
 import ConfigParser, urlparse, sha, types, traceback
 import time
@@ -343,15 +344,15 @@ class Dist:
 
     def rewrite(self):
         "Rewrite (string) attributes to replace variables by other (string) attributes"
-        list = variables
-        list.update({ 'arch': self.arch, 'nick': self.nick, 'dist': self.dist,
+        varlist = variables
+        varlist.update({ 'arch': self.arch, 'nick': self.nick, 'dist': self.dist,
                 'release': self.release, 'rhnrelease': self.rhnrelease })
         for key, value in vars(self).iteritems():
             if isinstance(value, types.StringType):
-                setattr(self, key, substitute(value, list))
+                setattr(self, key, substitute(value, varlist))
         for repo in self.repos:
-            list['repo'] = repo.name
-            repo.url = substitute(repo.url, list)
+            varlist['repo'] = repo.name
+            repo.url = substitute(repo.url, varlist)
 
     def findisos(self):
         "Return a list of existing ISO files"
@@ -363,21 +364,21 @@ class Dist:
                 if not os.path.isabs(file):
                     absfile = os.path.join(cf.srcdir, self.nick, file)
                     info(6, '%s: Looking for ISO files matching %s' % (self.nick, absfile))
-                    list = glob.glob(absfile)
-                if not list:
+                    filelist = glob.glob(absfile)
+                if not filelist:
                     absfile = os.path.join(cf.srcdir, self.dist, file)
                     info(6, '%s: Looking for ISO files matching %s' % (self.nick, absfile))
-                    list = glob.glob(absfile)
-                if not list:
+                    filelist = glob.glob(absfile)
+                if not filelist:
                     absfile = os.path.join(cf.srcdir, 'iso', file)
                     info(6, '%s: Looking for ISO files matching %s' % (self.nick, absfile))
-                    list = glob.glob(absfile)
-                if not list:
+                    filelist = glob.glob(absfile)
+                if not filelist:
                     absfile = os.path.join(cf.srcdir, file)
                     info(6, '%s: Looking for ISO files matching %s' % (self.nick, absfile))
-                    list = glob.glob(absfile)
-                list.sort()
-                for iso in list:
+                    filelist = glob.glob(absfile)
+                filelist.sort()
+                for iso in filelist:
                     if os.path.isfile(iso) and iso not in self.isos:
                         self.isos.append(iso)
         if self.isos:
@@ -389,12 +390,96 @@ class Dist:
 
     def listrepos(self, names=None):
         ret = []
-        for repo in self.repos:
-            if not names:
-                ret.append(repo)
-            elif repo.name in names:
-                ret.append(repo)
-        return ret
+        if names:
+            return [ repo for repo in self.repos if repo.name in names ]
+        else:
+            return self.repos
+
+    def genmetadata(self):
+        allsrcdirs = []
+        pathjoin = os.path.join
+        for repo in self.listrepos(op.repos):
+            if not repo.lock('generate'):
+                continue
+            if repo.name in ('os', 'core') and self.isos:
+                repo.url = None
+                srcdirs = [ pathjoin(self.dir, disc) for disc in self.discs ]
+                self.linksync(repo, srcdirs)
+                for file in glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')):
+                    if not os.path.exists(pathjoin(self.srcdir, self.nick, 'os-comps.xml')):
+                        copy(file, pathjoin(self.srcdir, self.nick, 'os-comps.xml'))
+                    allsrcdirs.extend(srcdirs)
+            else:
+                self.linksync(repo)
+                allsrcdirs.append(repo.srcdir)
+
+            repo.check()
+            repo.createmd()
+
+            ### After generation, write a sha1sum
+            repo.writesha1()
+            repo.unlock('generate')
+
+        # do not generate md for 'all', just the links
+        self.linksync(Repo('all', '', self, cf), allsrcdirs)
+
+    def linksync(self, repo, srcdirs=None):
+        if not srcdirs:
+            srcdirs = [ repo.srcdir ]
+        destdir = repo.wwwdir
+        srcfiles = listrpms(srcdirs, relative = destdir)
+        # srcfiles = [ (basename, relpath), ... ]
+        srcfiles.sort()
+        # uniq basenames
+        srcfiles = [f for i, f in enumerate(srcfiles) if not i or f[0] != srcfiles[i-1][0]]
+
+        info(5, '%s: Symlink %s packages from %s to %s' % (repo.dist.nick, repo.name, srcdirs, destdir))
+        mkdir(destdir)
+
+        destfiles = listrpmlinks(destdir)
+        # destfiles is a list of (link_target_base, link_target_dir) tuples
+        destfiles.sort()
+
+        pathjoin = os.path.join
+
+        def keyfunc(x):
+            # compare the basenames
+            return x[0]
+
+        changed = False
+        for srcfile, destfile in synciter(srcfiles, destfiles, key = keyfunc):
+            if srcfile is None:
+                # delete the link
+                base, targetdir = destfile
+                linkname = pathjoin(destdir, base)
+                info(5, 'Remove link: %s' % (linkname,))
+                if not op.dryrun:
+                    os.unlink(linkname)
+                    changed = True
+            elif destfile is None:
+                base, srcdir = srcfile
+                # create a new link
+                linkname = pathjoin(destdir, base)
+                target = pathjoin(srcdir, base)
+                info(5, 'New link: %s -> %s' % (linkname, target))
+                if not op.dryrun:
+                    os.symlink(target, linkname)
+                    changed = True
+            else:
+                 # same bases
+                 base, srcdir = srcfile
+                 base2, curtarget = destfile
+                 target = pathjoin(srcdir, base)
+                 if target != curtarget:
+                     info(5, 'Changed link %s: current: %s, should be: %s' % (base, curtarget, target))
+                     linkname = pathjoin(destdir, base)
+                     if not op.dryrun:
+                         os.unlink(linkname)
+                         os.symlink(target, linkname)
+                         changed = True
+
+        if changed:
+            repo.changed = True
 
     def mount(self):
         "Loopback mount all ISOs"
@@ -489,12 +574,9 @@ class Repo:
         self.url = url
         self.dist = dist
         self.srcdir = os.path.join(cf.srcdir, dist.nick, self.name)
-        self.wwwdir = os.path.join(cf.wwwdir, dist.nick, 'RPMS.' + self.name)
+        self.wwwdir = os.path.join(dist.dir, 'RPMS.' + self.name)
 
         self.changed = False
-
-        self.oldlist = Set()
-        self.newlist = Set()
 
     def __repr__(self):
 #       return "%s/%s" % (self.dist.nick, self.name)
@@ -548,50 +630,26 @@ class Repo:
         ### Make a snapshot of the directory
         self.newlist = self.rpmlist()
 
-    def clean(self):
-        info(5, '%s: Removing %s symlinks' % (self.dist.nick, self.name))
-        mkdir(self.wwwdir)
-        remove(glob.glob(os.path.join(self.wwwdir, '*.rpm')))
-
-    def linkall(self):
-        "Symlink all RPM packages that match a given arch"
-        srcdir = os.path.join(cf.srcdir, 'all', self.name)
-        info(5, '%s: Symlink %s packages from %s' % (self.dist.nick, self.name, srcdir))
-        os.path.walk(os.path.join(cf.srcdir, 'all', self.name), rpmlink, (self.dist, self.name))
-
-    def link(self, srcdir=None):
-        "Symlink all RPM packages that match a given arch"
-
-        mkdir(self.wwwdir)
-        mkdir(os.path.join(cf.wwwdir, self.dist.nick, 'RPMS.all'))
-
-        if not srcdir:
-            srcdir = self.srcdir
-
-        info(5, '%s: Symlink %s packages from %s' % (self.dist.nick, self.name, srcdir))
-        os.path.walk(srcdir, rpmlink, (self.dist, self.name))
-
     def rpmlist(self):
         "Capture a list of packages in the repository"
-        list = Set()
+        filelist = set()
 
         ### os.walk() is a python 2.4 feature
 #       for root, dirs, files in os.walk(self.srcdir):
 #           for file in files:
 #               if os.path.exists(file) and file.endswith('.rpm'):
 #                   size = os.stat(os.path.join(root, file)).st_size
-#                   list.add( (file, size) )
+#                   filelist.add( (file, size) )
 
         ### os.path.walk() goes back further
-        def addfile((list, ), path, files):
+        def addfile((filelist, ), path, files):
             for file in files:
                 if os.path.exists(os.path.join(path, file)) and file.endswith('.rpm'):
                     size = os.stat(os.path.join(path, file)).st_size
-                    list.add( (file, size) )
+                    filelist.add( (file, size) )
 
-        os.path.walk(self.srcdir, addfile, (list,))
-        list.sort()
-        return list
+        os.path.walk(self.srcdir, addfile, (filelist,))
+        return filelist
 
     def check(self):
         "Return what repositories require an update and write .newsha1sum"
@@ -777,6 +835,7 @@ class Repo:
         mkdir(os.path.join(self.dist.dir, 'base'))
 
         ### Write out /srcdir/nick/base/release
+        # TODO: should not be done per repository
         releasefile = os.path.join(self.dist.dir, 'base', 'release')
         if not os.path.exists(releasefile):
             open(releasefile, 'w').write(
@@ -834,33 +893,32 @@ class Repo:
 #           if ret:
 #               raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['repoview'], ret)))
 
-class Set:
-    def __init__(self):
-        self.list = []
+class mySet:
+    def __init__(self, seq = ()):
+        self._dict = dict([(a, True) for a in seq])
 
     def add(self, input):
-        if input not in self.list:
-            self.list.append(input)
-
-    def delete(self, input):
-        if input in self.list:
-            self.list.removed(input)
+        self._dict[input] = True
 
     def difference(self, other):
-        newlist = Set()
-        for element in self.list:
-            if element not in other.list:
-                newlist.add(element)
-        return newlist
+        return mySet([k for k in self._dict.keys() if k not in other])
 
-    def sort(self):
-        return self.list.sort()
+    def __getitem__(self, key):
+        return self._dict[key]
 
-    def __str__(self):
-        return '\n\t' + '\n\t'.join([element[0] for element in self.list])
+    def __iter__(self):
+        return self._dict.__iter__()
+
+    def __repr__(self):
+        return 'mySet(%r)' % (self._dict.keys(), )
+
+    __str__ = __repr__
 
     def __len__(self):
-        return len(self.list)
+        return len(self._dict)
+
+    def __eq__(self, s):
+        return self._dict == s._dict
 
 class mrepoMirrorException(Exception):
     def __init__(self, value):
@@ -953,9 +1011,9 @@ def mountpoint(dev):
     "Return the mountpoint of a mounted device/file"
     for entry in readfile('/etc/mtab').split('\n'):
         if entry:
-            list = entry.split()
-            if dev == list[0]:
-                return list[1]
+            cols = entry.split()
+            if dev == cols[0]:
+                return cols[1]
 
 def distsort(a, b):
     return cmp(a.nick, b.nick)
@@ -986,7 +1044,8 @@ def abspath(path, reference):
     return os.path.normpath(os.path.join(path, reference))
 
 def relpath(path, reference):
-    "Make relative path from reference"
+    """Make relative path from reference
+       if reference is a directory, it must end with a /"""
     common = os.path.commonprefix([path, reference])
     common = common[0:common.rfind('/')+1]
     (uncommon, targetName) = os.path.split(reference.replace(common, '', 1))
@@ -1187,9 +1246,9 @@ def mirrorfile(url, path):
 #   else: ### FIXME: Only if ISO file
 #       if not os.path.isabs(file):
 #           file = os.path.join(cf.srcdir, 'iso', file)
-#       list = glob.glob(file)
-#       list.sort()
-#       for iso in list:
+#       isolist = glob.glob(file)
+#       isolist.sort()
+#       for iso in isolist:
 #           if os.path.isfile(iso):
 #               print 'Please mount %s to %s' % (iso, path)
 
@@ -1314,19 +1373,107 @@ def readconfig():
             cf.update(configfile)
     return cf
 
+def _nextNone(iterator):
+    try:
+        return iterator.next()
+    except StopIteration:
+        return None
+
+def synciter(a, b, key = None, keya = None, keyb = None):
+    """returns an iterator that compares two ordered iterables a and b.
+    If keya or keyb are specified, they are called with elements of the corresponding
+    iterable. They should return a value that is used to compare two elements.
+    If keya or keyb are not specified, they default to key or to the element itself,
+    if key is None."""
+
+    if key is None:
+        key = lambda x: x
+    if keya is None:
+        keya = key
+    if keyb is None:
+        keyb = key
+    ai = iter(a)
+    bi = iter(b)
+    aelem = _nextNone(ai)
+    belem = _nextNone(bi)
+    while not ((aelem is None) or (belem is None)):
+        akey = keya(aelem)
+        bkey = keyb(belem)
+        if akey == bkey:
+            yield aelem, belem
+            aelem = _nextNone(ai)
+            belem = _nextNone(bi)
+        elif akey > bkey:
+            # belem missing in a
+            yield None, belem
+            belem = _nextNone(bi)
+        elif bkey > akey:
+            # aelem missing in b
+            yield aelem, None
+            aelem = _nextNone(ai)
+    # rest
+    while aelem is not None:
+        akey = key(aelem)
+        yield aelem, None
+        aelem = _nextNone(ai)
+    while belem is not None:
+        bkey = key(belem)
+        yield None, belem
+        belem = _nextNone(bi)
+
+def listrpms(dirs, relative = ''):
+    """return a list of rpms in the given directories as a list of (name, path) tuples
+    if relative is specified, return the paths relative to this directory"""
+    if not isinstance(dirs, (list, tuple)):
+        dirs = ( dirs, )
+    if relative and not relative.endswith('/'):
+        relative += '/'
+    isdir = os.path.isdir
+    pathjoin = os.path.join
+    pathexists = os.path.exists
+
+    def processdir(rpms, path, files):
+        if relative:
+            path2 = relpath(path, relative)
+        else:
+            path2 = path
+        for f in files:
+            pf = pathjoin(path, f)
+            if f.endswith('.rpm') and pathexists(pf) and not isdir(pf):
+                rpms.append((f, path2))
+
+    rpms = []
+    for dir in dirs:
+        if not dir.startswith('/'):
+            dir = pathjoin(relative, dir)
+        os.path.walk(dir, processdir, rpms)
+    rpms.sort()
+    return rpms
+
+def listrpmlinks(dir):
+    islink = os.path.islink
+    readlink = os.readlink
+    pathjoin = os.path.join
+    links = []
+    for f in os.listdir(dir):
+        path = pathjoin(dir, f)
+        if islink(path) and f.endswith('.rpm'):
+            links.append((f, readlink(path)))
+    return links
+
 def main():
     ### Check availability of commands
     for cmd in cf.cmd.keys():
         if not cf.cmd[cmd]:
             continue
-        list = cf.cmd[cmd].split()
-        if not os.path.isfile(list[0]):
-            list[0] = which(list[0])
-        if list[0] and not os.path.isfile(list[0]):
-            error(4, '%s command not found as %s, support disabled' % (cmd, list[0]))
+        cmdlist = cf.cmd[cmd].split()
+        if not os.path.isfile(cmdlist[0]):
+            cmdlist[0] = which(cmdlist[0])
+        if cmdlist[0] and not os.path.isfile(cmdlist[0]):
+            error(4, '%s command not found as %s, support disabled' % (cmd, cmdlist[0]))
             cf.cmd[cmd] = ''
         else:
-            cf.cmd[cmd] = ' '.join(list)
+            cf.cmd[cmd] = ' '.join(cmdlist)
     if not cf.cmd['createrepo'] and not cf.cmd['yumarch'] and not cf.cmd['genbasedir']:
         error(1, 'No tools found to generate repository metadata. Please install apt, yum or createrepo.')
 
@@ -1386,8 +1533,12 @@ def main():
                     repo.mirror()
                 else:
                     info(2, '%s: Repository %s does not exist' % (dist.nick, repo.name))
+                    repo.unlock('update')
+                    continue
+
                 repo.unlock('update')
 
+                ### files whose size has changed are in new and removed!
                 new = repo.newlist.difference(repo.oldlist)
                 removed = repo.oldlist.difference(repo.newlist)
 
@@ -1397,17 +1548,27 @@ def main():
                     fd = open(cf.logfile, 'a+')
                     date = time.strftime("%b %d %H:%M:%S", time.gmtime())
 
-                    if new.list:
-                        info(4, '%s: New packages: %s' % (dist.nick, new))
-                        distnew += len(new)
-                        for element in new.list:
+                    def sortedlist(pkgs):
+                        l = list(pkgs)
+                        l.sort()
+                        return l
+
+                    def formatlist(pkglist):
+                        return '\n\t' + '\n\t'.join([elem[0] for elem in pkglist])
+
+                    if new:
+                        pkglist = sortedlist(new)
+                        info(4, '%s: New packages: %s' % (dist.nick, formatlist(pkglist)))
+                        distnew += len(pkglist)
+                        for element in pkglist:
                             fd.write('%s %s/%s Added %s (%d kiB)\n' % (date, dist.nick, repo.name, element[0], element[1]/1024))
                             msg = msg + '\n\t\t+ %s (%d kiB)' % (element[0], element[1]/1024)
 
-                    if removed.list:
-                        info(4, '%s: Removed packages: %s' % (dist.nick, removed))
-                        distremoved += len(removed)
-                        for element in removed.list:
+                    if removed:
+                        pkglist = sortedlist(removed)
+                        info(4, '%s: Removed packages: %s' % (dist.nick, formatlist(pkglist)))
+                        distremoved += len(pkglist)
+                        for element in pkglist:
                             fd.write('%s %s/%s Removed %s (%d kiB)\n' % (date, dist.nick, repo.name, element[0], element[1]/1024))
                             msg = msg + '\n\t\t- %s (%d kiB)' % (element[0], element[1]/1024)
 
@@ -1435,33 +1596,7 @@ def main():
 
         info(1, '%s: Generating %s meta-data' % (dist.nick, dist.name))
 
-        info(5, '%s: Removing %s symlinks' % (dist.nick, 'all'))
-        mkdir(os.path.join(cf.wwwdir, dist.nick, 'RPMS.all'))
-        remove(glob.glob(os.path.join(cf.wwwdir, dist.nick, 'RPMS.all', '*.rpm')))
-
-        for repo in dist.listrepos(op.repos):
-            if not repo.lock('generate'):
-                continue
-            repo.clean()
-            if repo.name in ('os', 'core') and dist.isos:
-                repo.url = None
-                for disc in dist.discs:
-                    repo.link(os.path.join(dist.dir, disc))
-                for file in glob.glob(os.path.join(dist.dir + '/disc1/*/base/comps.xml')):
-                    if not os.path.exists(os.path.join(cf.srcdir, dist.nick, 'os-comps.xml')):
-                        copy(file, os.path.join(cf.srcdir, dist.nick, 'os-comps.xml'))
-            repo.linkall()
-            repo.link()
-
-            ### Check if repository is updated
-            repo.check()
-            repo.createmd()
-
-            ### After generation, write a sha1sum
-            repo.writesha1()
-
-            repo.unlock('generate')
-
+        dist.genmetadata()
         dist.pxe()
 
     if cf.hardlink and not op.dists:
@@ -1473,10 +1608,20 @@ sys.stderr = os.fdopen(2, 'w', 0)
 
 ### Workaround for python <= 2.2.1
 try:
-     True, False
+    True, False
 except NameError:
-     True = 1
-     False = 0
+    True, False = (0==0, 0!=0)
+
+try:
+    set()
+except NameError:
+    set = mySet
+
+try:
+    enumerate
+except NameError:
+    enumerate = lambda seq: zip(xrange(len(seq)), seq)
+
 
 ### Main entrance
 if __name__ == '__main__':
