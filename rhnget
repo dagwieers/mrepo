@@ -24,7 +24,8 @@ elif os.path.exists('/usr/share/rhn/') and os.path.exists('/usr/share/rhn/up2dat
     sys.path.insert(0, '/usr/share/rhn/')
     sys.path.insert(1, '/usr/share/rhn/up2date_client/')
 else:
-    die(1,'up2date libraries are not installed. Aborting execution')
+    print >>sys.stderr, 'rhnget: up2date libraries are not installed. Aborting execution'
+    sys.exit(1)
 
 from up2date_client import config, rpcServer, wrapperUtils, up2dateErrors, repoDirector
 from rhn import rpclib
@@ -54,13 +55,14 @@ class Options:
         self.rhnpassword = None
         self.rhnrelease = None
         self.rhnusername = None
+        self.source = False
         self.systemid = '/etc/sysconfig/rhn/systemid'
         self.verbose = 1
 
         try:
             opts, args = getopt.getopt (args, 'hlnqp:r:s:u:v',
                 ('delete', 'download-all', 'dryrun', 'filter=', 'help', 'list', 'password=', 'quiet',
-                 'release=', 'systemid=', 'username=', 'verbose', 'version' ))
+                 'release=', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
         except getopt.error, exc:
             print 'rhnget: %s, try rhnget -h for a list of all the options' % str(exc)
             sys.exit(1)
@@ -89,6 +91,8 @@ class Options:
                 self.quiet = True
             elif opt in ('-r', '--release'):
                 self.rhnrelease = arg
+            elif opt in ('--source'):
+                self.source = True
             elif opt in ('-s', '--systemid'):
                 self.systemid = os.path.abspath(arg)
             elif opt in ['-u', '--username']:
@@ -141,6 +145,7 @@ rhnget options:
   -n, --dry-run           show what would have been done
   -q, --quiet             minimal output
   -r, --release=release   specify the RHN release (if different from the systemid)
+      --source            download source packages
   -s, --systemid=file     systemid to use
   -v, --verbose           increase verbosity
   -vv, -vvv, -vvvv..      increase verbosity more
@@ -448,6 +453,21 @@ def mirrorrhn(url, path):
             error(0, 'TypeError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
         except up2dateErrors.CommunicationError, e:
             error(0, 'CommunicationError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+
+        if op.source:
+            try:
+                hdr, call_type = rpcServer.doCall(repos.getHeader, pkg)
+                srcrpm = hdr['sourcerpm']
+                if op.verbose <= 1:
+                    rpcServer.doCall(repos.getPackageSource, channel, srcrpm, None, None)
+                else:
+                    rpcServer.doCall(repos.getPackageSource, channel, srcrpm, wrapperUtils.printPkg, wrapperUtils.printRetrieveHash)
+            except rpclib.Fault, f:
+                error(0, 'rpcError: Error getting package %s from %s. %s' % (filename, label, f.faultString))
+            except TypeError, e:
+                error(0, 'TypeError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+            except up2dateErrors.CommunicationError, e:
+                error(0, 'CommunicationError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
 
     ### Remove packages on the receiver side that are not on the sender side
     if op.cleanup:
