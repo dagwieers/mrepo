@@ -1,0 +1,316 @@
+#!/usr/bin/python
+
+### This program is free software; you can redistribute it and/or modify
+### it under the terms of the GNU Library General Public License as published by
+### the Free Software Foundation; version 2 only
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU Library General Public License for more details.
+###
+### You should have received a copy of the GNU Library General Public License
+### along with this program; if not, write to the Free Software
+### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
+
+import os, sys, shutil, getopt, ConfigParser, urlparse, types
+import signal, xmlrpclib, getpass, glob, fnmatch, urllib2
+import gzip
+import cElementTree as ElementTree
+
+__version__ = "$Revision: 4786 $"
+# $Source$
+
+VERSION = '0.8.4svn'
+
+class Options:
+    def __init__(self, args):
+        self.cleanup = False
+        self.credpath = None
+        self.downloadall = False
+        self.dryrun = False
+        self.filter = None
+        self.list = None
+        self.quiet = False
+        self.password = None
+        self.username = None
+        self.source = False
+        self.verbose = 1
+
+        try:
+            opts, args = getopt.getopt (args, 'hlnqp:s:u:v',
+                ('credpath=', 'delete', 'download-all', 'dryrun', 'filter=', 'help', 'list',
+                 'password=', 'quiet', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
+        except getopt.error, exc:
+            print 'youget: %s, try youget -h for a list of all the options' % str(exc)
+            sys.exit(1)
+
+        for opt, arg in opts:
+            if opt in ('--credpath', ):
+                self.credpath = arg
+            elif opt in ('--delete', ):
+                self.cleanup = True
+            elif opt in ('--download-all', ):
+                self.downloadall = True
+            elif opt in ('--filter', ):
+                self.filter = arg
+                self.downloadall = True
+            elif opt in ('-h', '--help'):
+                self.usage()
+                print
+                self.help()
+                sys.exit(0)
+            elif opt in ('-l', '--list'):
+                self.list = True
+                self.downloadall = True
+            elif opt in ('-n', '--dry-run'):
+                self.dryrun = True
+            elif opt in ['-p', '--password']:
+                self.password = arg
+            elif opt in ('-q', '--quiet'):
+                self.quiet = True
+            elif opt in ('--source'):
+                self.source = True
+            elif opt in ('-s', '--systemid'):
+                self.systemid = os.path.abspath(arg)
+            elif opt in ['-u', '--username']:
+                self.username = arg
+            elif opt in ('-v', '--verbose'):
+                self.verbose = self.verbose + 1
+            elif opt in ('--version', ):
+                self.version()
+                sys.exit(0)
+
+        if len(args) < 1:
+            self.usage()
+            print
+            self.help()
+            sys.exit(1)
+
+        self.uri = args[0]
+
+        if not self.username and not self.password:
+            if self.credpath:
+                try:
+                    self.username = open(os.path.join(self.credpath, 'mcookie')).read().rstrip()
+                    self.password = open(os.path.join(self.credpath, 'partnernet')).read().rstrip()
+                except:
+                    die(1, 'Credentials directory %s does not contain mcookie and partnernet files.' % op.credpath)
+            elif os.path.isdir('/etc/ximian'):
+                try:
+                    self.username = open('/etc/ximian/mcookie').read().rstrip()
+                    self.password = open('/etc/ximian/partnernet').read().rstrip()
+                except:
+                    die(1, 'Credentials directory /etc/ximian does not contain mcookie and partnernet files.')
+
+        if not self.username:
+            self.username = raw_input('YOU Username: ')
+
+        if self.username and not self.password:
+            self.password = getpass.getpass('YOU Password for user %s: ' % self.username)
+
+        if len(args) == 2:
+            self.destination = args[1]
+        else:
+            self.destination = os.getcwd()
+
+        if self.quiet:
+            self.verbose = 0
+
+        if self.verbose >= 3:
+            print 'Verbosity set to level %d' % (self.verbose - 1)
+
+    def version(self):
+        print 'youget %s' % VERSION
+        print 'Written by Dag Wieers <dag@wieers.com>'
+        print
+        print 'platform %s/%s' % (os.name, sys.platform)
+        print 'python %s' % sys.version
+        print
+        print 'build revision $Rev: 4786 $'
+
+    def usage(self):
+        print 'usage: youget [options] URL'
+
+    def help(self):
+        print '''Download packages from Yast Online Update (YOU)
+
+youget options:
+  -d, --credpath=dir      credentials directory
+      --delete            delete files that are not on the sender side
+      --download-all      download all package versions available
+      --filter            filter packages based on regexp
+  -l, --list              list the available packages
+  -n, --dry-run           show what would have been done
+  -q, --quiet             minimal output
+      --source            download source packages
+  -v, --verbose           increase verbosity
+  -vv, -vvv, -vvvv..      increase verbosity more
+'''
+
+class Set:
+    def __init__(self):
+        self.list = []
+
+    def add(self, input):
+        if input not in self.list:
+            self.list.append(input)
+
+    def delete(self, input):
+        if input in self.list:
+            self.list.removed(input)
+
+    def difference(self, other):
+        newlist = Set()
+        for element in self.list:
+            if element not in other.list:
+                newlist.add(element)
+        return newlist
+
+    def sort(self):
+        return self.list.sort()
+
+    def __str__(self):
+        return '\n\t' + '\n\t'.join([element[0] for element in self.list])
+
+    def __len__(self):
+        return len(self.list)
+
+class MirrorException(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+def error(level, str):
+    "Output error message"
+    if level <= op.verbose:
+        sys.stderr.write('youget: %s\n' % str)
+
+def info(level, str):
+    "Output info message"
+    if level <= op.verbose:
+        sys.stdout.write('%s\n' % str)
+
+def die(ret, str):
+    "Print error and exit with errorcode"
+    error(0, str)
+    sys.exit(ret)
+
+def mirroryou(url, path):
+    'Mirror a channel from YOU'
+
+    ### Download packagelist for this channel
+    info(2, 'Downloading packagelist from %s' % url)
+    host = urlparse.urlparse(url)[1]
+    auth_handler = urllib2.HTTPDigestAuthHandler()
+    auth_handler.add_password('Express', host, op.username, op.password)
+    opener = urllib2.build_opener(auth_handler)
+    opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+    fdin = opener.open(os.path.join(url, 'packageinfo.xml.gz'))
+    fdout = open(os.path.join(path,'packageinfo.xml.gz'), 'w')
+    fdout.write(fdin.read())
+    fdin.close()
+    fdout.close()
+
+    ### Parse packagelist
+    fd = gzip.open(os.path.join(path,'packageinfo.xml.gz'), 'r')
+    tree = ElementTree.ElementTree(file=fd)
+    root = tree.getroot()
+    package_list = Set()
+    for elem in root.getiterator('package'):
+        pkgname = elem.findtext('history/update/filename')
+        pkgsize = elem.findtext('history/update/filesize')
+        package_list.add( (pkgname, pkgsize) )
+    fd.close()
+    package_list.sort()
+
+    ### Download packages from the packagelist
+    for filename, filesize in package_list.list:
+
+        ### Filter packagelist
+        if op.filter and not fnmatch.fnmatch(filename, op.filter):
+            info(4, 'Packages %s excluded by filter' % filename)
+            continue
+
+        ### List only files if requested
+        if op.list:
+            info(0, filename)
+            continue
+
+        ### If file (or symlink target) exists
+        if os.path.isfile(os.path.join(path, filename)):
+            stat = os.stat(os.path.join(path, filename))
+            if stat.st_size == int(filesize):
+                info(3, 'File %s is already in %s' % (filename, path))
+                continue
+            else:
+                info(2, 'File %s has wrong size (found: %s, expected: %s), refetching.' % (filename, stat.st_size, filesize))
+                remove(os.path.join(path, filename))
+
+        ### If symlink target does not exist, remove symlink
+        elif os.path.islink(os.path.join(path, filename)):
+            remove(os.path.join(path, filename))
+
+        if op.dryrun:
+            info(1, 'Not downloading package %s' % filename)
+            continue
+
+        info(2, 'Download %s (%s)' % (filename, filesize))
+        fdin = opener.open(os.path.join(url, filename))
+        fdout = open(os.path.join(path, filename), 'w')
+        fdout.write(fdin.read())
+        fdin.close()
+        fdout.close()
+
+    ### Remove packages on the receiver side that are not on the sender side
+    if op.cleanup:
+
+        ### Collect receiver side
+        receiver = Set()
+        for file in glob.glob(os.path.join(path, '*.rpm')):
+            if os.path.exists(file):
+                filename = os.path.basename(file)
+                filesize = os.stat(file).st_size
+                receiver.add( (filename, filesize) )
+        receiver.sort()
+
+        ### Collect sender side
+        sender = package_list
+
+        ### Remove difference between receiver and sender
+        cleanse = receiver.difference(sender)
+        for filename, filesize in cleanse.list:
+            info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, filesize))
+            remove(os.path.join(path, filename))
+
+def main():
+    try:
+        mirroryou(op.uri, op.destination)
+    except Exception, e:
+        die(1, e)
+
+### Unbuffered sys.stdout
+sys.stdout = os.fdopen(1, 'w', 0)
+sys.stderr = os.fdopen(2, 'w', 0)
+
+### Workaround for python <= 2.2.1
+try:
+     True, False
+except NameError:
+     True = 1
+     False = 0
+
+### Main entrance
+if __name__ == '__main__':
+    exitcode = 0
+
+    op = Options(sys.argv[1:])
+    try:
+        main()
+    except KeyboardInterrupt, e:
+        die(6, 'Exiting on user request')
+    sys.exit(exitcode)
+
+# vim:ts=4:sw=4:et

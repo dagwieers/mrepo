@@ -413,6 +413,7 @@ def mirrorrhn(url, path):
     for pkg in package_list:
         ### FIXME: Check if not already on ISO-file or repository as well
         filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
+        filesize = pkg[5]
 
         ### Filter packagelist
         if op.filter and not fnmatch.fnmatch(filename, op.filter):
@@ -427,11 +428,11 @@ def mirrorrhn(url, path):
         ### If file (or symlink target) exists
         if os.path.isfile(os.path.join(path, filename)):
             stat = os.stat(os.path.join(path, filename))
-            if stat.st_size == int(pkg[5]):
+            if stat.st_size == int(filesize):
                 info(3, 'File %s is already in %s' % (filename, path))
                 continue
             else:
-                info(2, 'File %s has wrong size (found: %s, expected: %s), refetching.' % (filename, stat.st_size, pkg[5]))
+                info(2, 'File %s has wrong size (found: %s, expected: %s), refetching.' % (filename, stat.st_size, filesize))
                 remove(os.path.join(path, filename))
 
         ### If symlink target does not exist, remove symlink
@@ -477,22 +478,22 @@ def mirrorrhn(url, path):
         for file in glob.glob(os.path.join(path, '*.rpm')):
             if os.path.exists(file):
                 filename = os.path.basename(file)
-                size = os.stat(file).st_size
-                receiver.add( (filename, size) )
+                filesize = os.stat(file).st_size
+                receiver.add( (filename, filesize) )
         receiver.sort()
 
         ### Collect sender side
         sender = Set()
         for pkg in package_list:
             filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
-            size = int(pkg[5])
-            sender.add( (filename, size) )
+            filesize = int(pkg[5])
+            sender.add( (filename, filesize) )
         sender.sort()
 
         ### Remove difference between receiver and sender
         cleanse = receiver.difference(sender)
-        for filename, size in cleanse.list:
-            info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, size))
+        for filename, filesize in cleanse.list:
+            info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, filesize))
             remove(os.path.join(path, filename))
 
 def main():

@@ -28,12 +28,13 @@ archs = {
     'alpha': ('alpha', 'alphaev5', 'alphaev56', 'alphaev6', 'alphaev67'),
     'i386': ('i386', 'i486', 'i586', 'i686', 'athlon'),
     'ia64': ('i386', 'i686', 'ia64'),
+    'ppc': ('ppc', ),
     'ppc64': ('ppc', 'ppc64', 'ppc64pseries', 'ppc64iseries'),
     'x86_64': ('i386', 'i486', 'i586', 'i686', 'athlon', 'x86_64', 'amd64', 'ia32e'),
     'sparc64': ('sparc', 'sparcv8', 'sparcv9', 'sparc64'),
     'sparc64v': ('sparc', 'sparcv8', 'sparcv9', 'sparcv9v', 'sparc64', 'sparc64v'),
     's390': ('s390', ),
-    's390x': ('s390', 's390x', ),
+    's390x': ('s390', 's390x'),
 }
 
 variables = {}
@@ -42,7 +43,7 @@ enable = ('yes', 'on', 'true', '1')
 disable = ('no', 'off', 'false', '0')
 
 ### Register rhn and rhns as a known schemes
-for scheme in ('rhn', 'rhns'):
+for scheme in ('rhn', 'rhns', 'you'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
@@ -109,7 +110,7 @@ class Options:
                 self.update = True
 
         if not self.types:
-            self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn', 'rhns', 'rsync', 'sftp', 'mrepo']
+            self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn', 'rhns', 'rsync', 'sftp', 'mrepo', 'you']
 
         for arg in args:
             self.dists = self.dists + arg.split(',')
@@ -197,6 +198,7 @@ class Config:
         self.cmd['rhnget'] = self.getoption('main', 'rhngetcmd', '/usr/bin/rhnget')
         self.cmd['rsync'] = self.getoption('main', 'rsynccmd', '/usr/bin/rsync')
         self.cmd['umount'] = self.getoption('main', 'umountcmd', '/bin/umount')
+        self.cmd['youget'] = self.getoption('main', 'yougetcmd', '/usr/bin/youget')
         self.cmd['yumarch'] = self.getoption('main', 'yumarchcmd', '/usr/bin/yum-arch')
 
         self.createrepooptions = self.getoption('main', 'createrepo-options', '-p')
@@ -623,6 +625,8 @@ class Repo:
                     mirrormirrordir(url, self.srcdir)
                 elif s in ('rhn', 'rhns'):
                     mirrorrhnget(url, self.srcdir, self.dist)
+                elif s in ('you', ):
+                    mirroryouget(url, self.srcdir, self.dist)
                 else:
                     error(2, 'Scheme %s:// not implemented yet (in %s)' % (s, url))
             except mrepoMirrorException, e:
@@ -1307,6 +1311,50 @@ def mirrorrhnget(url, path, dist):
 #       opts = opts + ' -G \"*-debuginfo-*.rpm\" -G \"debug\"'
 
     ret = run("%s %s '%s' '%s'" % (cf.cmd['rhnget'], opts, url, path), dryrun=True)
+    if ret:
+        raise(mrepoMirrorException('Failed with return code: %s' % ret))
+
+def mirroryouget(url, path, dist):
+    "Mirror everything from a you:// URL"
+    if not cf.cmd['youget']:
+        error(1, 'youget was not found. YOU support is therefor disabled.')
+        return
+    mkdir(path)
+
+    url = url.replace('you://', 'https://')
+
+    opts = cf.rhngetoptions
+    if op.verbose >= 3:
+        opts = opts + ' -v' * (op.verbose - 3)  
+    if op.dryrun:
+        opts = opts + ' --dry-run'
+    if cf.rhngetcleanup:
+        opts = opts + ' --delete'
+    if cf.rhngetdownloadall:
+        opts = opts + ' --download-all'
+
+    credpath = os.path.join(cf.srcdir, dist.nick)
+    if os.path.isdir(credpath):
+        opts = opts + ' --credpath="%s"' % credpath
+
+#    if dist.rhnrelease:
+#        opts = opts + ' --release="%s"' % dist.rhnrelease
+
+#    if cf.rhnlogin:
+#        rhnlogin = cf.rhnlogin.split(':')
+#        if len(rhnlogin) > 0:
+#            opts = opts + ' --username="%s"' % rhnlogin[0]
+#        if len(rhnlogin) > 1:
+#            opts = opts + ' --password="%s"' % rhnlogin[1]
+
+##  opts = opts + ' -I \"*.rpm\"'
+#   opts = opts + ' -G \"headers\" -G \"repodata\"'
+#   if cf.mirrordirexclsrpm:
+#       opts = opts + ' -G \"*.src.rpm\" -G \"SRPMS\"'
+#   if cf.mirrordirexcldebug:
+#       opts = opts + ' -G \"*-debuginfo-*.rpm\" -G \"debug\"'
+
+    ret = run("%s %s '%s' '%s'" % (cf.cmd['youget'], opts, url, path), dryrun=True)
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 

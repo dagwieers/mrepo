@@ -1,0 +1,43 @@
+= Using YOU (Yast Online Update) support in mrepo
+Dag Wieers <dag@wieers.com>
+0.8.4svn, 19 october 2007
+
+// Please send me improvements to this document.
+
+This document describes how to set up a Yast Online Update mirror for
+various Novell/SUSE distributions and architectures.
+
+== Requirements
+The youget python script needs cElementTree support.
+
+
+== Novell update credentials
+To be able to download updates from update.novell.com (or another YOU server)
+you need to copy the files _/etc/ximian/mcookie_ and _/etc/ximian/partnernet_
+from a registered/activated system to your +$srcdir/$dist-$arch/+ directory.
+
+So for NLD9, you would have eg:
+
+    /var/mrepo/nld9-i586/mcookie
+    /var/mrepo/nld9-i586/partnernet
+
+These are used by youget to authenticate with the YOU server.
+
+
+== YOU configuration
+Having done that, you can enable multiple channels for these credentials by
+adding a configuration like the one below:
+
+----
+[nld9]
+name = Novell Linux Desktop $release SP3 ($arch)
+release = 9
+arch = i386
+iso = NLD$release-SP3-$arch-CD?.iso
+updates = you://update.novell.com/data/$RCE/nld9/getPackage/nld-9-i586/
+extras = you://update.novell.com/data/$RCE/nld9-extras/getPackage/nld-9-i586/
+sdk = you://update.novell.com/data/$RCE/nld9-sdk/getPackage/nld-9-i586/
+----
+
+After that, mrepo should be able to successfully log on and download
+all packages for the configured channels.

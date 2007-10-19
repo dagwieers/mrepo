@@ -1,4 +1,4 @@
-* 0.8.4svn - ... - released 30/12/2006
+* 0.8.4svn - ... - released 19/10/2007
 - Fixed a few typos (Ian Forde)
 - Added promoteepoch directive to disable it for older distributions (rhel2.1, rh7.3)
 - Fixed a problem with the disabled directive (disabled = no was ignored)
@@ -19,6 +19,7 @@
 - Get rid of variables named 'list' that override python's list() builtin (Alexander Bergolth)
 - Synchronize symlinks instead of deleting and recreating them (Alexander Bergolth)
 - Added unit tests (Alexander Bergolth)
+- Added youget tool to download packages from Yast Online Update
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
