@@ -198,6 +198,25 @@ def die(ret, str):
     error(0, str)
     sys.exit(ret)
 
+def remove(file):
+    "Remove files or directories"
+    if isinstance(file, types.StringType):
+        if op.dryrun:
+            return
+        if os.path.islink(file):
+            os.unlink(file)
+        elif os.path.isdir(file):
+            try:
+                os.rmdir(file)
+            except:
+                os.path.walk(file, removedir, ())
+                os.rmdir(file)
+        elif os.path.isfile(file) or os.path.islink(file):
+            os.unlink(file)
+    else:
+        for f in file:
+            remove(f)
+
 def mirroryou(url, path):
     'Mirror a channel from YOU'
 
