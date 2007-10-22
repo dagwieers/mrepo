@@ -2,8 +2,15 @@
 
 import os, sys, getopt, getpass, urlparse
 
-sys.path.insert(0, "/usr/share/rhn/")
-sys.path.insert(1,"/usr/share/rhn/up2date_client")
+if os.path.exists('/usr/share/mrepo/rhn/') and os.path.exists('/usr/share/mrepo/rhn/up2date_client/'):
+    sys.path.insert(0, '/usr/share/mrepo/rhn/')
+    sys.path.insert(1, '/usr/share/mrepo/rhn/up2date_client/')
+elif os.path.exists('/usr/share/rhn/') and os.path.exists('/usr/share/rhn/up2date_client/'):
+    sys.path.insert(0, '/usr/share/rhn/')
+    sys.path.insert(1, '/usr/share/rhn/up2date_client/')
+else:
+    print >>sys.stderr, 'rhnget: up2date libraries are not installed. Aborting execution'
+    sys.exit(1)
 
 from up2date_client import config, rpcServer, up2dateErrors
 from rhn import rpclib
