@@ -93,14 +93,14 @@ class Options:
         if not self.username and not self.password:
             if self.credpath:
                 try:
-                    self.username = open(os.path.join(self.credpath, 'mcookie')).read().rstrip()
-                    self.password = open(os.path.join(self.credpath, 'partnernet')).read().rstrip()
+                    self.username = open(os.path.join(self.credpath, 'mcookie')).read().rstrip().rstrip('\0')
+                    self.password = open(os.path.join(self.credpath, 'partnernet')).read().rstrip().rstrip('\0')
                 except:
                     die(1, 'Credentials directory %s does not contain mcookie and partnernet files.' % op.credpath)
             elif os.path.isdir('/etc/ximian'):
                 try:
-                    self.username = open('/etc/ximian/mcookie').read().rstrip()
-                    self.password = open('/etc/ximian/partnernet').read().rstrip()
+                    self.username = open('/etc/ximian/mcookie').read().rstrip().rstrip('\0')
+                    self.password = open('/etc/ximian/partnernet').read().rstrip().rstrip('\0')
                 except:
                     die(1, 'Credentials directory /etc/ximian does not contain mcookie and partnernet files.')
 
@@ -219,6 +219,8 @@ def remove(file):
 
 def mirroryou(url, path):
     'Mirror a channel from YOU'
+
+    info(2, 'Using username %s with password %s.' % (op.username, op.password))
 
     ### Download packagelist for this channel
     info(2, 'Downloading packagelist from %s' % url)
