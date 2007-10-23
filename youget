@@ -39,7 +39,7 @@ class Options:
         self.verbose = 1
 
         try:
-            opts, args = getopt.getopt (args, 'hlnqp:s:u:v',
+            opts, args = getopt.getopt (args, 'd:hlnqp:s:u:v',
                 ('credpath=', 'delete', 'download-all', 'dryrun', 'filter=', 'help', 'list',
                  'password=', 'quiet', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
         except getopt.error, exc:
@@ -47,7 +47,7 @@ class Options:
             sys.exit(1)
 
         for opt, arg in opts:
-            if opt in ('--credpath', ):
+            if opt in ('-d', '--credpath'):
                 self.credpath = arg
             elif opt in ('--delete', ):
                 self.cleanup = True
@@ -103,6 +103,12 @@ class Options:
                     self.password = open('/etc/ximian/partnernet').read().rstrip().rstrip('\0')
                 except:
                     die(1, 'Credentials directory /etc/ximian does not contain mcookie and partnernet files.')
+            elif os.path.isdir('/etc/zmd'):
+                try:
+                    self.username = open('/etc/zmd/mcookie').read().rstrip().rstrip('\0')
+                    self.password = open('/etc/zmd/partnernet').read().rstrip().rstrip('\0')
+                except:
+                    die(1, 'Credentials directory /etc/zmd does not contain mcookie and partnernet files.')
 
         if not self.username:
             self.username = raw_input('YOU Username: ')
@@ -220,7 +226,7 @@ def remove(file):
 def mirroryou(url, path):
     'Mirror a channel from YOU'
 
-    info(2, 'Using username %s with password %s.' % (op.username, op.password))
+    info(3, 'Using username %s with password %s.' % (op.username, op.password))
 
     ### Download packagelist for this channel
     info(2, 'Downloading packagelist from %s' % url)
@@ -242,7 +248,7 @@ def mirroryou(url, path):
     package_list = Set()
     for elem in root.getiterator('package'):
         pkgname = elem.findtext('history/update/filename')
-        pkgsize = elem.findtext('history/update/filesize')
+        pkgsize = int(elem.findtext('history/update/filesize'))
         package_list.add( (pkgname, pkgsize) )
     fd.close()
     package_list.sort()
@@ -263,7 +269,7 @@ def mirroryou(url, path):
         ### If file (or symlink target) exists
         if os.path.isfile(os.path.join(path, filename)):
             stat = os.stat(os.path.join(path, filename))
-            if stat.st_size == int(filesize):
+            if stat.st_size == filesize:
                 info(3, 'File %s is already in %s' % (filename, path))
                 continue
             else:
