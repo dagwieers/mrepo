@@ -101,8 +101,9 @@ fi
 %config(noreplace) %{_sysconfdir}/mrepo.conf.d/
 %config %{_initrddir}/mrepo
 %{_bindir}/gensystemid
-%{_bindir}/rhnget
 %{_bindir}/mrepo
+%{_bindir}/rhnget
+%{_bindir}/youget
 %{_datadir}/mrepo/
 %{_localstatedir}/cache/mrepo/
 %{_localstatedir}/www/mrepo/

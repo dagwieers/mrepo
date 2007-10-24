@@ -11,15 +11,28 @@ various Novell/SUSE distributions and architectures.
 The youget python script needs cElementTree support.
 
 
-== Novell update credentials
-To be able to download updates from update.novell.com (or another YOU server)
-you need to copy the files _/etc/ximian/mcookie_ and _/etc/ximian/partnernet_
-from a registered/activated system to your +$srcdir/$dist-$arch/+ directory.
+== Novell update credentials for NLD9 (and alike)
+To be able to download updates from update.novell.com you need to copy the
+files _/etc/ximian/mcookie_ and _/etc/ximian/partnernet_ from a registered
+system to your +$srcdir/$dist-$arch/+ directory.
 
 So for NLD9, you would have eg:
 
     /var/mrepo/nld9-i586/mcookie
     /var/mrepo/nld9-i586/partnernet
+
+These are used by youget to authenticate with the YOU server.
+
+
+== Novell update credentials for SLES10 (and alike)
+To be able to download updates from nu.novell.com you need to copy the
+files _/etc/zmd/deviceid_ and _/etc/zmd/secret_ from a registered
+system to your +$srcdir/$dist-$arch/+ directory.
+
+So for SLES10, you would have eg:
+
+    /var/mrepo/sles10-x86_64/deviceid
+    /var/mrepo/sles10-x86_64/secret
 
 These are used by youget to authenticate with the YOU server.
 
@@ -32,11 +45,23 @@ adding a configuration like the one below:
 [nld9]
 name = Novell Linux Desktop $release SP3 ($arch)
 release = 9
-arch = i386
+arch = i586
 iso = NLD$release-SP3-$arch-CD?.iso
-updates = you://update.novell.com/data/$RCE/nld9/getPackage/nld-9-i586/
-extras = you://update.novell.com/data/$RCE/nld9-extras/getPackage/nld-9-i586/
-sdk = you://update.novell.com/data/$RCE/nld9-sdk/getPackage/nld-9-i586/
+updates = you://update.novell.com/data/$RCE/nld9/getPackage/nld-9-$arch/
+extras = you://update.novell.com/data/$RCE/nld9-extras/getPackage/nld-9-$arch/
+sdk = you://update.novell.com/data/$RCE/nld9-sdk/getPackage/nld-9-$arch/
+----
+
+or
+
+----
+[sles10]
+name = SuSE Linux Enterprise Server $release SP1 ($arch)
+release = 10
+arch = i586 ia64 ppc s390x x86_64
+iso = SLES-$release-SP1-$arch-CD?.iso SLES-$release-SP1-$arch-DVD?.iso
+updates = you://update.novell.com/repo/$RCE/SLES10-Updates/sles-10-$arch/
+sdk = you://update.novell.com/repo/$RCE/SLE10-SDK-Updates/sles-10-$arch/
 ----
 
 After that, mrepo should be able to successfully log on and download

@@ -413,7 +413,7 @@ def mirrorrhn(url, path):
     for pkg in package_list:
         ### FIXME: Check if not already on ISO-file or repository as well
         filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
-        filesize = pkg[5]
+        filesize = int(pkg[5])
 
         ### Filter packagelist
         if op.filter and not fnmatch.fnmatch(filename, op.filter):
@@ -428,7 +428,7 @@ def mirrorrhn(url, path):
         ### If file (or symlink target) exists
         if os.path.isfile(os.path.join(path, filename)):
             stat = os.stat(os.path.join(path, filename))
-            if stat.st_size == int(filesize):
+            if stat.st_size == filesize:
                 info(3, 'File %s is already in %s' % (filename, path))
                 continue
             else:
