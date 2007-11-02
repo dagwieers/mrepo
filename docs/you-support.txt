@@ -66,3 +66,32 @@ sdk = you://update.novell.com/repo/$RCE/SLE10-SDK-Updates/sles-10-$arch/
 
 After that, mrepo should be able to successfully log on and download
 all packages for the configured channels.
+
+
+== Troubleshooting
+If you have problems making one of the catalogs (channels) work, you may
+have a problem with your zmd cache or zmdb. Resolution is described in
+TID 3303599, 3181469 and 3818394. After following those procedures, rerun
+suse_register with your Novell login and activation code, eg:
+
+----
+service novell-zmd stop
+rm -f /etc/zmd/{deviceid,secret}
+rm -rf /var/cache/zmd/*
+service novell-zmd start
+suse_register -n -a email=company@example.com -a regcode-sles=03474hdkndg3934957340
+----
+
+
+== Links
+ * TID 3181469: Activation fails with error indicating the database disk image is malformed
+   https://secure-support.novell.com/KanisaPlatform/Publishing/718/3181469_f.SAL_Public.html
+
+ * TID 3303599: Resetting your ZEN Updater and Novell Customer Center key registration
+   https://secure-support.novell.com/KanisaPlatform/Publishing/718/3303599_f.SAL_Public.html
+
+ * TID 3423640: SLE 10 SDK update catalog won't get added to ZEN-Updater configuration
+   https://secure-support.novell.com/KanisaPlatform/Publishing/728/3423640_f.SAL_Public.html
+
+ * TID 3818394: Activation fails with an error downloading XML data.
+   https://secure-support.novell.com/KanisaPlatform/Publishing/718/3818394_f.SAL_Public.html
