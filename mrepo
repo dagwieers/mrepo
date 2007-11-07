@@ -515,19 +515,19 @@ class Dist:
             if not os.path.isfile(cf.cmd['mount']):
                 die(4, 'mount command not %s' % cf.cmd['mount'])
             mount2 = mountpoint(iso) 
-            if mount2:
-                if mount2 != mount:
-                    if os.path.exists(mount):
-                        remove(mount)
-                    info(5, '%s: %s already mounted, symlink ISO to %s' % (self.nick, os.path.basename(iso), mount))
-                    symlink(mount2, mount)
-            else:
+            if not mount2:
                 if os.path.exists(mount) and not os.path.isdir(mount):
                     os.rename(mount, os.tempnam(os.path.dirname(mount), 'bak-'))
                 mkdir(mount)
                 if not os.path.ismount(mount):
                     info(2, '%s: Mount ISO %s to %s' % (self.nick, os.path.basename(iso), mount))
                     run('%s %s %s %s %s' % (cf.cmd['mount'], opts, iso, mount, extra_opts))
+            else:
+                if mount2 != mount:
+#                    if os.path.exists(mount):
+#                        remove(mount)
+                    info(5, '%s: %s already mounted, symlink ISO to %s' % (self.nick, os.path.basename(iso), mount))
+                    symlink(mount2, mount)
         return discs
 
     def umount(self):
