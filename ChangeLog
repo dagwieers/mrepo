@@ -20,6 +20,7 @@
 - Synchronize symlinks instead of deleting and recreating them (Alexander Bergolth)
 - Added unit tests (Alexander Bergolth)
 - Added youget tool to download packages from Yast Online Update
+- Added new OES1 and OES2 dist configs (Nicole Hähnel)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)

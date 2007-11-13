@@ -25,7 +25,7 @@ YAMCONFIG="/etc/mrepo.conf"
 
 RETVAL=0
 prog="mrepo"
-desc="mrepo Distribution Server"
+desc="rpm distribution server"
 
 start() {
 	echo -n $"Starting $desc ($prog): "
