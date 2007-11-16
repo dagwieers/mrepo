@@ -21,6 +21,7 @@
 - Added unit tests (Alexander Bergolth)
 - Added youget tool to download packages from Yast Online Update
 - Added new OES1 and OES2 dist configs (Nicole Hähnel)
+- Fix elementtree for python 2.5 and higher (Leo Eraly)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
