@@ -49,7 +49,7 @@ arch = i586
 iso = NLD$release-SP3-$arch-CD?.iso
 updates = you://update.novell.com/data/$RCE/nld9/getPackage/nld-9-$arch/
 extras = you://update.novell.com/data/$RCE/nld9-extras/getPackage/nld-9-$arch/
-sdk = you://update.novell.com/data/$RCE/nld9-sdk/getPackage/nld-9-$arch/
+updates-sdk = you://update.novell.com/data/$RCE/nld9-sdk/getPackage/nld-9-$arch/
 ----
 
 or
@@ -60,12 +60,31 @@ name = SuSE Linux Enterprise Server $release SP1 ($arch)
 release = 10
 arch = i586 ia64 ppc s390x x86_64
 iso = SLES-$release-SP1-$arch-CD?.iso SLES-$release-SP1-$arch-DVD?.iso
-updates = you://update.novell.com/repo/$RCE/SLES10-Updates/sles-10-$arch/
-sdk = you://update.novell.com/repo/$RCE/SLE10-SDK-Updates/sles-10-$arch/
+updates = you://nu.novell.com/repo/$RCE/SLES10-SP1-Updates/sles-10-$arch/
+updates-sdk = you://nu.novell.com/repo/$RCE/SLE10-SDK-Updates/sles-10-$arch/
 ----
 
 After that, mrepo should be able to successfully log on and download
 all packages for the configured channels.
+
+
+== Updates and SDK channel subscription
+Before you can use the Updates or SDK channel from the Novell website, make
+sure you have registered the SLES and SDK media (DVD or CD) within YaST.
+Only if the +rug ca+ command returns a subscription for the updates and for
+the SDK channel, it will work with mrepo:
+
+----
+system:~ # rug ca
+
+Sub'd? | Name                                              | Service
+-------+---------------------------------------------------+--------------------------------------------------
+Yes    | SUSE Linux Enterprise Server 10 SP1               | SUSE Linux Enterprise Server 10 SP1
+Yes    | SUSE Linux Enterprise Software Development Kit 10 | SUSE Linux Enterprise Software Development Kit 10
+Yes    | SLES10-SP1-Updates                                | https://nu.novell.com
+       | SLE10-SP1-Debuginfo-Updates                       | https://nu.novell.com
+Yes    | SLE10-SDK-Updates                                 | https://nu.novell.com
+----
 
 
 == Troubleshooting
@@ -95,3 +114,9 @@ suse_register -n -a email=company@example.com -a regcode-sles=03474hdkndg3934957
 
  * TID 3818394: Activation fails with an error downloading XML data.
    https://secure-support.novell.com/KanisaPlatform/Publishing/718/3818394_f.SAL_Public.html
+
+ * SDB: Generating YaST Installation Sources
+   http://en.opensuse.org/SDB:Generating_YaST_Installation_Sources
+
+ * Creating YaST Installation Sources
+   http://en.opensuse.org/Creating_YaST_Installation_Sources
