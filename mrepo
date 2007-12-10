@@ -190,7 +190,8 @@ class Config:
         self.cmd['createrepo'] = self.getoption('main', 'createrepocmd', '/usr/bin/createrepo')
         self.cmd['genbasedir'] = self.getoption('main', 'genbasedircmd', '/usr/bin/genbasedir')
         self.cmd['hardlink'] = self.getoption('main', 'hardlinkcmd', '/usr/sbin/hardlink')
-        self.cmd['hardlink++'] = self.getoption('main', 'hardlinkpluscmd', '/usr/bin/hardlink++')
+        self.cmd['hardlink++'] = self.getoption('main', 'hardlinkcppcmd', '/usr/bin/hardlink++')
+        self.cmd['hardlinkpy'] = self.getoption('main', 'hardlinkpycmd', '/usr/bin/hardlinkpy')
         self.cmd['lftp'] = self.getoption('main', 'lftpcmd', '/usr/bin/lftp')
         self.cmd['mirrordir'] = self.getoption('main', 'mirrordircmd', '/usr/bin/mirrordir')
         self.cmd['mount'] = self.getoption('main', 'mountcmd', '/bin/mount')
@@ -1361,7 +1362,13 @@ def mirroryouget(url, path, dist):
 def hardlink(srcdir):
     info(1, 'Hardlinking duplicate packages in %s.' % srcdir)
     opts = ''
-    if cf.cmd['hardlink++']:
+    if cf.cmd['hardlinkpy']:
+        if op.verbose <= 2:
+            opts = ' -v 0'
+        else:
+            opts = ' -v %d' % (op.verbose - 2)
+        run('%s %s %s' % (cf.cmd['hardlinkpy'], os.path.join(srcdir, ''), opts))
+    elif cf.cmd['hardlink++']:
         if op.verbose <= 2:
             opts = '>/dev/null'
         run('%s %s %s' % (cf.cmd['hardlink++'], os.path.join(srcdir, ''), opts))
