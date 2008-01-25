@@ -120,3 +120,6 @@ suse_register -n -a email=company@example.com -a regcode-sles=03474hdkndg3934957
 
  * Creating YaST Installation Sources
    http://en.opensuse.org/Creating_YaST_Installation_Sources
+
+ * Secure Installation Sources
+   http://en.opensuse.org/Secure_Installation_Sources

@@ -1,0 +1,71 @@
+Integrating fuseiso with mrepo
+==============================
+
+Packages required
+-----------------
+dkms
+~~~~
+DKMS project delivers a framework where kernel dependent module source can reside 
+so that it is very easy to rebuild modules as you upgrade kernels. This makes kernel 
+updates easy as all the kernel dependent modules are managed by dkms and get regenerated 
+in case of kernel update. Further details can be obtained at 
+http://linux.dell.com/projects.shtml[homepage]
+
+dkms-fuse
+~~~~~~~~~
+Fuse kernel module in dkms
+
+fuse
+~~~~
+Fuse is filesystem implemented in userspace.
+'With FUSE it is possible to implement a fully functional filesystem in a
+userspace program.' Please look at fuse http://fuse.sourceforge.net[homepage] 
+for details
+
+fuseiso
+~~~~~~~
+Fuseiso is a ISO filesystem implementation in userspace using fuse backend.
+Fuseiso http://fuse.sourceforge.net/wiki/index.php/FuseIso[homepage]
+
+
+Installing Fuse and FuseIso
+---------------------------
+Fuse and related packages can be installed directly using the apt/yum 
+from rpmforge using http://dag.wieers.com/rpm/packages/rpmforge-release/[rpmforge-release] package.
+Once the rpmforge-release package is installed
+
+    yum install dkms-fuse fuse-iso
+
+This should pull all other dependent packages (in total 4 packages dkms, dkms-fuse, fuse, fuse-iso)
+
+Or manually get following packages for your distro
+
+
+Using dkms to install fuse kernel module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The dkms rpm is available http://dag.wieers.com/rpm/packages/dkms/['here']
+
+The dkms-fuse rpm is available http://dag.wieers.com/rpm/packages/dkms-fuse/['here']
+
+
+Installing the fuse userspace package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The fuse packages is available http://dag.wieers.com/rpm/packages/fuse/['here']
+
+The fuse-iso rpm is available http://dag.wieers.com/rpm/packages/fuse-iso/['here']
+
+
+Configuring Mrepo
+----------------
+Changes in mrepo.conf
+~~~~~~~~~~~~~~~~~~~~~
+
+In '/etc/mrepo.conf' add/configure the following in the [main] section
+
+    mountcmd = /usr/bin/fuseiso
+
+Restart mrepo service
+
+    service mrepo restart
+
+This will remount all the iso images using fuseiso.
