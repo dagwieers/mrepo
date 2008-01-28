@@ -91,7 +91,7 @@ class Options:
                 self.quiet = True
             elif opt in ('-r', '--release'):
                 self.rhnrelease = arg
-            elif opt in ('--source'):
+            elif opt in ('--source', ):
                 self.source = True
             elif opt in ('-s', '--systemid'):
                 self.systemid = os.path.abspath(arg)
