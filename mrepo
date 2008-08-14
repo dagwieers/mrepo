@@ -181,6 +181,8 @@ class Config:
 
         self.hardlink = self.getoption('main', 'hardlink', 'no') not in disable
 
+        self.unionfs = self.getoption('main', 'unionfs', 'yes') not in disable
+
         self.no_proxy = self.getoption('main', 'no_proxy', None)
         self.ftp_proxy = self.getoption('main', 'ftp_proxy', None)
         self.http_proxy = self.getoption('main', 'http_proxy', None)
@@ -198,6 +200,7 @@ class Config:
         self.cmd['repoview'] = self.getoption('main', 'repoviewcmd', '/usr/bin/repoview')
         self.cmd['rhnget'] = self.getoption('main', 'rhngetcmd', '/usr/bin/rhnget')
         self.cmd['rsync'] = self.getoption('main', 'rsynccmd', '/usr/bin/rsync')
+	self.cmd['unionfs'] = self.getoption('main', 'unionfscmd', '/usr/bin/unionfs')
         self.cmd['umount'] = self.getoption('main', 'umountcmd', '/bin/umount')
         self.cmd['youget'] = self.getoption('main', 'yougetcmd', '/usr/bin/youget')
         self.cmd['yumarch'] = self.getoption('main', 'yumarchcmd', '/usr/bin/yum-arch')
@@ -285,6 +288,7 @@ class Config:
                     dist.metadata = self.metadata.split()
                     dist.enabled = True
                     dist.promoteepoch = True
+                    dist.unionfs = True
                     for option in self.cfg.options(section):
                         if option in ('iso', 'name', 'release', 'repo', 'rhnrelease'):
                             setattr(dist, option, self.cfg.get(section, option))
@@ -292,6 +296,8 @@ class Config:
                             pass
                         elif option in ('disabled',):
                             dist.enabled = self.cfg.get(section, option) in disable
+                        elif option in ('unionfs',):
+                            dist.unionfs = self.cfg.get(section, option) not in disable
                         elif option in ('metadata',):
                             setattr(dist, option, self.cfg.get(section, option).split())
                         elif option in ('promoteepoch',):
@@ -489,6 +495,7 @@ class Dist:
     def mount(self):
         "Loopback mount all ISOs"
         discs = []
+	mountpoints = []
         discnr = 0
         if cf.shareiso:
             mkdir(os.path.join(self.dir, 'iso'))
@@ -523,18 +530,38 @@ class Dist:
                 if not os.path.ismount(mount):
                     info(2, '%s: Mount ISO %s to %s' % (self.nick, os.path.basename(iso), mount))
                     run('%s %s %s %s %s' % (cf.cmd['mount'], opts, iso, mount, extra_opts))
+                    mountpoints.append(mount)
             else:
                 if mount2 != mount:
 #                    if os.path.exists(mount):
 #                        remove(mount)
                     info(5, '%s: %s already mounted, symlink ISO to %s' % (self.nick, os.path.basename(iso), mount))
                     symlink(mount2, mount)
+
+        if cf.cmd['unionfs'] and cf.unionfs and self.unionfs:
+            # This will be the name of our filesystem (first column of /etc/mtab)
+            unionfs_name = "%s-%s-fuse" % (self.dist, self.arch)
+
+            # We need to make sure that our directory isn't already mounted (in the case of mrepo -g)
+            if not mountpoint(unionfs_name):
+                # Create the 'os' directory for the merged trees.
+            	unionfs_mountpoint = os.path.join(self.dir, 'os')
+                mkdir(unionfs_mountpoint)
+                info(2, "%s -o allow_other,fsname=%s %s %s" % (cf.cmd['unionfs'], unionfs_name, ':'.join(mountpoints), unionfs_mountpoint))
+                run("%s -o allow_other,fsname=%s %s %s" % (cf.cmd['unionfs'], unionfs_name, ':'.join(mountpoints), unionfs_mountpoint))
+
         return discs
 
     def umount(self):
         "Umount all mounted ISOs"
         discnr = 0
         regexp = re.compile('.+[_-]CD[0-9]?\..+')
+
+        # Remove any unionfs mounted directories first.
+        if os.path.isdir(os.path.join(self.dir, 'os')):
+            info(2, '%s %s' % (cf.cmd['umount'], os.path.join(self.dir, 'os')))
+            run('%s %s' % (cf.cmd['umount'], os.path.join(self.dir, 'os')))
+
         for iso in self.isos:
             discnr = discnr + 1
             discstr = 'disc'
@@ -1416,7 +1443,7 @@ def mail(subject, msg):
         import smtplib
         smtp = smtplib.SMTP(cf.smtpserver)
 #       server.set_debuglevel(1)
-        msg = 'Subject: [mrepo] %s\n\n%s' % (subject, msg)
+        msg = 'Subject: [mrepo] %s\nX-Mailer: mrepo %s\n\n%s' % (subject, VERSION, msg)
         for email in cf.mailto.split():
             smtp.sendmail(cf.mailfrom, email, 'To: %s\n%s' % (email, msg))
         smtp.quit()
