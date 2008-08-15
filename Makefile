@@ -40,8 +40,8 @@ install:
 
 	install -d -m0755 $(DESTDIR)$(datadir)/mrepo/rhn/
 	install -d -m0755 $(DESTDIR)$(datadir)/mrepo/up2date_client/repoBackends/
-	cp -av rhn/*.py $(DESTDIR)$(datadir)/mrepo/rhn/
-	cp -av up2date_client/*.py $(DESTDIR)$(datadir)/mrepo/up2date_client/
+	cp -av rhn/README rhn/*.py $(DESTDIR)$(datadir)/mrepo/rhn/
+	cp -av up2date_client/README up2date_client/*.py $(DESTDIR)$(datadir)/mrepo/up2date_client/
 	cp -av up2date_client/repoBackends/*.py $(DESTDIR)$(datadir)/mrepo/up2date_client/repoBackends/
 
 	[ "$(DESTDIR)" -o ! -f "$(DESTDIR)$(sysconfdir)/cron.d/mrepo" ] && install -Dp -m0644 config/mrepo.cron $(DESTDIR)$(sysconfdir)/cron.d/mrepo || :

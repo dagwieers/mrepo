@@ -22,7 +22,7 @@ import time
 __version__ = "$Revision$"
 # $Source$
 
-VERSION = '0.8.4svn'
+VERSION = '0.8.5'
 
 archs = {
     'alpha': ('alpha', 'alphaev5', 'alphaev56', 'alphaev6', 'alphaev67'),
@@ -181,6 +181,7 @@ class Config:
 
         self.hardlink = self.getoption('main', 'hardlink', 'no') not in disable
 
+        ### FIXME: See if fuse module is loaded
         self.unionfs = self.getoption('main', 'unionfs', 'yes') not in disable
 
         self.no_proxy = self.getoption('main', 'no_proxy', None)
@@ -495,21 +496,24 @@ class Dist:
     def mount(self):
         "Loopback mount all ISOs"
         discs = []
-	mountpoints = []
+        mountpoints = []
         discnr = 0
         if cf.shareiso:
             mkdir(os.path.join(self.dir, 'iso'))
         else:
             remove(os.path.join(self.dir, 'iso'))
         regexp = re.compile('.+[_-]CD[0-9]?\..+')
-        if cf.cmd['mount'].find('fuseiso') != -1:
+        ### FIXME: See if fuse module is loaded
+        if cf.cmd['unionfs'] and cf.unionfs and self.unionfs:
             opts = '-n'
             extra_opts = '-oallow_other'
+            mount_cmd = cf.cmd['fuseiso']
         else:
             opts = '-o loop,ro'
             extra_opts = ''
-        if readfile('/selinux/enforce') == '1' and cf.cmd['mount'].find('fuseiso') == -1:
-            opts = opts + ',context=system_u:object_r:httpd_sys_content_t'
+            mount_cmd = cf.cmd['mount']
+            if readfile('/selinux/enforce') == '1':
+                opts = opts + ',context=system_u:object_r:httpd_sys_content_t'
         for iso in self.isos:
             if cf.shareiso:
                 symlink(iso, os.path.join(self.dir, 'iso'))
@@ -529,7 +533,7 @@ class Dist:
                 mkdir(mount)
                 if not os.path.ismount(mount):
                     info(2, '%s: Mount ISO %s to %s' % (self.nick, os.path.basename(iso), mount))
-                    run('%s %s %s %s %s' % (cf.cmd['mount'], opts, iso, mount, extra_opts))
+                    run('%s %s %s %s %s' % (mount_cmd, opts, iso, mount, extra_opts))
                     mountpoints.append(mount)
             else:
                 if mount2 != mount:
@@ -545,7 +549,7 @@ class Dist:
             # We need to make sure that our directory isn't already mounted (in the case of mrepo -g)
             if not mountpoint(unionfs_name):
                 # Create the 'os' directory for the merged trees.
-            	unionfs_mountpoint = os.path.join(self.dir, 'os')
+                unionfs_mountpoint = os.path.join(self.dir, 'os')
                 mkdir(unionfs_mountpoint)
                 info(2, "%s -o allow_other,fsname=%s %s %s" % (cf.cmd['unionfs'], unionfs_name, ':'.join(mountpoints), unionfs_mountpoint))
                 run("%s -o allow_other,fsname=%s %s %s" % (cf.cmd['unionfs'], unionfs_name, ':'.join(mountpoints), unionfs_mountpoint))
@@ -1054,7 +1058,7 @@ def mountpoint(dev):
 
 def distsort(a, b):
     return cmp(a.nick, b.nick)
-            
+
 def reposort(a, b):
     return cmp(a.name, b.name)
 

@@ -24,7 +24,9 @@
 - Fix elementtree for python 2.5 and higher (Leo Eraly)
 - Added hardlinkpy support
 - Added X-Mailer header to emails send
+- Added unionfs patches for merged os repository
 - Imported rhn and up2date_client libraries from the RHEL4 up2date package
+- Made fuseiso the default way of mounting (if fuseiso and fuse are found)
 
 * 0.8.4 - Sint-Jacobsplein - released 13/12/2006
 - Renamed Yam to mrepo (Matthew Hannigan)
