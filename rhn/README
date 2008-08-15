@@ -1,0 +1,6 @@
+### This directory contains the rhn and up2date code that ships with
+### RHEL4 in order to have a working rhnget and gensystemid
+### implementation on RHEL5 and other distributions.
+###
+### According to the information I have read this code is
+### redistributable under the GPLv2 license.
