@@ -1,3 +1,4 @@
+#/usr/bin/env python
 #
 # This module contains all the RPC-related functions the RHN code uses
 #
@@ -5,10 +6,11 @@
 #
 # Author: Mihai Ibanescu <misa@redhat.com>
 
-# $Id: rpclib.py 102540 2006-09-18 20:19:31Z jbowes $
+# $Id: rpclib.py 118741 2007-07-31 21:23:02Z pkilambi $
 
-__version__ = "$Revision: 102540 $"
+__version__ = "$Revision: 118741 $"
 
+import string
 import transports
 import urllib
 
@@ -16,10 +18,19 @@ from types import ListType, TupleType
 
 from UserDictCase import UserDictCase
 
-import xmlrpclib
-from xmlrpclib import Fault, ResponseError, ProtocolError, getparser
+# We may have an internalized version of xmlrpclib, we determine that in
+# transports
+xmlrpclib = transports.xmlrpclib
+File = transports.File
 
-from transports import File
+# Wrappers around xmlrpclib objects
+Fault = xmlrpclib.Fault
+
+# XXX Do we want to do it this way, or are we going to use __init__ for this?
+ResponseError = xmlrpclib.ResponseError
+ProtocolError = xmlrpclib.ProtocolError
+
+getparser = xmlrpclib.getparser
 
 # Redirection handling
 
@@ -35,7 +46,7 @@ send_handler = None
 # TODO: check IPv6 numerical IPs it may break
 #
 def split_host(hoststring):
-    l = hoststring.split('@', 1)
+    l = string.split(hoststring, '@', 1)
     host = None
     port = None
     user = None
@@ -44,7 +55,7 @@ def split_host(hoststring):
     if len(l) == 2:
         hostport = l[1]
         # userinfo present
-        userinfo = l[0].split(':', 1)
+        userinfo = string.split(l[0], ':', 1)
         user = userinfo[0]
         if len(userinfo) == 2:
             passwd = userinfo[1]
@@ -52,7 +63,7 @@ def split_host(hoststring):
         hostport = l[0]
 
     # Now parse hostport
-    arr = hostport.split(':', 1)
+    arr = string.split(hostport, ':', 1)
     host = arr[0]
     if len(arr) == 2:
         port = arr[1]
@@ -63,18 +74,13 @@ def get_proxy_info(proxy):
     if proxy == None:
         raise ValueError, "Host string cannot be null"
 
-    arr = proxy.split('://', 1)
+    arr = string.split(proxy, '://', 1)
     if len(arr) == 2:
         # scheme found, strip it
         proxy = arr[1]
     
     return split_host(proxy)
         
-
-class MalformedURIError(IOError):
-    pass
-
-
 # This is a cut-and-paste of xmlrpclib.ServerProxy, with the data members made
 # protected instead of private
 # It also adds support for changing the way the request is made (XMLRPC or
@@ -144,13 +150,7 @@ class Server:
 
         # get the url
         type, uri = urllib.splittype(uri)
-        if type is None:
-            raise MalformedURIError, "missing protocol in uri"
-        # with a real uri passed in, uri will now contain "//hostname..." so we 
-        # need at least 3 chars for it to maybe be ok...
-        if len(uri) < 3 or uri[0:2] != "//": 
-            raise MalformedURIError
-        type = type.lower()
+        type = (string.lower(type)).strip()
         self._type = type
         if type not in ("http", "https"):
             raise IOError, "unsupported XML-RPC protocol"
@@ -249,10 +249,10 @@ class Server:
         content_range = headers.get('Content-Range')
         if not content_range:
             return None
-        arr = filter(None, content_range.split())
+        arr = filter(None, string.split(content_range))
         assert arr[0] == "bytes"
         assert len(arr) == 2
-        arr = arr[1].split('/')
+        arr = string.split(arr[1], '/')
         assert len(arr) == 2
 
         brange, total_len = arr
@@ -263,7 +263,7 @@ class Server:
         else:
             total_len = int(total_len)
 
-        start, end = brange.split('-')
+        start, end = string.split(brange, '-')
         result = {
             'length'            : total_len,
             'first_byte_pos'    : int(start),
@@ -297,7 +297,7 @@ class Server:
             
             self._transport.add_header("X-Info",
                 'RPC Processor (C) Red Hat, Inc (version %s)' % 
-                __version__.split()[1])
+                string.split(__version__)[1])
             # identify the capability set of this client to the server
             self._transport.set_header("X-Client-Version", 1)
             
@@ -342,7 +342,7 @@ class Server:
             typ, uri = urllib.splittype(self._redirected)
             
             if typ != None:
-                typ = typ.lower()
+                typ = string.lower(typ)
             if typ not in ("http", "https"):
                 raise InvalidRedirectionError(
                     "Redirected to unsupported protocol %s" % typ)
@@ -495,10 +495,10 @@ class GETServer(Server):
         if not params or len(params) < 1:
             raise Exception("Required parameter channel not found")
         # Strip the multiple / from the handler
-        h_comps = filter(lambda x: x != '', self._orig_handler.split('/'))
+        h_comps = filter(lambda x: x != '', string.split(self._orig_handler, '/'))
         # Set the handler we are going to request
         hndl = h_comps + ["$RHN", params[0], methodname] + list(params[1:])
-        self._handler = '/' + '/'.join(hndl)
+        self._handler = '/' + string.join(hndl, '/')
 
         #save the constructed handler in case of redirect
         send_handler = self._handler
@@ -578,7 +578,7 @@ def getHeaderValues(headers, name):
             return [headers[name]]
         return []
 
-    return map(lambda x: x.split(':', 1)[1].strip(), 
+    return map(lambda x: string.strip(string.split(x, ':', 1)[1]), 
             headers.getallmatchingheaders(name))
 
 class _Method:
@@ -641,7 +641,7 @@ def reportError(headers):
     if headers.has_key(s):
         _sList = getHeaderValues(headers, s)
         if _sList:
-            _s = ''.join(_sList)
+            _s = string.join(_sList, '')
             import base64
             errmsg = "%s" % base64.decodestring(_s)
 

@@ -1,3 +1,4 @@
+#/usr/bin/env python
 #
 # Connection objects
 #
@@ -5,13 +6,31 @@
 #
 # Author: Mihai Ibanescu <misa@redhat.com>
 
-# $Id: connections.py 104795 2006-10-23 21:20:28Z jbowes $
+# $Id: connections.py 116568 2007-05-21 23:30:08Z pkilambi $
 
 
+import sys
+import string
 import SSL
 import nonblocking
-import httplib
-import xmlrpclib
+
+# Testing which version of python we run
+if hasattr(sys, "version_info"):
+    # python 2.2 or newer
+    import httplib
+else:
+    # Older version, with incompatible httplib; import the patched one
+    import _httplib
+    httplib = _httplib
+
+# Testing which version of python we run
+if hasattr(sys, "version_info"):
+    # python 2.2 or newer
+    import xmlrpclib
+else:
+    # Older version, with incompatible httplib; import the patched one
+    import _internal_xmlrpclib
+    xmlrpclib = _internal_xmlrpclib
 
 # Import into the local namespace some httplib-related names
 _CS_REQ_SENT = httplib._CS_REQ_SENT
@@ -70,7 +89,7 @@ class HTTPConnection(httplib.HTTPConnection):
         self._cb_ex = []
         self._cb_user_data = None
         self._cb_callback = None
-        self._user_agent = "rhn.connections $Revision: 104795 $ (python)"
+        self._user_agent = "rhn.connections $Revision: 116568 $ (python)"
 
     def set_callback(self, rs, ws, ex, user_data, callback):
         # XXX check the params
@@ -173,7 +192,7 @@ class HTTPProxyConnection(HTTPConnection):
         # Authenticated proxy
         import base64
         userpass = "%s:%s" % (self.__username, self.__password)
-        enc_userpass = base64.encodestring(userpass).replace("\n", "")
+        enc_userpass = string.replace(base64.encodestring(userpass), "\n", "")
         self.putheader("Proxy-Authorization", "Basic %s" % enc_userpass)
         
 class HTTPSConnection(HTTPConnection):
@@ -189,7 +208,6 @@ class HTTPSConnection(HTTPConnection):
         "Connect to a host on a given (SSL) port"
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(SSL.DEFAULT_TIMEOUT)
         sock.connect((self.host, self.port))
         self.sock = SSL.SSLSocket(sock, self.trusted_certs)
         self.sock.init_ssl()
@@ -233,7 +251,6 @@ class HTTPSProxyConnection(HTTPProxyConnection):
             self.close()
             raise xmlrpclib.ProtocolError(host,
                 response.status, response.reason, response.msg)
-        self.sock.settimeout(SSL.DEFAULT_TIMEOUT)
         self.sock = SSL.SSLSocket(self.sock, self.trusted_certs)
         self.sock.init_ssl()
 

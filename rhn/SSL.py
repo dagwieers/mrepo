@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #
 # Higher-level SSL objects used by rpclib
 #
@@ -5,7 +6,7 @@
 #
 # Author: Mihai Ibanescu <misa@redhat.com>
 
-# $Id: SSL.py 104814 2006-10-24 15:36:18Z jbowes $
+# $Id: SSL.py 137099 2008-02-19 17:27:26Z pkilambi $
 
 """
 rhn.SSL builds an abstraction on top of the objects provided by pyOpenSSL
@@ -18,7 +19,7 @@ import time
 import socket
 import select
 
-DEFAULT_TIMEOUT = 30
+DEFAULT_TIMEOUT = 120
 
 
 class SSLSocket:
@@ -285,7 +286,7 @@ def ssl_verify_callback(conn, cert, errnum, depth, ok):
     # Nothing by default
     return ok
 
-class TimeoutException(SSL.Error, socket.timeout):
+class TimeoutException(SSL.Error):
     
     def __init__(self, *args):
         self.args = args
