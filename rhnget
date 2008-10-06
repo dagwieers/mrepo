@@ -158,11 +158,11 @@ class Set:
     def add(self, input):
         if input not in self.list:
             self.list.append(input)
-    
+
     def delete(self, input):
         if input in self.list:
             self.list.removed(input)
-    
+
     def difference(self, other):
         newlist = Set()
         for element in self.list:
@@ -172,7 +172,7 @@ class Set:
 
     def sort(self):
         return self.list.sort()
-    
+
     def __str__(self):
         return '\n\t' + '\n\t'.join([element[0] for element in self.list])
 
@@ -497,10 +497,7 @@ def mirrorrhn(url, path):
             remove(os.path.join(path, filename))
 
 def main():
-    try:
-        mirrorrhn(op.uri, op.destination)
-    except Exception, e:
-        die(1, e)
+    mirrorrhn(op.uri, op.destination)
 
 ### Unbuffered sys.stdout
 sys.stdout = os.fdopen(1, 'w', 0)
