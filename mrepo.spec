@@ -2,9 +2,9 @@
 # Authority: dag
 # Upstream: Dag Wieers <dag$wieers,com>
 
-Summary: Tool to set up a Yum/Apt mirror from various sources (ISO, RHN, rsync, http, ftp, ...)
+Summary: Set up repositories from various sources (ISO, RHN, YOU, rsync, http, ftp, ...)
 Name: mrepo
-Version: 0.8.5
+Version: 0.8.6
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -31,7 +31,8 @@ the repository structure and meta-data, enables HTTP access to
 the repository and creates a directory-structure for remote
 network installations using PXE/TFTP.
 
-mrepo supports ftp, http, sftp, rsync, rhn and other download methods.
+mrepo supports ftp, http, sftp, rsync, Red Hat Network and YaST
+Online Update and other download methods.
 
 With mrepo, you can enable your laptop or a local server to provide
 updates for the whole network and provide the proper files to
@@ -78,8 +79,8 @@ EOF
 
 %preun
 if [ $1 -eq 0 ]; then
-	/service mrepo stop &>/dev/null || :
-        /sbin/chkconfig --del mrepo
+    /service mrepo stop &>/dev/null || :
+    /sbin/chkconfig --del mrepo
 fi
 
 %post
@@ -110,6 +111,9 @@ fi
 %{_localstatedir}/mrepo/
 
 %changelog
+* Mon Oct 06 2008 Dag Wieers <dag@wieers.com> - 0.8.6-1
+- Updated to release 0.8.6.
+
 * Fri Aug 15 2008 Dag Wieers <dag@wieers.com> - 0.8.5-1
 - Updated to release 0.8.5.
 
