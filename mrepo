@@ -830,7 +830,7 @@ class Repo:
 
         opts = ' ' + cf.createrepooptions
         if op.force:
-            opts = ' --pretty'
+            opts = ' --pretty' + opts
         if op.verbose <= 2:
             opts = ' --quiet' + opts
         elif op.verbose >= 4:

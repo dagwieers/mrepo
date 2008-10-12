@@ -1,4 +1,8 @@
-* 0.8.4svn - ... - released 19/10/2007
+* 0.8.6svn - ... - released 10/10/2008
+- Add pyOpenSSL dependency to RPM spec file (Bryan Washer)
+- Fixed a problem with createrepo options (David Zambonini)
+
+* 0.8.6 - Househunting - released 06/10/2008
 - Fixed a few typos (Ian Forde)
 - Added promoteepoch directive to disable it for older distributions (rhel2.1, rh7.3)
 - Fixed a problem with the disabled directive (disabled = no was ignored)
