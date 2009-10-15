@@ -1,6 +1,7 @@
-* 0.8.6svn - ... - released 10/10/2008
+* 0.8.6svn - ... - released 15/10/2009
 - Add pyOpenSSL dependency to RPM spec file (Bryan Washer)
 - Fixed a problem with createrepo options (David Zambonini)
+- Fixed a problem in rhnget related to python sys.path causing 'Forbidden' (Mark Reynolds)
 
 * 0.8.6 - Househunting - released 06/10/2008
 - Fixed a few typos (Ian Forde)
