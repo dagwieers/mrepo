@@ -45,7 +45,7 @@
 - Hardcoded xmlrpc.rhn.redhat.com in rhnget (Matt Hyclak)
 - Fixed a problem when symlink to an existing dangling symlink
 - Suppress backtrace and print Exception error within rhnget
-- Added Scientific Linux configurations (Michael Mansour)
+- Added Scientific Linux configurations (Michael Mansour, Troy Dawson)
 
 * 0.8.3 - Van Eyck - released 15/10/2006
 - Fixed a problem with specific python versions (Justin B Hochstetler)
