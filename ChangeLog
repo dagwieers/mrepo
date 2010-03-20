@@ -1,4 +1,4 @@
-* 0.8.6svn - ... - released 15/10/2009
+* 0.8.7 - Way Overdue - released 20/03/2010
 - Add pyOpenSSL dependency to RPM spec file (Bryan Washer)
 - Fixed a problem with createrepo options (David Zambonini)
 - Fixed a problem in rhnget related to python sys.path causing 'Forbidden' (Mark Reynolds)
