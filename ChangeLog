@@ -1,3 +1,7 @@
+* 0.8.8 - ... - released 16/08/2010
+- Renamed YAMCONFIG to MREPOCONFIG
+- Updated distribution config files
+
 * 0.8.7 - Way Overdue - released 20/03/2010
 - Add pyOpenSSL dependency to RPM spec file (Bryan Washer)
 - Fixed a problem with createrepo options (David Zambonini)

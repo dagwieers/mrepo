@@ -16,12 +16,12 @@ source /etc/rc.d/init.d/functions
 
 ### Default variables
 SYSCONFIG="/etc/sysconfig/mrepo"
-YAMCONFIG="/etc/mrepo.conf"
+MREPOCONFIG="/etc/mrepo.conf"
 
 ### Read configuration
 [ -r "$SYSCONFIG" ] && source "$SYSCONFIG"
 
-[ -r "$YAMCONFIG" ] || exit 1
+[ -r "$MREPOCONFIG" ] || exit 1
 
 RETVAL=0
 prog="mrepo"
@@ -29,7 +29,7 @@ desc="rpm distribution server"
 
 start() {
 	echo -n $"Starting $desc ($prog): "
-	mrepo -q -c $YAMCONFIG
+	mrepo -q -c $MREPOCONFIG
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && success || failure
 	echo
@@ -39,7 +39,7 @@ start() {
 
 stop() {
 	echo -n $"Shutting down $desc ($prog): "
-	mrepo -q --umount -c $YAMCONFIG
+	mrepo -q --umount -c $MREPOCONFIG
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && success || failure
 	echo
