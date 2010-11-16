@@ -20,10 +20,10 @@ global cfg, loginInfo
 def checkrelease(release, arch):
     ### We are not sure about the architectures below :-/
     releases = {
-        '6Workstation': ('i386', 'ia64', 'x86_64'),
-        '6Server': ('i386', 'ia64', 'ppc', 's390', 's390x', 'x86_64'),
-        '6ComputeNode': ('i386', 'ia64', 'ppc', 's390', 's390x', 'x86_64'),
-        '6Client': ('i386', 'ia64', 'x86_64'),
+        '6Workstation': ('i386', 'x86_64'),
+        '6Server': ('i386', 'ppc', 's390', 's390x', 'x86_64'),
+        '6ComputeNode': ('i386', 'ppc', 's390', 's390x', 'x86_64'),
+        '6Client': ('i386', 'x86_64'),
         '5Server': ('i386', 'ia64', 'ppc', 's390', 's390x', 'x86_64'),
         '5Client': ('i386', 'ia64', 'x86_64'),
         '4AS': ('i386', 'ia64', 'ppc', 's390', 's390x', 'x86_64'),
