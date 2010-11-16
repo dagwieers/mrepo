@@ -328,7 +328,7 @@ class Config:
         "Get an option from a section from configfile"
         try:
             var = self.cfg.get(section, option)
-            info(2, 'Setting option %s in section [%s] to: %s' % (option, section, var))
+            info(3, 'Setting option %s in section [%s] to: %s' % (option, section, var))
         except ConfigParser.NoSectionError, e:
             error(5, 'Failed to find section [%s]' % section)
         except ConfigParser.NoOptionError, e:
