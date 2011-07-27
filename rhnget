@@ -59,7 +59,7 @@ class Options:
 
         try:
             opts, args = getopt.getopt (args, 'hlnqp:r:s:u:v',
-                ('delete', 'download-all', 'dryrun', 'filter=', 'help', 'list', 'password=', 'quiet',
+                ('delete', 'download-all', 'dry-run', 'filter=', 'help', 'list', 'password=', 'quiet',
                  'release=', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
         except getopt.error, exc:
             print 'rhnget: %s, try rhnget -h for a list of all the options' % str(exc)
