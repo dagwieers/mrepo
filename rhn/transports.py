@@ -33,6 +33,7 @@ class NotProcessed(Exception):
 
 class Transport(xmlrpclib.Transport):
     user_agent = "rhn.rpclib.py/%s" % __version__
+    _use_datetime = False
 
     def __init__(self, transfer=0, encoding=0, refreshCallback=None,
             progressCallback=None):
