@@ -830,14 +830,20 @@ class Repo:
         ### Find the createrepo version we are using (due to groupfile usage changes)
         createrepo_version = None
         groupfilename = 'RPMS.%s/comps.xml' % self.name
+
+        sys.path.append("/usr/share/createrepo")
         try:
-            sys.path.append("/usr/share/createrepo")
-            import genpkgmetadata
-            createrepo_version = genpkgmetadata.__version__
-            sys.path.remove("/usr/share/createrepo")
-            del genpkgmetadata
-        except:
+            try:
+                import createrepo
+                createrepo_version = createrepo.__version__
+                del createrepo
+            except ImportError:
+                import genpkgmetadata
+                createrepo_version = genpkgmetadata.__version__
+                del genpkgmetadata
+        except ImportError:
             pass
+        sys.path.remove("/usr/share/createrepo")
 
         ### If version < 0.4.6, then use the old createrepo behaviour
         if not createrepo_version:
