@@ -148,7 +148,7 @@ gensystemid options:
   -a, --arch=arch              specify architecture (i386, x86_64, ppc, ia64)
   -q, --quiet                  minimal output
   -p, --password=password      specify rhn password (asked when not given)
-  -r, --release=rhnrelease     specify rhn release {2.1,3,4}{AS,ES,WS,Desktop} 5{Server,Client}
+  -r, --release=rhnrelease     specify rhn release {2.1,3,4}{AS,ES,WS,Desktop} 5{Server,Client} 6{Server,Client,Workstation,ComputeNode}
   -u, --username=username      specify rhn username (asked when not given)
   -v, --verbose                increase verbosity
   -vv, -vvv, -vvvv..           increase verbosity more
