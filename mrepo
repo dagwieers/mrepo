@@ -21,7 +21,14 @@ import getopt
 import glob
 import os
 import re
-import sha
+
+# Python >= 2.5
+try:
+    from hashlib import sha1 as sha1hash
+# Python <= 2.4
+except ImportError:
+    from sha import new as sha1hash
+
 import shutil
 import sys
 import time
@@ -1000,7 +1007,7 @@ def sha1dir(dir):
     output = ''
     for file in files:
         output = output + os.path.basename(file) + ' ' + str(os.stat(file).st_size) + '\n'
-    return sha.new(output).hexdigest()
+    return sha1hash(output).hexdigest()
 
 def writesha1(file, sha1sum=None):
     "Write out sha1sum"
