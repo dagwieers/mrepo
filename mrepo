@@ -439,10 +439,18 @@ class Dist:
                 repo.url = None
                 srcdirs = [ pathjoin(self.dir, disc) for disc in self.discs ]
                 self.linksync(repo, srcdirs)
-                for file in glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')):
+
+                os_components = (
+                    glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) + # RHEL 4
+                    glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) + # RHEL 5
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps-*.xml')) # RHEL 6
+                )
+
+                for file in os_components:
                     if not os.path.exists(pathjoin(self.srcdir, self.nick, 'os-comps.xml')):
                         copy(file, pathjoin(self.srcdir, self.nick, 'os-comps.xml'))
                     allsrcdirs.extend(srcdirs)
+
             else:
                 self.linksync(repo)
                 allsrcdirs.append(repo.srcdir)
