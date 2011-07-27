@@ -543,7 +543,7 @@ class Dist:
             extra_opts = ''
             mount_cmd = cf.cmd['mount']
             if readfile('/selinux/enforce') == '1':
-                opts = opts + ',context=system_u:object_r:httpd_sys_content_t'
+                opts = opts + ',context=system_u:object_r:httpd_sys_content_t:s0'
         for iso in self.isos:
             if cf.shareiso:
                 symlink(iso, os.path.join(self.dir, 'iso'))
