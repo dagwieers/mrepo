@@ -15,9 +15,19 @@
 ### Copyright 2004-2007 Dag Wieers <dag@wieers.com>
 
 from __future__ import generators # for Python 2.2
-import os, sys, glob, re, shutil, getopt
-import ConfigParser, urlparse, sha, types, traceback
+
+import ConfigParser
+import getopt
+import glob
+import os
+import re
+import sha
+import shutil
+import sys
 import time
+import traceback
+import types
+import urlparse
 
 __version__ = "$Revision$"
 # $Source$
