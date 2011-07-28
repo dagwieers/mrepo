@@ -15,9 +15,26 @@
 ### Copyright 2004-2007 Dag Wieers <dag@wieers.com>
 
 from __future__ import generators # for Python 2.2
-import os, sys, glob, re, shutil, getopt, popen2
-import ConfigParser, urlparse, sha, types, traceback
+
+import ConfigParser
+import getopt
+import glob
+import os
+import re
+
+# Python >= 2.5
+try:
+    from hashlib import sha1 as sha1hash
+# Python <= 2.4
+except ImportError:
+    from sha import new as sha1hash
+
+import shutil
+import sys
 import time
+import traceback
+import types
+import urlparse
 
 __version__ = "$Revision$"
 # $Source$
@@ -65,7 +82,7 @@ class Options:
 
         try:
             opts, args = getopt.getopt (args, 'c:d:fghnqr:t:uvx',
-                ('config=', 'dist=', 'dryrun', 'force', 'generate', 'help', 'quiet', 'repo',
+                ('config=', 'dist=', 'dry-run', 'force', 'generate', 'help', 'quiet', 'repo',
                 'remount', 'type=', 'umount', 'unmount', 'update', 'verbose', 'version', 'extras'))
         except getopt.error, exc:
             print 'mrepo: %s, try mrepo -h for a list of all the options' % str(exc)
@@ -422,10 +439,18 @@ class Dist:
                 repo.url = None
                 srcdirs = [ pathjoin(self.dir, disc) for disc in self.discs ]
                 self.linksync(repo, srcdirs)
-                for file in glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')):
+
+                os_components = (
+                    glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) + # RHEL 4
+                    glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) + # RHEL 5
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps-*.xml')) # RHEL 6
+                )
+
+                for file in os_components:
                     if not os.path.exists(pathjoin(self.srcdir, self.nick, 'os-comps.xml')):
                         copy(file, pathjoin(self.srcdir, self.nick, 'os-comps.xml'))
                     allsrcdirs.extend(srcdirs)
+
             else:
                 self.linksync(repo)
                 allsrcdirs.append(repo.srcdir)
@@ -518,7 +543,7 @@ class Dist:
             extra_opts = ''
             mount_cmd = cf.cmd['mount']
             if readfile('/selinux/enforce') == '1':
-                opts = opts + ',context=system_u:object_r:httpd_sys_content_t'
+                opts = opts + ',context=system_u:object_r:httpd_sys_content_t:s0'
         for iso in self.isos:
             if cf.shareiso:
                 symlink(iso, os.path.join(self.dir, 'iso'))
@@ -581,7 +606,7 @@ class Dist:
             if not os.path.isfile(cf.cmd['umount']):
                 die(5, 'umount command not %s' % cf.cmd['umount'])
             if os.path.ismount(mount):
-                if mountpoint(mount):
+                if mountpoint(iso):
                     info(2, '%s: Unmount ISO %s from %s' % (self.nick, os.path.basename(iso), mount))
                     run('%s %s' % (cf.cmd['umount'], mount))
                 else:
@@ -813,14 +838,20 @@ class Repo:
         ### Find the createrepo version we are using (due to groupfile usage changes)
         createrepo_version = None
         groupfilename = 'RPMS.%s/comps.xml' % self.name
+
+        sys.path.append("/usr/share/createrepo")
         try:
-            sys.path.append("/usr/share/createrepo")
-            import genpkgmetadata
-            createrepo_version = genpkgmetadata.__version__
-            sys.path.remove("/usr/share/createrepo")
-            del genpkgmetadata
-        except:
+            try:
+                import createrepo
+                createrepo_version = createrepo.__version__
+                del createrepo
+            except ImportError:
+                import genpkgmetadata
+                createrepo_version = genpkgmetadata.__version__
+                del genpkgmetadata
+        except ImportError:
             pass
+        sys.path.remove("/usr/share/createrepo")
 
         ### If version < 0.4.6, then use the old createrepo behaviour
         if not createrepo_version:
@@ -990,7 +1021,7 @@ def sha1dir(dir):
     output = ''
     for file in files:
         output = output + os.path.basename(file) + ' ' + str(os.stat(file).st_size) + '\n'
-    return sha.new(output).hexdigest()
+    return sha1hash(output).hexdigest()
 
 def writesha1(file, sha1sum=None):
     "Write out sha1sum"
