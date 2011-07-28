@@ -13,7 +13,13 @@ import sys
 import time
 import rpm
 import string
-import md5
+
+# Python >= 2.5
+try:
+    from hashlib import md5 as md5hash
+# Python <= 2.4
+except ImportError:
+    from md5 import new as md5hash
 
 sys.path.insert(0, "/usr/share/rhn/")
 sys.path.insert(1,"/usr/share/rhn/up2date_client")
@@ -158,7 +164,7 @@ def isObsoleted(obs, pkg, package=None):
     
 
 def md5sum(fileName):
-    hashvalue = md5.new()
+    hashvalue = md5hash()
     
     try:
         f = open(fileName, "r")
