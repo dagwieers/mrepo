@@ -4,7 +4,7 @@
 
 Summary: Set up repositories from various sources (ISO, RHN, YOU, rsync, http, ftp, ...)
 Name: mrepo
-Version: 0.8.7
+Version: 0.8.8
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -21,6 +21,7 @@ BuildRequires: /usr/bin/python2
 Requires: createrepo
 Requires: python >= 2.0
 Requires: pyOpenSSL
+Requires: rhpl
 Obsoletes: yam <= %{version}
 
 %description
@@ -109,10 +110,13 @@ fi
 %{_bindir}/youget
 %{_datadir}/mrepo/
 %{_localstatedir}/cache/mrepo/
-%{_localstatedir}/www/mrepo/
 %{_localstatedir}/mrepo/
+%{_localstatedir}/www/mrepo/
 
 %changelog
+* Mon Aug 01 2011 Dag Wieers <dag@wieers.com> - 0.8.8-1
+- Updated to release 0.8.8.
+
 * Sat Feb 06 2010 Dag Wieers <dag@wieers.com> - 0.8.7-1
 - Updated to release 0.8.7.
 

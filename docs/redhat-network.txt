@@ -107,36 +107,6 @@ You can also log on manually to the RHN website to subscribe your system
 to the channels you require.
 
 
-== Configuring up2date sources
-If you encounter the following message:
-
-----
-	Traceback (most recent call last):
-	  File "/usr/bin/mrepo", line 1364, in ?
-	    main()
-	  File "/usr/bin/mrepo", line 1247, in main
-	    mirror(dist.repos[repo], srcdir, dist)
-	  File "/usr/bin/mrepo", line 819, in mirror
-	    mirrorrhn(url, path, dist)
-	  File "/usr/bin/mrepo", line 1099, in mirrorrhn
-	    package_list, type = rpcServer.doCall(repos.listPackages, channel, None, None)
-	  File "/usr/share/rhn/up2date_client/rpcServer.py", line 316, in doCall
-	    ret = apply(method, args, kwargs)
-	  File "/usr/share/rhn/up2date_client/repoDirector.py", line 21, inlistPackages
-	    return self.handlers[channel['type']].listPackages(channel, msgCallback, progressCallback)
-	KeyError: 'up2date'
-----
-
-you need to configure up2date by adding or enabling the following line in
-_/etc/sysconfig/rhn/sources_
-
-    up2date default
-
-Especially on a system that was not using RHN or on CentOS this is a manual
-change you have to make. mrepo doesn't really care, but the up2date
-implementation it is using simply requires it.
-
-
 == Adding up2date-uuid file
 If you get the following error:
 

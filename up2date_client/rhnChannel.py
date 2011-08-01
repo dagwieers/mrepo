@@ -12,7 +12,7 @@ import up2dateErrors
 import config
 import up2dateLog
 import rpcServer
-import sourcesConfig
+#import sourcesConfig
 import urlMirrors
 from rhn import rpclib
 
@@ -155,129 +155,35 @@ def getChannels(force=None, label_whitelist=None):
     selected_channels=label_whitelist
     if not selected_channels and not force:
 
-        useRhn = 0
-        sources = sourcesConfig.getSources()
-        for source in sources:
-            if source['type'] == "up2date":
-                useRhn = 1
+        ### mrepo: hardcode sources so we don't depend on /etc/sysconfig/rhn/sources
+        # sources = sourcesConfig.getSources()
+        sources = [{'url': 'https://xmlrpc.rhn.redhat.com/XMLRPC', 'type': 'up2date'}]
+        useRhn = 1
 
         if cfg.has_key('cmdlineChannel'):
             sources.append({'type':'cmdline', 'label':'cmdline'}) 
 
         selected_channels = rhnChannelList()
         cfg['useRhn'] = useRhn
-        if useRhn:
-            li = up2dateAuth.getLoginInfo()
-            # login can fail...
-            if not li:
-                return []
+
+        li = up2dateAuth.getLoginInfo()
+        # login can fail...
+        if not li:
+            return []
         
-            tmp = li.get('X-RHN-Auth-Channels')
-            if tmp == None:
-                tmp = []
-            for i in tmp:
-                if label_whitelist and not label_whitelist.has_key(i[0]):
-                    continue
-                
-                channel = rhnChannel(label = i[0], version = i[1],
-                                     type = 'up2date', url = cfg["serverURL"])
-                selected_channels.addChannel(channel)
-
-            if len(selected_channels.list) == 0:
-                raise up2dateErrors.NoChannelsError(_("This system may not be updated until it is associated with a channel."))
-        # doesnt do much at the moment, but I've got the feeling
-        # it's going to get much more complicated
-
-        #  ^ Indeed...
-        sources = sourcesConfig.getSources()
-
-        # create a virutal "source" that is just the packages specified on the commandline
-        if cfg.has_key('cmdlineChannel'):
-            sources.append({'type':'cmdline', 'label':'cmdline'}) 
-
-        useMirrors = {}
-        mirrorSources = []
-        #figure out mirrorInfo first:
-        for source in sources:
-            if source['type'] in ('apt-mirror', 'yum-mirror'):
-                label = source['label']
-                mirrorUrl = source['url']
-                useMirrors[label] = mirrorUrl
-                mirrorSources.append(source)
-
-        for source in mirrorSources:
-            sources.remove(source)
-        
-        for source in sources:
-            url = ""
-            channel = None
-            
-            if source['type'] == "up2date":
-                # FIXME: need better logic here
+        tmp = li.get('X-RHN-Auth-Channels')
+        if tmp == None:
+            tmp = []
+        for i in tmp:
+            if label_whitelist and not label_whitelist.has_key(i[0]):
                 continue
-            if source['type'] == "yum":
-                url = source['url']
-                if useMirrors.has_key(source['label']):
-                    url = getMirror(source,useMirrors[source['label']])
-                channel = rhnChannel(label = source['label'],
-                                     type = source['type'],
-                                     version = "1000",
-                                     url = url)
-
-            if source['type'] == "apt":
-                url = source['url']
-                if useMirrors.has_key(source['label']):
-                    url = getMirror(source, useMirrors[source['label']])
-                channel = rhnChannel(label = source['label'],
-                                     type = source['type'],
-                                     version = "1000",
-                                     url = url,
-                                     dist = source['dist'])
-
-            if source['type'] == 'repomd':
-                url = source['url']
-                if useMirrors.has_key(source['label']):
-                    url = getMirror(source, useMirrors[source['label']])
-		     #url = getMirror(source)
-                channel = rhnChannel(label = source['label'],
-                                     type = source['type'],
-                                     version = "1000",
-                                     url = url)
-
-            if source['type'] == "dir":
-                if not os.access(source['path'], os.R_OK):
-                    # FIXME: this should probabaly be an exception we catch somewhere
-                    # and present a pretty erorr message, but this is better than a traceback
-                    print _("%s is not a valid directory") % source['path']
-                    continue
-                timestamp = os.stat(source['path'])[8]
-                version = time.strftime("%Y%m%d%H%M%S", time.gmtime(timestamp))
-                channel = rhnChannel(label = source['label'],
-                                     type = source['type'],
-                                     version = version,
-                                     url = "file:/%s" % source['path'],
-                                     path = source['path'])
-
-            if source['type'] == 'bt':
-                # version doesnt really matter since we only use
-                # it as a possible source to download packages
-                channel = rhnChannel(label = source['label'],
-                                     type = source['type'],
-                                     version = "1000",
-                                     url = source['url'])
-
-            if source['type'] == "cmdline":
-                channel = rhnChannel(label = source['label'],
-                                     type = source['type'],
-                                     # whatever...
-                                     version = "1000",
-                                     url = "cmdline")
-
-            if label_whitelist and not label_whitelist.has_key(channel['label']):
-                    continue
                 
+            channel = rhnChannel(label = i[0], version = i[1],
+                                 type = 'up2date', url = cfg["serverURL"])
             selected_channels.addChannel(channel)
 
+        if len(selected_channels.list) == 0:
+            raise up2dateErrors.NoChannelsError(_("This system may not be updated until it is associated with a channel."))
 
     return selected_channels
             
