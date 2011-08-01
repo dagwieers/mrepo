@@ -606,7 +606,7 @@ class Dist:
             if not os.path.isfile(cf.cmd['umount']):
                 die(5, 'umount command not %s' % cf.cmd['umount'])
             if os.path.ismount(mount):
-                if mountpoint(iso):
+                if mountpoint(mount):
                     info(2, '%s: Unmount ISO %s from %s' % (self.nick, os.path.basename(iso), mount))
                     run('%s %s' % (cf.cmd['umount'], mount))
                 else:
