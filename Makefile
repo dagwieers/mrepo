@@ -45,7 +45,7 @@ install:
 	cp -av up2date_client/repoBackends/*.py $(DESTDIR)$(datadir)/mrepo/up2date_client/repoBackends/
 
 	[ "$(DESTDIR)" -o ! -f "$(DESTDIR)$(sysconfdir)/cron.d/mrepo" ] && install -Dp -m0644 config/mrepo.cron $(DESTDIR)$(sysconfdir)/cron.d/mrepo || :
-	
+
 	install -Dp -m0644 config/mrepo.logrotate $(DESTDIR)$(sysconfdir)/logrotate.d/mrepo
 
 	@if [ -z "$(DESTDIR)" -a -x "/sbin/chkconfig" ]; then \
@@ -58,8 +58,7 @@ docs:
 	make -C docs
 
 dist: clean
-	svn up
-	svn list -R | pax -d -w -x ustar -s ,^,$(name)-$(version)/, | bzip2 >../$(name)-$(version).tar.bz2
+	git ls-tree -r --name-only --full-tree `git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'` | pax -d -w -x ustar -s ,^,$(name)-$(version)/, | bzip2 >../$(name)-$(version).tar.bz2
 
 rpm: dist
 	rpmbuild -tb --clean --rmspec --define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" --define "_rpmdir ../" ../$(name)-$(version).tar.bz2
