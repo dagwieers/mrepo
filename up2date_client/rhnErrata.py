@@ -6,7 +6,6 @@ import sys
 sys.path.insert(0, "/usr/share/rhn/")
 sys.path.insert(1,"/usr/share/rhn/up2date_client")
 
-from rhpl.translate import _, N_
 import up2dateErrors
 import up2dateMessages
 import rpmUtils

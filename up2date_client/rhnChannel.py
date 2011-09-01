@@ -17,7 +17,6 @@ import urlMirrors
 from rhn import rpclib
 
 
-from rhpl.translate import _, N_
 
 
 
@@ -183,7 +182,7 @@ def getChannels(force=None, label_whitelist=None):
             selected_channels.addChannel(channel)
 
         if len(selected_channels.list) == 0:
-            raise up2dateErrors.NoChannelsError(_("This system may not be updated until it is associated with a channel."))
+            raise up2dateErrors.NoChannelsError("This system may not be updated until it is associated with a channel.")
 
     return selected_channels
             

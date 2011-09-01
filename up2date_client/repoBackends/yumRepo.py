@@ -22,8 +22,6 @@ from up2date_client import config
 from up2date_client import rpcServer
 from up2date_client import up2dateUtils
 
-from rhpl.translate import _, N_
-
 import genericRepo
 import urlUtils
 import genericSolveDep
@@ -106,7 +104,7 @@ class YumRepoSource(rpmSource.PackageSource):
                                                hdr['release'])] = hdr
                 nohdr = 0
             except:
-                print _("There was an error downloading:"), "%s"  % url
+                print "There was an error downloading:", "%s"  % url
                 nohdr = 1
 
         return hdr

@@ -19,8 +19,6 @@ import up2dateUtils
 import up2dateLog
 import wrapperUtils
 
-from rhpl.translate import _, N_
-
 # The format for sources v1 is stupid. each entry can only be one line
 # each different source type has different info (aieee!) # comment stuff out (duh)
 
@@ -28,8 +26,8 @@ from rhpl.translate import _, N_
 SOURCESFILE="/etc/sysconfig/rhn/sources"
 
 def showError(line):
-    print _("Error parsing %s") % SOURCESFILE
-    print _("at line: %s") % line
+    print "Error parsing %s" % SOURCESFILE
+    print "at line: %s" % line
 
 class SourcesConfigFile:
     "class for parsing out the up2date/apt/yum src repo info"
@@ -223,7 +221,7 @@ class SourcesConfigFile:
         try:
             from repoBackends import yumBaseRepo
         except ImportError:
-            self.log.log_me(_("Unable to import repomd so repomd support will not be available"))
+            self.log.log_me("Unable to import repomd so repomd support will not be available")
             return
         
         yb = yumBaseRepo.initYumRepo()

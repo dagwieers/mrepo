@@ -22,8 +22,6 @@ import repoDirector
 #import wrapperUtils
 from rhn import rpclib
     
-from rhpl.translate import _, N_
-            
 
 def stdoutMsgCallback(msg):
     print msg
@@ -197,7 +195,7 @@ def getServer(refreshCallback=None):
     # require RHNS-CA-CERT file to be able to authenticate the SSL connections
     for rhns_ca_cert in rhns_ca_certs:
         if not os.access(rhns_ca_cert, os.R_OK):
-	    msg = "%s: %s" % (_("ERROR: can not find RHNS CA file:"),
+	    msg = "%s: %s" % ("ERROR: can not find RHNS CA file:",
 				 rhns_ca_cert)
             log.log_me("%s" % msg)
 	    print msg
@@ -235,8 +233,8 @@ def doCall(method, *args, **kwargs):
         try:
             ret = apply(method, args, kwargs)
         except KeyboardInterrupt:
-            raise up2dateErrors.CommunicationError(_(
-                "Connection aborted by the user"))
+            raise up2dateErrors.CommunicationError(
+                "Connection aborted by the user")
         # if we get a socket error, keep tryingx2
         except (socket.error, socket.sslerror), e:
             log.log_me("A socket error occurred: %s, attempt #%s" % (
@@ -279,7 +277,7 @@ def doCall(method, *args, **kwargs):
             # the servers are being throttle to pay users only, catch the
             # exceptions and display a nice error message
             if abs(errCode) == 51:
-                log.log_me(_("Server has refused connection due to high load"))
+                log.log_me("Server has refused connection due to high load")
                 raise up2dateErrors.CommunicationError(e.errmsg)
             # if we get a 404 from our server, thats pretty
             # fatal... no point in retrying over and over. Note that

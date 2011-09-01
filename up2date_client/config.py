@@ -17,8 +17,6 @@ import os
 import string
 import sys
 
-from rhpl.translate import _, N_
-
 #cfg = None
 
 # XXX: This could be moved in a more "static" location if it is too
@@ -188,7 +186,7 @@ class ConfigFile:
         # and fails (see #130391)
         if not os.access(self.fileName, os.R_OK):
             if not os.access(os.path.dirname(self.fileName), os.R_OK):
-                print _("%s was not found" % os.path.dirname(self.fileName))
+                print "%s was not found" % os.path.dirname(self.fileName)
                 return
         
         f = open(self.fileName, "w")
@@ -334,7 +332,7 @@ def initUp2dateConfig(file = "/etc/sysconfig/rhn/up2date"):
         uuidCfg = UuidConfig()
         uuidCfg.load()
         if uuidCfg['rhnuuid'] == None or uuidCfg['rhnuuid'] == "UNSPECIFIED":
-            print _("No rhnuuid config option found in /etc/sysconfig/rhn/up2date-uuid.")
+            print "No rhnuuid config option found in /etc/sysconfig/rhn/up2date-uuid."
             sys.exit(1)
         cfg['rhnuuid'] = uuidCfg['rhnuuid']
 

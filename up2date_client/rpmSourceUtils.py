@@ -9,7 +9,6 @@ import sys
 import glob
 
 from rhn import rpclib
-from rhpl.translate import _, N_
 
 
 def factory(aClass, *args, **kwargs):

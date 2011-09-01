@@ -41,7 +41,6 @@ import rpmSourceUtils
 
 from rhn import rpclib
 
-from rhpl.translate import _, N_
 
 
 BUFFER_SIZE = 8092
@@ -346,7 +345,7 @@ class LocalDisk(PackageSource):
                     except:
                         os.close(fd)
                         self.ts.popVSFlags()
-                        raise up2dateErrors.RpmError(_("Error reading header"))
+                        raise up2dateErrors.RpmError("Error reading header")
                     self.ts.popVSFlags()
                     os.close(fd)
                     self.headerCache[up2dateUtils.pkgToStringArch(pkg)] = hdr
@@ -384,8 +383,7 @@ class LocalDisk(PackageSource):
                                 hdr = self.ts.hdrFromFdno(fd)
                             except:
                                 os.close(fd)
-                                raise up2dateErrors.RpmError(_(
-                                    "Error reading header"))
+                                raise up2dateErrors.RpmError("Error reading header")
                             os.close(fd)
                             self.log.log_me("Reading header from: %s" % fileNames)
                             self.headerCache[up2dateUtils.pkgToStringArch(pkg)] = hdr
@@ -457,7 +455,7 @@ class DiskCache(PackageSource):
         except:
              os.close(fd)
              self.ts.popVSFlags()
-             raise up2dateErrors.RpmError(_("Error reading header"))
+             raise up2dateErrors.RpmError("Error reading header")
         self.ts.popVSFlags()
         os.close(fd)
         self.log.log_me("Reading header from: %s" % fileNames)
@@ -640,8 +638,7 @@ class Up2datePackageSource(PackageSource):
         try:
             ret = self.s.up2date.header(up2dateAuth.getSystemId(), pkg)
         except KeyboardInterrupt:
-            raise up2dateErrors.CommunicationError(_(
-                "Connection aborted by the user"))
+            raise up2dateErrors.CommunicationError("Connection aborted by the user")
         except (socket.error, socket.sslerror), e:
             if len(e.args) > 1:
                 raise up2dateErrors.CommunicationError(e.args[1])
@@ -650,8 +647,7 @@ class Up2datePackageSource(PackageSource):
         except rpclib.ProtocolError, e:
             raise up2dateErrors.CommunicationError(e.errmsg)
         except rpclib.ResponseError:
-            raise up2dateErrors.CommunicationError(
-                "Broken response from the server.");
+            raise up2dateErrors.CommunicationError("Broken response from the server.");
         except rpclib.Fault, f:
             raise up2dateErrors.CommunicationError(f.faultString)
 

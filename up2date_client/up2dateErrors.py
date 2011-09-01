@@ -9,7 +9,6 @@
 #
 
 import up2dateLog
-from rhpl.translate import _, N_
 
 
 class Error:
@@ -27,7 +26,7 @@ class FileError(Error):
     error to report when we encounter file errors (missing files/dirs,
     lack of permissions, quoat issues, etc"""
     def __repr__(self):
-        msg = _("Disk error.  The message was:\n") + self.errmsg
+        msg = "Disk error.  The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -35,7 +34,7 @@ class FileError(Error):
 class RpmError(Error):
     """rpm itself raised an error condition"""
     def __repr__(self):
-        msg = _("RPM error.  The message was:\n") + self.errmsg
+        msg = "RPM error.  The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -46,7 +45,7 @@ class RpmInstallError(Error):
         self.errmsg = msg
         self.pkg = pkg
     def __repr__(self):
-        msg = _("There was a fatal error installing the package:\n")
+        msg = "There was a fatal error installing the package:\n"
         msg = msg + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
@@ -57,7 +56,7 @@ class PasswordError(Error):
     """Raise when the server responds with that a password is incorrect"""
     def __repr__(self):
         log = up2dateLog.initLog()
-        msg = _("Password error. The message was:\n") + self.errmsg
+        msg = "Password error. The message was:\n" + self.errmsg
         log.log_me(msg)
         return msg
 
@@ -68,7 +67,7 @@ class ConflictError(Error):
         self.errmsg = msg
         self.data = data
     def __repr__(self):
-        msg = _("RPM package conflict error.  The message was:\n")
+        msg = "RPM package conflict error.  The message was:\n"
         msg = msg + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
@@ -80,7 +79,7 @@ class FileConflictError(Error):
         self.rc = rc
         self.errmsg = msg
     def __repr__(self):
-        msg = _("RPM file conflict error. The message was:\n") + self.errmsg
+        msg = "RPM file conflict error. The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -94,7 +93,7 @@ class DependencyError(Error):
         self.deps = deps
         
     def __repr__(self):
-        msg = _("RPM dependency error. The message was:\n") + self.errmsg
+        msg = "RPM dependency error. The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -108,7 +107,7 @@ class TransactionError(Error):
         self.deps = deps
         
     def __repr__(self):
-        msg = _("RPM  error. The message was:\n") + self.errmsg
+        msg = "RPM  error. The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -121,7 +120,7 @@ class UnsolvedDependencyError(Error):
         self.dep = dep
         self.pkgs = pkgs 
     def __repr__(self):
-        msg = _("RPM dependency error.  The message was:\n") + self.errmsg
+        msg = "RPM dependency error.  The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -134,7 +133,7 @@ class DependencySenseError(Error):
         self.errmsg = msg
         self.sense = sense
     def __repr__(self):
-        msg = _("RPM dependency error.  The message was:\n") + self.errmsg
+        msg = "RPM dependency error.  The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -145,7 +144,7 @@ class SkipListError(Error):
 	self.errmsg = msg
 	self.pkglist = pkglist 
     def __repr__(self):
-        msg = _("Package Skip List error.  The message was:\n") + self.errmsg
+        msg = "Package Skip List error.  The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -158,8 +157,8 @@ class FileConfigSkipListError(Error):
         self.errmsg = msg
         self.pkglist = pkglist
     def __repr__(self):
-        msg = _("File Skip List or config file overwrite error. "\
-                "The message was:\n") + self.errmsg
+        msg = "File Skip List or config file overwrite error. "\
+                "The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -168,8 +167,8 @@ class FileConfigSkipListError(Error):
 class CommunicationError(Error):
     """Indicates a problem doing xml-rpc http communication with the server"""
     def __repr__(self):
-        msg =  _("Error communicating with server. "\
-                 "The message was:\n") + self.errmsg
+        msg =  "Error communicating with server. "\
+                 "The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -179,7 +178,7 @@ class FileNotFoundError(Error):
     Raise when a package or header that is requested returns
     a 404 error code"""
     def __repr__(self):
-        msg =  _("File Not Found: \n") + self.errmsg
+        msg =  "File Not Found: \n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -190,7 +189,7 @@ class DelayError(Error):
     Raise when the expected response from a xml-rpc call
     exceeds a timeout"""
     def __repr__(self):
-        msg =  _("Delay error from server.  The message was:\n") + self.errmsg
+        msg =  "Delay error from server.  The message was:\n" + self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -198,8 +197,8 @@ class DelayError(Error):
 class RpmRemoveSkipListError(Error):
     """Raise when we try to remove a package on the RemoveSkipList"""
     def __repr__(self):
-        msg = _("Could not remove package \"%s\". "\
-                "It was on the RemoveSkipList") % self.errmsg
+        msg = "Could not remove package \"%s\". "\
+                "It was on the RemoveSkipList" % self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -221,7 +220,7 @@ class RpmRemoveError(Error):
 class GPGInstallationError(Error):
     """Raise when we we detect that the GPG is not installed properly"""
     def __repr__(self):
-        msg = _("GPG is not installed properly.")
+        msg = "GPG is not installed properly."
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -231,8 +230,8 @@ class GPGKeyringError(Error):
     Raise when we we detect that the gpg keyring for the user
     does not have the Red Hat Key installed"""
     def __repr__(self):
-        msg = _("GPG keyring does not include the Red Hat, Inc. "\
-                "public package-signing key")
+        msg = "GPG keyring does not include the Red Hat, Inc. "\
+                "public package-signing key"
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -243,8 +242,8 @@ class GPGVerificationError(Error):
         self.errmsg = msg
         self.pkg = msg
     def __repr__(self):
-        msg = _("The package %s failed its gpg signature verification. "\
-                "This means the package is corrupt." % self.errmsg)
+        msg = "The package %s failed its gpg signature verification. "\
+                "This means the package is corrupt." % self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -257,7 +256,7 @@ class GPGVerificationUnsignedPackageError(Error):
         self.errmsg = msg
         self.pkg = msg
     def __repr__(self):
-        msg = _("Package %s does not have a GPG signature.\n") %  self.errmsg
+        msg = "Package %s does not have a GPG signature.\n" %  self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -270,7 +269,7 @@ class GPGVerificationUntrustedKeyError(Error):
         self.errmsg = msg
         self.pkg = msg
     def __repr__(self):
-        msg = _("Package %s has a untrusted GPG signature.\n") % self.errmsg
+        msg = "Package %s has a untrusted GPG signature.\n" % self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -283,7 +282,7 @@ class GPGVerificationUnknownKeyError(Error):
         self.errmsg = msg
         self.pkg = msg
     def __repr__(self):
-        msg = _("Package %s has a unknown GPG signature.\n") % self.errmsg
+        msg = "Package %s has a unknown GPG signature.\n" % self.errmsg
         log = up2dateLog.initLog()
         log.log_me(msg)
         return msg
@@ -333,7 +332,7 @@ class ValidationError(Error):
 
     # indicates an error during server input validation
     def __repr__(self):
-        return _("Error validating data at server:\n") + self.errmsg
+        return "Error validating data at server:\n" + self.errmsg
 
 class InvalidProductRegistrationError(Error):
     def __init__(self, errmsg):
@@ -341,14 +340,14 @@ class InvalidProductRegistrationError(Error):
 
     # indicates an error during server input validation
     def __repr__(self):
-        return _("The subscription number is invalid") + self.errmsg
+        return "The subscription number is invalid" + self.errmsg
     
 class OemInfoFileError(Error):
     def __init__(self,errmsg):
         Error.__init__(self, errmsg)
 
     def __repr__(self):
-        return _("Error parsing the oemInfo file at field:\n") + self.errmsg
+        return "Error parsing the oemInfo file at field:\n" + self.errmsg
 
 class NoRollbacksToUndoError(Error):
     """

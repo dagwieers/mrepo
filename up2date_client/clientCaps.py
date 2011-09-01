@@ -9,8 +9,6 @@ import os
 import string
 import sys
 
-from rhpl.translate import _, N_
-
 import capabilities
 import config
 import up2dateErrors

@@ -30,7 +30,6 @@ import transaction
 import string
 
 
-from rhpl.translate import _, N_
 from up2date_client import up2dateLog            
 
 # mainly here to make conflicts resolution cleaner
@@ -255,7 +254,7 @@ def checkHeaderForFileConfigExcludes(h,package,ts):
             
             if fnmatch.fnmatch(fileNames[f_i],pattern):
                 # got to get a better string to use here
-                removedList.append((package, _("File Name/pattern")))
+                removedList.append((package, "File Name/pattern"))
                 fflag = 1
                 break
             # if we found a matching file, no need to
@@ -280,7 +279,7 @@ def checkHeaderForFileConfigExcludes(h,package,ts):
                     # check if config file and if so, if modified
                     if checkModified(f_i, fileNames, fileMD5s,
                                      installedFileNames, installedFileMD5s):
-                        removedList.append((package, _("Config modified")))
+                        removedList.append((package, "Config modified"))
                         fflag = 1
                         break
 
@@ -455,7 +454,7 @@ def getInstalledPackageList(msgCallback = None, progressCallback = None,
 
     
     if msgCallback != None:
-        msgCallback(_("Getting list of packages installed on the system"))
+        msgCallback("Getting list of packages installed on the system")
  
     _ts = transaction.initReadOnlyTransaction()   
     count = 0
@@ -505,9 +504,9 @@ def runTransaction(ts, rpmCallback, transdir=None):
         transdir = cfg['storageDir']
     deps = ts.check()
     if deps:
-        raise up2dateErrors.DependencyError(_(
+        raise up2dateErrors.DependencyError(
             "Dependencies should have already been resolved, "\
-            "but they are not."), deps)
+            "but they are not.", deps)
     rc = ts.run(rpmCallback, transdir)
     if rc:
         errors = "\n"
@@ -516,13 +515,13 @@ def runTransaction(ts, rpmCallback, transdir=None):
                 errors = errors + e[1] + "\n"
             except:
                 errors = errors + str(e) + "\n"
-        raise up2dateErrors.TransactionError(_(
-            "Failed running transaction of  packages: %s") % errors, deps=rc)
+        raise up2dateErrors.TransactionError(
+            "Failed running transaction of  packages: %s" % errors, deps=rc)
     elif type(rc) == type([]) and not len(rc):
         # let the user know whats wrong
         log = up2dateLog.initLog()
         log.log_me("Failed running rpm transaction - %pre %pro failure ?.")
-        raise up2dateErrors.RpmError(_("Failed running rpm transaction"))
+        raise up2dateErrors.RpmError("Failed running rpm transaction")
 
 def readHeader(filename):
     if not os.access(filename, os.R_OK):
@@ -549,9 +548,9 @@ def readHeaderBlob(blob, filename=None):
         hdr = rpm.headerLoad(blob)
     except:
         if filename:
-            print _("rpm was unable to load the header: %s" % filename)
+            print "rpm was unable to load the header: %s" % filename
         else:
-            print _("rpm was unable to load a header")
+            print "rpm was unable to load a header"
         return None
     # Header successfully read
     #print hdr['name']

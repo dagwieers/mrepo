@@ -13,8 +13,6 @@ import rpcServer
 import string
 
 
-from rhpl.translate import _, N_
-
 neededCaps = {"caneatCheese": {'version':"21"},
               "supportsAutoUp2dateOption": {'version': "1"},
               "registration.finish_message": {'version': "1"},
@@ -89,8 +87,8 @@ class Capabilities(UserDict.UserDict):
 
     def validateCap(self, cap, capvalue):
         if not self.data.has_key(cap):
-            errstr = _("This client requires the server to support %s, which the current " \
-                       "server does not support") % cap
+            errstr = "This client requires the server to support %s, which the current " \
+                     "server does not support" % cap
             self.missingCaps[cap] = None
         else:
             data = self.data[cap]

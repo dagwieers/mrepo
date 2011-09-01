@@ -29,8 +29,6 @@ import transaction
 import config
 
 
-from rhpl.translate import _, N_
-
 def rpmFlagsToOperator(flags):
     flags = flags & 0xFF
     buf = ""
@@ -74,7 +72,7 @@ def pkglistToString(pkgs):
     return packages
 
 def restartUp2date():
-    print _("Restarting up2date")
+    print "Restarting up2date"
     args = sys.argv[:]
     return_code = os.spawnvp(os.P_WAIT, sys.argv[0], args)
     sys.exit(return_code)

@@ -11,7 +11,6 @@ import string
 
 import rpm
 
-from rhpl.translate import _, N_
 import up2dateErrors
 import up2dateMessages
 import rpmUtils
@@ -46,7 +45,7 @@ class RpmCallback:
             try:
                 self.fd = os.open(fileName, os.O_RDONLY)
             except OSError:
-                raise up2dateErrors.RpmError(_("Error opening %s") % fileName)
+                raise up2dateErrors.RpmError("Error opening %s" % fileName)
 
             return self.fd
         elif what == rpm.RPMCALLBACK_INST_CLOSE_FILE:
@@ -68,12 +67,12 @@ class RpmCallback:
                                                    hdr['arch'])
                 if self.cfg["isatty"]:
                     if self.progressCurrent == 0:
-                        printit(_("Installing")) 
+                        printit("Installing") 
                     print "%4d:%-23.23s" % (self.progressCurrent + 1,
                                             hdr['name']),
                     sys.stdout.flush()
                 else:
-                    printit(_("Installing %s") % fileName)
+                    printit("Installing %s" % fileName)
 
 
         # gets called at the start of each repackage, with a count of
@@ -87,7 +86,7 @@ class RpmCallback:
 #            self.printRpmHash(amount, total, noInc=1)
             
         elif what == rpm.RPMCALLBACK_REPACKAGE_START:
-            printit( _("Repackaging"))
+            printit( "Repackaging")
             #sys.stdout.flush()
             #print "what: %s amount: %s total: %s hdr: %s path: %s" % (
             # what, amount, total, hdr, path)
@@ -109,7 +108,7 @@ class RpmCallback:
             self.lastPercent = 0
             self.progressTotal = 1
             self.progressCurrent = 0
-            print "%-23.23s" % _("Preparing"),
+            print "%-23.23s" % "Preparing",
             sys.stdout.flush()
 
         elif what == rpm.RPMCALLBACK_TRANS_STOP:
@@ -239,7 +238,7 @@ def printRetrieveHash(amount, total, speed = 0, secs = 0):
 
     if cfg["isatty"]:
         if amount == total:
-            print "%-25s" % _(" Done.")
+            print "%-25s" % " Done."
         else:
             print "%4d k/sec, %02d:%02d:%02d rem." % \
                   (speed / 1024, secs / (60*60), (secs % 3600) / 60,
@@ -247,7 +246,7 @@ def printRetrieveHash(amount, total, speed = 0, secs = 0):
             for i in range(hashesTotal + 25):
                 sys.stdout.write("\b")
     elif amount == total:
-        print _("Retrieved.")
+        print "Retrieved."
 
 def printPkg(name, shortName = None):
     if shortName:
@@ -266,17 +265,17 @@ def warningDialog(message, hasGui):
             from up2date_client import gui
             gui.errorWindow(message)
         except:
-            print _("Unable to open gui. Try `up2date --nox`")
+            print "Unable to open gui. Try `up2date --nox`"
             print message
     else:
         print message
 
 
 def printDepPackages(depPackages):
-    print _("The following packages were added to your selection to satisfy dependencies:")
-    print _("""
+    print "The following packages were added to your selection to satisfy dependencies:"
+    print """
 Name                                    Version        Release
---------------------------------------------------------------""")
+--------------------------------------------------------------"""
     for pkg in depPackages:
         print "%-40s%-15s%-20s" % (pkg[0], pkg[1], pkg[2])
     print
@@ -291,9 +290,9 @@ warningCallback = stdoutMsgCallback
 def printVerboseList(availUpdates):
     cfg = config.initUp2dateConfig()
     if cfg['showChannels']:
-        print _("""
+        print """
 Name                          Version        Rel             Channel     
-----------------------------------------------------------------------""")
+----------------------------------------------------------------------"""
         for pkg in availUpdates:
             print "%-30s%-15s%-15s%-20s" % (pkg[0], pkg[1], pkg[2], pkg[6])
             if cfg["debug"]:
@@ -304,12 +303,12 @@ Name                          Version        Rel             Channel
                         topic = string.join(string.split(a['topic']), ' ')
                         print "[%s] %s\n" % (a['advisory'], topic)
                 else:
-                    print _("No advisory information available\n")
+                    print "No advisory information available\n"
         print
         return
-    print _("""
+    print """
 Name                                    Version        Rel     
-----------------------------------------------------------""")
+----------------------------------------------------------"""
     for pkg in availUpdates:
         print "%-40s%-15s%-18s%-6s" % (pkg[0], pkg[1], pkg[2], pkg[4])
         if cfg["debug"]:
@@ -320,15 +319,15 @@ Name                                    Version        Rel
                     topic = string.join(string.split(a['topic']), ' ')
                     print "[%s] %s\n" % (a['advisory'], topic)
             else:
-                print _("No advisory information available\n")
+                print "No advisory information available\n"
     print
 
 def printSkippedPackages(skippedUpdates):
     cfg = config.initUp2dateConfig()
-    print _("The following Packages were marked to be skipped by your configuration:")
-    print _("""
+    print "The following Packages were marked to be skipped by your configuration:"
+    print """
 Name                                    Version        Rel  Reason
--------------------------------------------------------------------------------""")
+-------------------------------------------------------------------------------"""
     for pkg,reason in skippedUpdates:
         print "%-40s%-15s%-5s%s" % (pkg[0], pkg[1], pkg[2], reason)
         if cfg["debug"]:
@@ -339,24 +338,24 @@ Name                                    Version        Rel  Reason
                     topic = string.join(string.split(a['topic']), ' ')
                     print "[%s] %s\n" % (a['advisory'], topic)
             else:
-                print _("No advisory information available\n")
+                print "No advisory information available\n"
     print
 
 def printEmptyGlobsWarning(listOfGlobs):
-    print _("The following wildcards did not match any packages:")
+    print "The following wildcards did not match any packages:"
     for token in listOfGlobs:
         print token
 
 def printEmptyCompsWarning(listOfComps):
-    print _("The following groups did not match any packages:")
+    print "The following groups did not match any packages:"
     for token in listOfComps:
         print token
 
 def printObsoletedPackages(obsoletedPackages):
-    print _("The following Packages are obsoleted by newer packages:")
-    print _("""
+    print "The following Packages are obsoleted by newer packages:"
+    print """
 Name-Version-Release        obsoleted by      Name-Version-Release
--------------------------------------------------------------------------------""")
+-------------------------------------------------------------------------------"""
     for (obs,newpackages) in obsoletedPackages:
         obsstr = "%s-%s-%s" % (obs[0],obs[1],obs[2])
         newpackage = newpackages[0]
@@ -368,10 +367,10 @@ Name-Version-Release        obsoleted by      Name-Version-Release
             print "%-40s%-40s\n" % ("", newstr)
                                        
 def  printInstalledObsoletingPackages(installedObsoletingPackages):
-    print _("The following packages were not installed because they are obsoleted by installed packages:")
-    print _("""
+    print "The following packages were not installed because they are obsoleted by installed packages:"
+    print """
 Name-Version-Release       obsoleted by      Name-Version-Release
--------------------------------------------------------------------------------""")
+-------------------------------------------------------------------------------"""
     for (obsoleted, obsoleting) in installedObsoletingPackages:
         obsstr = "%s-%s-%s" % (obsoleted[0],obsoleted[1],obsoleted[2])
         print "%-40s%-40s" % (obsstr, obsoleting[0])
@@ -379,10 +378,10 @@ Name-Version-Release       obsoleted by      Name-Version-Release
             print "%-40s%-40s" % (obsstr, obsoletingstr)
 
 def printAvailablePackages(availablePackages):
-    print _("The following packages are not installed but available from Red Hat Network:")
-    print _("""
+    print "The following packages are not installed but available from Red Hat Network:"
+    print """
 Name                                    Version        Release  
---------------------------------------------------------------""")
+--------------------------------------------------------------"""
     for pkg in availablePackages:
         print "%-40s%-14s%-14s" % (pkg[0], pkg[1], pkg[2])
     print
