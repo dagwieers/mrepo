@@ -702,7 +702,7 @@ class Repo:
                 elif s in ('you', ):
                     mirroryouget(url, self.srcdir, self.dist)
                 elif s in ('reposync'):
-                    mirrorreposync(url, self.srcdir)
+                    mirrorreposync(url, self.srcdir, '%s-%s' % (self.dist.nick, self.name))
                 else:
                     error(2, 'Scheme %s:// not implemented yet (in %s)' % (s, url))
             except mrepoMirrorException, e:
@@ -1440,7 +1440,7 @@ def mirroryouget(url, path, dist):
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
-def mirrorreposync(url, path):
+def mirrorreposync(url, path, reponame):
     "Mirror everything from a reposync:// URL"
     if not cf.cmd['reposync']:
         error(1, 'reposync was not found. reposync support is therefor disabled.')
@@ -1462,18 +1462,19 @@ def mirrorreposync(url, path):
     opts = opts + ' --norepopath'
 
     # store a temporary YUM config to use with reposync
-    reposync_conf_contents = """[mrepo-reposync]
-name=mrepo-reposync
+    reposync_conf_contents = """[%s]
+name=%s
 baseurl=%s
 enabled=1
-""" % url
+""" % (reponame, reponame, url)
 
     (fd, reposync_conf_file) = tempfile.mkstemp(text=True)
     handle = os.fdopen(fd, 'w')
     handle.writelines(reposync_conf_contents)
     handle.close()
 
-    ret = run("%s %s -c '%s' -r mrepo-reposync -p '%s'" % (cf.cmd['reposync'], opts, reposync_conf_file, path))
+    ret = run("%s %s -t -c '%s' -r %s -p '%s'" % \
+              (cf.cmd['reposync'], opts, reposync_conf_file, reponame, path))
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
