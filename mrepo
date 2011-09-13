@@ -61,7 +61,7 @@ enable = ('yes', 'on', 'true', '1')
 disable = ('no', 'off', 'false', '0')
 
 ### Register rhn and rhns as a known schemes
-for scheme in ('rhn', 'rhns', 'you', 'reposync'):
+for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
@@ -129,7 +129,7 @@ class Options:
 
         if not self.types:
             self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn',
-                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync']
+                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs']
 
         for arg in args:
             self.dists = self.dists + arg.split(',')
@@ -701,7 +701,7 @@ class Repo:
                     mirrorrhnget(url, self.srcdir, self.dist)
                 elif s in ('you', ):
                     mirroryouget(url, self.srcdir, self.dist)
-                elif s in ('reposync'):
+                elif s in ('reposync', 'reposyncs'):
                     mirrorreposync(url, self.srcdir, '%s-%s' % (self.dist.nick, self.name))
                 else:
                     error(2, 'Scheme %s:// not implemented yet (in %s)' % (s, url))
@@ -1447,6 +1447,7 @@ def mirrorreposync(url, path, reponame):
         return
     mkdir(path)
 
+    url = url.replace('reposyncs://', 'https://')
     url = url.replace('reposync://', 'http://')
 
     opts = cf.reposyncoptions
