@@ -1229,7 +1229,7 @@ def mkdir(path):
 def mirrorrsync(url, path):
     "Mirror everything from an rsync:// URL"
     if not cf.cmd['rsync']:
-        error(1, 'rsync was not found. rsync support is therefor disabled.')
+        error(1, 'rsync was not found. rsync support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1268,7 +1268,7 @@ def mirrorrsync(url, path):
 def mirrormirrordir(url, path):
     "Mirror everything from a ftp:// or mc:// URL"
     if not cf.cmd['mirrordir']:
-        error(1, 'mirrordir was not found. ftp and mc support (using mirrordir) is therefor disabled.')
+        error(1, 'mirrordir was not found. ftp and mc support (using mirrordir) is therefore disabled.')
         return
     mkdir(path)
 
@@ -1295,7 +1295,7 @@ def mirrormirrordir(url, path):
 def mirrorlftp(url, path):
     "Mirror everything from a http://, ftp://, sftp://, fish:// URL"
     if not cf.cmd['lftp']:
-        error(1, 'lftp was not found. fish, ftp, http and sftp support (using lftp) is therefor disabled.')
+        error(1, 'lftp was not found. fish, ftp, http and sftp support (using lftp) is therefore disabled.')
         return
     mkdir(path)
 
@@ -1357,7 +1357,7 @@ def mirrormrepo(url, path):
 def mirrorrhnget(url, path, dist):
     "Mirror everything from a rhn:// or rhns:// URL"
     if not cf.cmd['rhnget']:
-        error(1, 'rhnget was not found. rhn and rhns support is therefor disabled.')
+        error(1, 'rhnget was not found. rhn and rhns support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1399,7 +1399,7 @@ def mirrorrhnget(url, path, dist):
 def mirroryouget(url, path, dist):
     "Mirror everything from a you:// URL"
     if not cf.cmd['youget']:
-        error(1, 'youget was not found. YOU support is therefor disabled.')
+        error(1, 'youget was not found. YOU support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1443,7 +1443,7 @@ def mirroryouget(url, path, dist):
 def mirrorreposync(url, path, reponame):
     "Mirror everything from a reposync:// URL"
     if not cf.cmd['reposync']:
-        error(1, 'reposync was not found. reposync support is therefor disabled.')
+        error(1, 'reposync was not found. reposync support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1502,7 +1502,7 @@ def hardlink(srcdir):
             opts = opts + ' -n'
         run('%s -c %s %s' % (cf.cmd['hardlink'], opts, os.path.join(srcdir, '')), dryrun=True)
     else:
-        info(1, 'hardlink was not found, hardlink support is therefor disabled.')
+        info(1, 'hardlink was not found, hardlink support is therefore disabled.')
         return
 
 def rpmlink((dist, repo), dirpath, filelist):
