@@ -167,6 +167,7 @@ mrepo can use several types of protocols or URL identifiers:
 	http://		- handled by lftp
 	https://	- handled by lftp
 	mc://		- handled by mirrordir
+	reposync://	- handled by reposync
 	rhn://		- handled by up2date python classes
 	rhns://		- handled by up2date python classes
 	rsync://	- handled by rsync
