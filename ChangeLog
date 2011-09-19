@@ -1,4 +1,4 @@
-* 0.8.8 - Summertime - released 29/08/2011
+* 0.8.8 - Summertime - released 19/09/2011
 - Renamed YAMCONFIG to MREPOCONFIG
 - Updated distribution config files
 - Added RHEL6 product names to gensystemid
@@ -11,6 +11,8 @@
 - Get rid of rhpl dependency (David Cantrell)
 - Change default options to use --update and --database
 - Always generate metadata for 'all' repository
+- Remove unwanted SSI .timestamp check in html file (Reed Loden)
+- Added reposync support (Aron Parsons)
 
 * 0.8.7 - Way Overdue - released 20/03/2010
 - Add pyOpenSSL dependency to RPM spec file (Bryan Washer)

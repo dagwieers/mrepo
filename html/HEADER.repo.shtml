@@ -1,5 +1,4 @@
 <h2>mrepo RPM Mirror of <!--#include virtual=".title" --></h2>
-<!-- <b><!--#include virtual=".timestamp" --></b> -->
 
 <u>Network installation</u>: Select "HTTP installation method" &raquo; "<!--#echo var="SERVER_NAME" -->" &raquo; "<!--#echo var="REQUEST_URI" -->" during installation<br>
 
