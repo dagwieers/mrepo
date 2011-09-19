@@ -225,7 +225,7 @@ class Config:
         self.cmd['youget'] = self.getoption('main', 'yougetcmd', '/usr/bin/youget')
         self.cmd['yumarch'] = self.getoption('main', 'yumarchcmd', '/usr/bin/yum-arch')
 
-        self.createrepooptions = self.getoption('main', 'createrepo-options', '-p')
+        self.createrepooptions = self.getoption('main', 'createrepo-options', '--pretty --database --update')
 
         self.lftpbwlimit = self.getoption('main', 'lftp-bandwidth-limit', None)
         self.lftpcleanup = self.getoption('main', 'lftp-cleanup', 'yes') not in disable
@@ -462,8 +462,20 @@ class Dist:
             repo.writesha1()
             repo.unlock('generate')
 
-        # do not generate md for 'all', just the links
-        self.linksync(Repo('all', '', self, cf), allsrcdirs)
+        # Finally generate 'all' repsitory
+        for repo in Repo('all', '', self, cf):
+            if not repo.lock('generate'):
+                continue
+
+            ### Link all srcdirs from other repositories
+            self.linksync(Repo('all', '', self, cf), allsrcdirs)
+
+            repo.check()
+            repo.createmd()
+
+            ### After generation, write a sha1sum
+            repo.writesha1()
+            repo.unlock('generate')
 
     def linksync(self, repo, srcdirs=None):
         if not srcdirs:
