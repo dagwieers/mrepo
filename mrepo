@@ -21,6 +21,7 @@ import getopt
 import glob
 import os
 import re
+import tempfile
 
 # Python >= 2.5
 try:
@@ -60,7 +61,7 @@ enable = ('yes', 'on', 'true', '1')
 disable = ('no', 'off', 'false', '0')
 
 ### Register rhn and rhns as a known schemes
-for scheme in ('rhn', 'rhns', 'you'):
+for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
@@ -127,7 +128,8 @@ class Options:
                 self.update = True
 
         if not self.types:
-            self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn', 'rhns', 'rsync', 'sftp', 'mrepo', 'you']
+            self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn',
+                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs']
 
         for arg in args:
             self.dists = self.dists + arg.split(',')
@@ -218,6 +220,7 @@ class Config:
         self.cmd['mirrordir'] = self.getoption('main', 'mirrordircmd', '/usr/bin/mirrordir')
         self.cmd['mount'] = self.getoption('main', 'mountcmd', '/bin/mount')
         self.cmd['repoview'] = self.getoption('main', 'repoviewcmd', '/usr/bin/repoview')
+        self.cmd['reposync'] = self.getoption('main', 'reposynccmd', '/usr/bin/reposync')
         self.cmd['rhnget'] = self.getoption('main', 'rhngetcmd', '/usr/bin/rhnget')
         self.cmd['rsync'] = self.getoption('main', 'rsynccmd', '/usr/bin/rsync')
         self.cmd['unionfs'] = self.getoption('main', 'unionfscmd', '/usr/bin/unionfs')
@@ -240,6 +243,10 @@ class Config:
         self.mirrordirexcldebug = self.getoption('main', 'mirrordir-exclude-debug', 'yes') not in disable
         self.mirrordirexclsrpm = self.getoption('main', 'mirrordir-exclude-srpm', 'yes') not in disable
         self.mirrordiroptions = self.getoption('main', 'mirrordir-options', '')
+
+        self.reposyncoptions = self.getoption('main', 'reposync-options', '')
+        self.reposynccleanup = self.getoption('main', 'reposync-cleanup', 'yes') not in disable
+        self.reposyncnewestonly = self.getoption('main', 'reposync-newest-only', 'no') not in disable
 
         self.rhnlogin = self.getoption('main', 'rhnlogin', None)
         self.rhngetoptions = self.getoption('main', 'rhnget-options', '')
@@ -706,6 +713,8 @@ class Repo:
                     mirrorrhnget(url, self.srcdir, self.dist)
                 elif s in ('you', ):
                     mirroryouget(url, self.srcdir, self.dist)
+                elif s in ('reposync', 'reposyncs'):
+                    mirrorreposync(url, self.srcdir, '%s-%s' % (self.dist.nick, self.name))
                 else:
                     error(2, 'Scheme %s:// not implemented yet (in %s)' % (s, url))
             except mrepoMirrorException, e:
@@ -1232,7 +1241,7 @@ def mkdir(path):
 def mirrorrsync(url, path):
     "Mirror everything from an rsync:// URL"
     if not cf.cmd['rsync']:
-        error(1, 'rsync was not found. rsync support is therefor disabled.')
+        error(1, 'rsync was not found. rsync support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1271,7 +1280,7 @@ def mirrorrsync(url, path):
 def mirrormirrordir(url, path):
     "Mirror everything from a ftp:// or mc:// URL"
     if not cf.cmd['mirrordir']:
-        error(1, 'mirrordir was not found. ftp and mc support (using mirrordir) is therefor disabled.')
+        error(1, 'mirrordir was not found. ftp and mc support (using mirrordir) is therefore disabled.')
         return
     mkdir(path)
 
@@ -1298,7 +1307,7 @@ def mirrormirrordir(url, path):
 def mirrorlftp(url, path):
     "Mirror everything from a http://, ftp://, sftp://, fish:// URL"
     if not cf.cmd['lftp']:
-        error(1, 'lftp was not found. fish, ftp, http and sftp support (using lftp) is therefor disabled.')
+        error(1, 'lftp was not found. fish, ftp, http and sftp support (using lftp) is therefore disabled.')
         return
     mkdir(path)
 
@@ -1360,7 +1369,7 @@ def mirrormrepo(url, path):
 def mirrorrhnget(url, path, dist):
     "Mirror everything from a rhn:// or rhns:// URL"
     if not cf.cmd['rhnget']:
-        error(1, 'rhnget was not found. rhn and rhns support is therefor disabled.')
+        error(1, 'rhnget was not found. rhn and rhns support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1402,7 +1411,7 @@ def mirrorrhnget(url, path, dist):
 def mirroryouget(url, path, dist):
     "Mirror everything from a you:// URL"
     if not cf.cmd['youget']:
-        error(1, 'youget was not found. YOU support is therefor disabled.')
+        error(1, 'youget was not found. YOU support is therefore disabled.')
         return
     mkdir(path)
 
@@ -1443,6 +1452,48 @@ def mirroryouget(url, path, dist):
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
+def mirrorreposync(url, path, reponame):
+    "Mirror everything from a reposync:// URL"
+    if not cf.cmd['reposync']:
+        error(1, 'reposync was not found. reposync support is therefore disabled.')
+        return
+    mkdir(path)
+
+    url = url.replace('reposyncs://', 'https://')
+    url = url.replace('reposync://', 'http://')
+
+    opts = cf.reposyncoptions
+    if op.verbose < 3: 
+        opts = opts + ' -q'
+    if op.dryrun:
+        opts = opts + ' --urls'
+    if cf.reposynccleanup:
+        opts = opts + ' --delete'
+    if not cf.reposyncnewestonly:
+        opts = opts + ' --newest-only'
+
+    opts = opts + ' --norepopath'
+
+    # store a temporary YUM config to use with reposync
+    reposync_conf_contents = """[%s]
+name=%s
+baseurl=%s
+enabled=1
+""" % (reponame, reponame, url)
+
+    (fd, reposync_conf_file) = tempfile.mkstemp(text=True)
+    handle = os.fdopen(fd, 'w')
+    handle.writelines(reposync_conf_contents)
+    handle.close()
+
+    ret = run("%s %s -t -c '%s' -r %s -p '%s'" % \
+              (cf.cmd['reposync'], opts, reposync_conf_file, reponame, path))
+    if ret:
+        raise(mrepoMirrorException('Failed with return code: %s' % ret))
+
+    # remove the temporary config
+    os.remove(reposync_conf_file)
+
 def hardlink(srcdir):
     info(1, 'Hardlinking duplicate packages in %s.' % srcdir)
     opts = ''
@@ -1463,7 +1514,7 @@ def hardlink(srcdir):
             opts = opts + ' -n'
         run('%s -c %s %s' % (cf.cmd['hardlink'], opts, os.path.join(srcdir, '')), dryrun=True)
     else:
-        info(1, 'hardlink was not found, hardlink support is therefor disabled.')
+        info(1, 'hardlink was not found, hardlink support is therefore disabled.')
         return
 
 def rpmlink((dist, repo), dirpath, filelist):
