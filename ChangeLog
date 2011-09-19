@@ -1,4 +1,4 @@
-* 0.8.8 - Summertime - released 01/08/2011
+* 0.8.8 - Summertime - released 29/08/2011
 - Renamed YAMCONFIG to MREPOCONFIG
 - Updated distribution config files
 - Added RHEL6 product names to gensystemid
@@ -8,6 +8,9 @@
 - Improved comps.xml path lookup (Brian Long)
 - Add default level to the SELinux security context (Yury V. Zaytsev)
 - Clean up up2date code to not rely on /etc/sysconfig/rhn/sources anymore
+- Get rid of rhpl dependency (David Cantrell)
+- Change default options to use --update and --database
+- Always generate metadata for 'all' repository
 
 * 0.8.7 - Way Overdue - released 20/03/2010
 - Add pyOpenSSL dependency to RPM spec file (Bryan Washer)
