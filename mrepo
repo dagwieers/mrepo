@@ -470,7 +470,7 @@ class Dist:
             repo.unlock('generate')
 
         # Finally generate 'all' repsitory
-        for repo in Repo('all', '', self, cf):
+        for repo in ( Repo('all', '', self, cf), ):
             if not repo.lock('generate'):
                 continue
 

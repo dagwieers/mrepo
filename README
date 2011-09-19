@@ -1,18 +1,15 @@
-mrepo builds a local APT/Yum RPM repository from local ISO files, downloaded
-updates, and extra packages from 3rd party repositories. It takes care of
-setting up the ISO files, downloading the RPMs, configuring HTTP access
+mrepo builds a local RPM repository from local ISO files, downloaded
+updates and extra packages from 3rd party repositories. It takes care of
+setting up the ISO files, downloading the RPMs, generating metadata
 and providing PXE/TFTP resources for remote installations.
 
+RPM packages can be download by various means using ftp, http, rsync,
+reposync, sftp, RHN or YOU.
+
 It was primarily intended for doing remote network installations of various
-distributions from a laptop without the need for CD media or floppies, but
-is equally suitable for an organisation's centralized update server.
+distributions from a laptop or USB disk without the need for CD media or
+floppies, but is equally suitable for an organisation's centralized update
+server.
 
-Doing a remote installation only requires a configured DHCP-server, the
-TFTP service and a Webserver configured with mrepo. Then boot your system
-using a PXE-enabled network card.
-
-For updating your local systems, configure either Apt, Yum or up2date and
+For updating your local systems, configure either Yum, Apt, or up2date and
 point them to your local mrepo server.
-
----
-Please send me improvements to this document.

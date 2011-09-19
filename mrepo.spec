@@ -96,7 +96,7 @@ fi
 
 %files
 %defattr(-, root, root, 0755)
-%doc AUTHORS ChangeLog COPYING README THANKS TODO WISHLIST config/* docs/
+%doc AUTHORS ChangeLog COPYING README THANKS TODO config/* docs/
 %config(noreplace) %{_sysconfdir}/cron.d/mrepo
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/mrepo.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/mrepo
@@ -113,7 +113,7 @@ fi
 %{_localstatedir}/www/mrepo/
 
 %changelog
-* Mon Aug 01 2011 Dag Wieers <dag@wieers.com> - 0.8.8-1
+* Mon Sep 19 2011 Dag Wieers <dag@wieers.com> - 0.8.8-1
 - Updated to release 0.8.8.
 
 * Sat Feb 06 2010 Dag Wieers <dag@wieers.com> - 0.8.7-1
