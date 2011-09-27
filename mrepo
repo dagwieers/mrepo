@@ -1472,8 +1472,6 @@ def mirrorreposync(url, path, reponame):
     if not cf.reposyncnewestonly:
         opts = opts + ' --newest-only'
 
-    opts = opts + ' --norepopath'
-
     # store a temporary YUM config to use with reposync
     reposync_conf_contents = """[%s]
 name=%s
