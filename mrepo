@@ -1469,10 +1469,8 @@ def mirrorreposync(url, path, reponame):
         opts = opts + ' --urls'
     if cf.reposynccleanup:
         opts = opts + ' --delete'
-    if not cf.reposyncnewestonly:
+    if cf.reposyncnewestonly:
         opts = opts + ' --newest-only'
-
-    opts = opts + ' --norepopath'
 
     # store a temporary YUM config to use with reposync
     reposync_conf_contents = """[%s]
