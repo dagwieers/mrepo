@@ -1,11 +1,18 @@
 Loop devices
 ============
 
+If you see "mount: could not find any free loop device" you have
+to increase the number of loop devices of the loop module.
+
+
 Increasing the number of loop devices
 -------------------------------------
-If you see "mount: could not find any free loop device" you have
-to increase the number of loop devices by adding the following
-to /etc/modprobe.conf on a 2.6 kernel (or /etc/modules.conf on
+Unfortunately some distributions (eg. SLES9 or RHEL6) has the loop module
+compiled as aprt of the kernel, therefor you have to add 'max_loop=64' to
+the kernel parameters directly and you require a reboot.
+
+In case the loop module is a loadable module, you can simply add the
+following to /etc/modprobe.conf on a 2.6 kernel (or /etc/modules.conf on
 a 2.4 kernel).
 
 ----
@@ -48,10 +55,6 @@ An easy way to create more, is by doing:
 	done
 
 You can have up to 256 loop devices mounted.
-
-PS Unfortunately SLES9 has compiled the loop module inside the kernel,
-therefor you have to add 'max_loop=64' to the kernel parameters directly
-and you require a reboot.
 
 ---
 Please send me improvements to this document.
