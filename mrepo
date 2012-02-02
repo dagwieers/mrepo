@@ -459,8 +459,9 @@ class Dist:
                     allsrcdirs.extend(srcdirs)
 
             else:
-                self.linksync(repo)
+                self.linksync(repo, [ repo.srcdir, repo.allsrcdir ])
                 allsrcdirs.append(repo.srcdir)
+                allsrcdirs.append(repo.allsrcdir)
 
             repo.check()
             repo.createmd()
@@ -664,6 +665,7 @@ class Repo:
         self.url = url
         self.dist = dist
         self.srcdir = os.path.join(cf.srcdir, dist.nick, self.name)
+        self.allsrcdir = os.path.join(cf.srcdir, 'all', self.name)
         self.wwwdir = os.path.join(dist.dir, 'RPMS.' + self.name)
 
         self.changed = False
