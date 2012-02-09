@@ -317,6 +317,7 @@ class Config:
                     dist.promoteepoch = True
                     dist.fuseiso = True
                     dist.unionfs = True
+                    dist.systemid = None
                     for option in self.cfg.options(section):
                         if option in ('iso', 'name', 'release', 'repo', 'rhnrelease'):
                             setattr(dist, option, self.cfg.get(section, option))
@@ -332,6 +333,8 @@ class Config:
                             setattr(dist, option, self.cfg.get(section, option).split())
                         elif option in ('promoteepoch',):
                             dist.promoteepoch = self.cfg.get(section, option) not in disable
+                        elif option in ('systemid',):
+                            dist.systemid = self.cfg.get(section, option)
                         else:
                             dist.repos.append(Repo(option, self.cfg.get(section, option), dist, self))
 
@@ -1383,7 +1386,8 @@ def mirrorrhnget(url, path, dist):
     if cf.rhngetdownloadall:
         opts = opts + ' --download-all'
 
-    systemidpath = os.path.join(cf.srcdir, dist.nick, 'systemid')
+    systemidpath = dist.systemid or os.path.join(cf.srcdir, dist.nick, 'systemid')
+
     if os.path.isfile(systemidpath):
         opts = opts + ' --systemid="%s"' % systemidpath
 
