@@ -8,7 +8,7 @@ to increase the number of loop devices of the loop module.
 Increasing the number of loop devices
 -------------------------------------
 Unfortunately some distributions (eg. SLES9 or RHEL6) has the loop module
-compiled as aprt of the kernel, therefor you have to add 'max_loop=64' to
+compiled as aprt of the kernel, therefore you have to add 'max_loop=64' to
 the kernel parameters directly and you require a reboot.
 
 In case the loop module is a loadable module, you can simply add the
