@@ -517,7 +517,7 @@ def mirror(urls, path):
 def mirrorrsync(url, path):
 	"Mirror everything from an rsync:// URL"
 	if not cf.cmd['rsync']:
-		info(1, 'rsync was not found, rsync support is therefor disabled.')
+		info(1, 'rsync was not found, rsync support is therefore disabled.')
 		return
 	mkdir(path)
 
@@ -539,7 +539,7 @@ def mirrorrsync(url, path):
 def mirrorlftp(url, path):
 	"Mirror everything from a http://, ftp://, sftp://, fish:// URL"
 	if not cf.cmd['lftp']:
-		info(1, 'lftp was not found, fish, ftp, http and sftp support is therefor disabled.')
+		info(1, 'lftp was not found, fish, ftp, http and sftp support is therefore disabled.')
 		return
 	mkdir(path)
 
@@ -587,7 +587,7 @@ def hardlink(srcdir):
 		if op.verbose: opts = opts + '-' + ('v' * (op.verbose - 2))
 		run('%s -c %s %s' % (cf.cmd['hardlink'], opts, os.path.join(srcdir, '')))
 	else:
-		info(1, 'hardlink was not found, hardlink support is therefor disabled.')
+		info(1, 'hardlink was not found, hardlink support is therefore disabled.')
 		return
 
 def rpmlink((dist, repo), dirpath, filelist):
