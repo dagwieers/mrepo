@@ -6,7 +6,7 @@
 #
 # Author: Mihai Ibanescu <misa@redhat.com>
 
-# $Id: connections.py 116568 2007-05-21 23:30:08Z pkilambi $
+# $Id: connections.py 191145 2010-03-01 10:21:24Z msuchy $
 
 
 import sys
@@ -14,23 +14,8 @@ import string
 import SSL
 import nonblocking
 
-# Testing which version of python we run
-if hasattr(sys, "version_info"):
-    # python 2.2 or newer
-    import httplib
-else:
-    # Older version, with incompatible httplib; import the patched one
-    import _httplib
-    httplib = _httplib
-
-# Testing which version of python we run
-if hasattr(sys, "version_info"):
-    # python 2.2 or newer
-    import xmlrpclib
-else:
-    # Older version, with incompatible httplib; import the patched one
-    import _internal_xmlrpclib
-    xmlrpclib = _internal_xmlrpclib
+import httplib
+import xmlrpclib
 
 # Import into the local namespace some httplib-related names
 _CS_REQ_SENT = httplib._CS_REQ_SENT
@@ -89,7 +74,7 @@ class HTTPConnection(httplib.HTTPConnection):
         self._cb_ex = []
         self._cb_user_data = None
         self._cb_callback = None
-        self._user_agent = "rhn.connections $Revision: 116568 $ (python)"
+        self._user_agent = "rhn.connections $Revision: 191145 $ (python)"
 
     def set_callback(self, rs, ws, ex, user_data, callback):
         # XXX check the params
