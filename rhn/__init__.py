@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2005 Red Hat, Inc.
 # 
-# $Id: __init__.py 89042 2005-07-05 22:05:02Z wregglej $
+# $Id: __init__.py 191145 2010-03-01 10:21:24Z msuchy $
 """
 rhn - A collection of modules used by Red Hat Network
 """

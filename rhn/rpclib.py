@@ -6,15 +6,15 @@
 #
 # Author: Mihai Ibanescu <misa@redhat.com>
 
-# $Id: rpclib.py 118741 2007-07-31 21:23:02Z pkilambi $
+# $Id: rpclib.py 198366 2010-11-24 12:51:35Z msuchy $
 
-__version__ = "$Revision: 118741 $"
+__version__ = "$Revision: 198366 $"
 
 import string
 import transports
 import urllib
-
-from types import ListType, TupleType
+import re
+from types import ListType, TupleType, StringType, UnicodeType, DictType, DictionaryType
 
 from UserDictCase import UserDictCase
 
@@ -279,16 +279,41 @@ class Server:
             return headers['Accept-Ranges']
         return None
 
+    def _strip_characters(self, *args):
+        """ Strip characters, which are not allowed according:
+            http://www.w3.org/TR/2006/REC-xml-20060816/#charsets
+            From spec:
+            Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]  /* any Unicode character, excluding the surrogate blocks, FFFE, and FFFF. */
+        """
+        regexp = r'[\x00-\x08]|[\x0b-\x0c]|[\x0e-\x1f]'
+        result=[]
+        for item in args:
+            item_type = type(item)
+            if item_type == StringType or item_type == UnicodeType:
+                item = re.sub(regexp, '', item)
+            elif item_type == TupleType:
+                item = tuple(map(self._strip_characters, item))
+            elif item_type == ListType:
+                item = map(self._strip_characters, item)
+            elif item_type == DictType or item_type == DictionaryType:
+                item = dict([(self._strip_characters(name, val)) for name, val in item.iteritems()])
+            # else: some object - should take care of himself
+            #        numbers - are safe
+            result.append(item)
+        if len(result) == 1:
+            return result[0]
+        else:
+            return tuple(result)
+
     def _request(self, methodname, params):
         # call a method on the remote server
         # the loop is used to handle redirections
-        num = 0
         redirect_response = 0
-                
+        retry = 0        
         while 1:
-            if num >= MAX_REDIRECTIONS:
-                raise InvalidRedirectionError("Too many redirects")
-            num = num + 1
+            if retry >= MAX_REDIRECTIONS:
+                raise InvalidRedirectionError(
+                      "Unable to fetch requested Package")
 
             # Clear the transport headers first
             self._transport.clear_headers()
@@ -305,18 +330,26 @@ class Server:
                 # Advertise that we follow redirects
                 #changing the version from 1 to 2 to support backward compatibility
                 self._transport.add_header("X-RHN-Transport-Capability",
-                    "follow-redirects=2")
+                    "follow-redirects=3")
 
             if redirect_response:
                 self._transport.add_header('X-RHN-Redirect', '0')
                 if send_handler:
                     self._transport.add_header('X-RHN-Path', send_handler)
 
-            request = self._req_body(params, methodname)
+            request = self._req_body(self._strip_characters(params), methodname)
 
             try:
-                response = self._transport.request(self._host, self._handler,
-                    request, verbose=self._verbose)
+                if self._redirected: 
+                    type, uri = urllib.splittype(self._redirected)
+                    self._redirected = None
+ 
+                    host, handler = urllib.splithost(uri) 
+                    response = self._transport.request(host, handler, 
+                        request, verbose=self._verbose) 
+                else:    
+                    response = self._transport.request(self._host, \
+                                self._handler, request, verbose=self._verbose)
                 save_response = self._transport.response_status
             except xmlrpclib.ProtocolError, pe:
                 if self.use_handler_path:
@@ -328,13 +361,20 @@ class Server:
                 raise InvalidRedirectionError("Redirects not allowed")
            
             if save_response == 200:
+                # reset _host and _handler for next request
+                type, uri = urllib.splittype(self._uri)
+                self._host, self._handler = urllib.splithost(uri)
+                # exit redirects loop and return response
                 break
-            elif save_response not in [200,302]:
-                self._redirected = self._uri
-                self.use_handler_path = 1
-            else:
+            elif save_response in (301, 302):
                 self._redirected = self._transport.redirected()
                 self.use_handler_path = 0
+                redirect_response = 1
+            else:
+                # Retry pkg fetch
+                 retry = retry + 1
+                 self.use_handler_path = 1
+                 continue
                                 
             if self._verbose:
                 print "%s redirected to %s" % (self._uri, self._redirected)
@@ -356,7 +396,6 @@ class Server:
                 raise InvalidRedirectionError(
                     "HTTPS redirected to HTTP is not supported")
 
-            self._host, self._handler = urllib.splithost(uri)
             if not self._handler:
                 self._handler = "/RPC2"
 
@@ -365,9 +404,6 @@ class Server:
                     raise InvalidRedirectionError("Redirects not allowed")
                 else:
                     redirect_response = 1
-                    num = 0
-                    continue
-
             # 
             # Create a new transport for the redirected service and 
             # set up the parameters on the new transport

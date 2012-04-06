@@ -6,7 +6,7 @@
 #
 # Author: Mihai Ibanescu <misa@redhat.com>
 
-# $Id: SSL.py 137099 2008-02-19 17:27:26Z pkilambi $
+# $Id: SSL.py 191145 2010-03-01 10:21:24Z msuchy $
 
 """
 rhn.SSL builds an abstraction on top of the objects provided by pyOpenSSL
