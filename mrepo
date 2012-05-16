@@ -453,7 +453,9 @@ class Dist:
                 os_components = (
                     glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) + # RHEL 4
                     glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) + # RHEL 5
-                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) # RHEL 6 / CentOS 6
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) + # RHEL 6 / CentOS 6
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/comps.xml')) # Scientific Linux 6
+
                 )
 
                 for file in os_components:
