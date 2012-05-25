@@ -17,9 +17,15 @@
 ### For SLES10 implementation, see:
 ###     http://lists.suse.com/archive/suse-sles-e/2006-Aug/0161.html
 
-import os, sys, shutil, getopt, ConfigParser, urlparse, types
-import signal, xmlrpclib, getpass, glob, fnmatch, urllib2
+import fnmatch
+import getopt
+import getpass
 import gzip
+import os
+import sys
+import types
+import urllib2
+import urlparse
 
 ### Python 2.5 and higher
 try:
@@ -34,13 +40,14 @@ except:
             import ElementTree
         except:
             ### No, it did not
-            print >>sys.stderr, 'Error loading python module ElementTree, please install.'
+            print >> sys.stderr, 'Error loading python module ElementTree, please install.'
             sys.exit(1)
 
 __version__ = "$Revision: 4786 $"
 # $Source$
 
 VERSION = '0.8.4svn'
+
 
 class Options:
     def __init__(self, args):
@@ -58,9 +65,12 @@ class Options:
         self.verbose = 1
 
         try:
-            opts, args = getopt.getopt (args, 'd:hlnqp:s:u:v',
-                ('credpath=', 'delete', 'download-all', 'dryrun', 'filter=', 'help', 'list',
-                 'password=', 'quiet', 'source', 'style=', 'username=', 'verbose', 'version' ))
+            opts, args = getopt.getopt(args,
+                                       'd:hlnqp:s:u:v',
+                                       ('credpath=', 'delete', 'download-all',
+                                        'dryrun', 'filter=', 'help', 'list',
+                                        'password=', 'quiet', 'source', 'style=',
+                                        'username=', 'verbose', 'version'))
         except getopt.error, exc:
             print 'youget: %s, try youget -h for a list of all the options' % str(exc)
             sys.exit(1)
@@ -148,6 +158,7 @@ youget options:
   -vv, -vvv, -vvvv..      increase verbosity more
 '''
 
+
 class Set:
     def __init__(self):
         self.list = []
@@ -176,26 +187,32 @@ class Set:
     def __len__(self):
         return len(self.list)
 
+
 class MirrorException(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
+
 
 def error(level, str):
     "Output error message"
     if level <= op.verbose:
         sys.stderr.write('youget: %s\n' % str)
 
+
 def info(level, str):
     "Output info message"
     if level <= op.verbose:
         sys.stdout.write('%s\n' % str)
 
+
 def die(ret, str):
     "Print error and exit with errorcode"
     error(0, str)
     sys.exit(ret)
+
 
 def filelist(top):
     flist = []
@@ -204,6 +221,7 @@ def filelist(top):
             flist.append(os.path.join(root, file))
     flist.sort()
     return flist
+
 
 def remove(file):
     "Remove files or directories"
@@ -224,6 +242,7 @@ def remove(file):
         for f in file:
             remove(f)
 
+
 def mkdir(path):
     "Create a directory, and parents if needed"
     if op.dryrun:
@@ -232,6 +251,7 @@ def mkdir(path):
         os.unlink(path)
     if not os.path.exists(path):
         os.makedirs(path)
+
 
 def httpget(opener, file, url, path=None):
     "Download file from url to local path"
@@ -246,6 +266,7 @@ def httpget(opener, file, url, path=None):
     fdout.write(fdin.read())
     fdin.close()
     fdout.close()
+
 
 def mirroryou(url, path):
     'Check username/password and YOU mirror style'
@@ -284,6 +305,7 @@ def mirroryou(url, path):
     else:
         mirroryou_sles10(url, path)
 
+
 def mirroryou_sles10(url, path):
     'Mirror a channel from YOU (SLES10 style)'
 
@@ -314,7 +336,7 @@ def mirroryou_sles10(url, path):
     for elem in root.getiterator('{http://linux.duke.edu/metadata/common}package'):
         pkgname = elem.find('{http://linux.duke.edu/metadata/common}location').get('href')
         pkgsize = int(elem.find('{http://linux.duke.edu/metadata/common}size').get('package'))
-        package_list.add( (pkgname, pkgsize) )
+        package_list.add((pkgname, pkgsize))
     fd.close()
     package_list.sort()
 
@@ -358,9 +380,9 @@ def mirroryou_sles10(url, path):
         ### Collect receiver side
         receiver = Set()
         for file in filelist(os.path.join(path, 'rpm')):
-            filename = file.split(path+'/')[1]
+            filename = file.split(path + '/')[1]
             filesize = os.stat(file).st_size
-            receiver.add( (filename, filesize) )
+            receiver.add((filename, filesize))
         receiver.sort()
 
         ### Collect sender side
@@ -371,6 +393,7 @@ def mirroryou_sles10(url, path):
         for filename, filesize in cleanse.list:
             info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, filesize))
             remove(os.path.join(path, filename))
+
 
 def mirroryou_nld9(url, path):
     'Mirror a channel from YOU (NLD9 style)'
@@ -389,14 +412,14 @@ def mirroryou_nld9(url, path):
     httpget(opener, 'packageinfo.xml.gz', url, path)
 
     ### Parse packagelist
-    fd = gzip.open(os.path.join(path,'packageinfo.xml.gz'), 'r')
+    fd = gzip.open(os.path.join(path, 'packageinfo.xml.gz'), 'r')
     tree = ElementTree.ElementTree(file=fd)
     root = tree.getroot()
     package_list = Set()
     for elem in root.getiterator('package'):
         pkgname = elem.findtext('history/update/filename')
         pkgsize = int(elem.findtext('history/update/filesize'))
-        package_list.add( (pkgname, pkgsize) )
+        package_list.add((pkgname, pkgsize))
     fd.close()
     package_list.sort()
 
@@ -440,9 +463,9 @@ def mirroryou_nld9(url, path):
         ### Collect receiver side
         receiver = Set()
         for file in filelist(os.path.join(path, 'rpm')):
-            filename = file.split(path+'/')[1]
+            filename = file.split(path + '/')[1]
             filesize = os.stat(file).st_size
-            receiver.add( (filename, filesize) )
+            receiver.add((filename, filesize))
         receiver.sort()
 
         ### Collect sender side
@@ -453,6 +476,7 @@ def mirroryou_nld9(url, path):
         for filename, filesize in cleanse.list:
             info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, filesize))
             remove(os.path.join(path, filename))
+
 
 def main():
     try:
@@ -466,10 +490,10 @@ sys.stderr = os.fdopen(2, 'w', 0)
 
 ### Workaround for python <= 2.2.1
 try:
-     True, False
+    True, False
 except NameError:
-     True = 1
-     False = 0
+    True = 1
+    False = 0
 
 ### Main entrance
 if __name__ == '__main__':
