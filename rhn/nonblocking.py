@@ -1,17 +1,26 @@
+#!/usr/bin/env python
 #
 #
 #
-# $Id: nonblocking.py 102302 2006-09-14 14:25:34Z jbowes $
+# $Id: nonblocking.py 191145 2010-03-01 10:21:24Z msuchy $
 
 import select
 import fcntl
 
+# Testing which version of python we run
+import sys
+if hasattr(sys, "version_info"):
+    # python 2.2 or newer; FCNTL is deprecated
+    FCNTL = fcntl
+else:
+    # Older version, with valid FCNTL
+    import FCNTL
 
 class NonBlockingFile:
     def __init__(self, fd):
         # Keep a copy of the file descriptor
         self.fd = fd
-        fcntl.fcntl(self.fd.fileno(), fcntl.F_SETFL, fcntl.O_NDELAY | fcntl.FNDELAY)
+        fcntl.fcntl(self.fd.fileno(), FCNTL.F_SETFL, FCNTL.O_NDELAY | FCNTL.FNDELAY)
         # Set the callback-related stuff
         self.read_fd_set = []
         self.write_fd_set = []
@@ -24,7 +33,7 @@ class NonBlockingFile:
         self.read_fd_set = read_fd_set
         # Make the objects non-blocking
         for f in self.read_fd_set:
-            fcntl.fcntl(f.fileno(), fcntl.F_SETFL, fcntl.O_NDELAY | fcntl.FNDELAY)
+            fcntl.fcntl(f.fileno(), FCNTL.F_SETFL, FCNTL.O_NDELAY | FCNTL.FNDELAY)
             
         self.write_fd_set = write_fd_set
         self.exc_fd_set = exc_fd_set
