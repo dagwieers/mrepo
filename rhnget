@@ -14,15 +14,23 @@
 ### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
 
-import os, sys, shutil, getopt, ConfigParser, urlparse, types
-import signal, xmlrpclib, getpass, glob, fnmatch
+import fnmatch
+import getopt
+import getpass
+import glob
+import os
+import signal
+import sys
+import types
+import urlparse
+import xmlrpclib
 
 if os.path.exists('/usr/share/mrepo/up2date_client/'):
-    sys.path[:0]=['/usr/share/mrepo/', '/usr/share/mrepo/up2date_client/']
+    sys.path[:0] = ['/usr/share/mrepo/', '/usr/share/mrepo/up2date_client/']
 elif os.path.exists('/usr/share/rhn/up2date_client/'):
-    sys.path[:0]=['/usr/share/rhn/', '/usr/share/rhn/up2date_client/']
+    sys.path[:0] = ['/usr/share/rhn/', '/usr/share/rhn/up2date_client/']
 else:
-    print >>sys.stderr, 'rhnget: up2date libraries are not installed. Aborting execution'
+    print >> sys.stderr, 'rhnget: up2date libraries are not installed. Aborting execution'
     sys.exit(1)
 
 from up2date_client import config, rpcServer, wrapperUtils, up2dateErrors, repoDirector
@@ -42,6 +50,7 @@ for scheme in ('rhn', 'rhns'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
+
 class Options:
     def __init__(self, args):
         self.cleanup = False
@@ -58,9 +67,9 @@ class Options:
         self.verbose = 1
 
         try:
-            opts, args = getopt.getopt (args, 'hlnqp:r:s:u:v',
+            opts, args = getopt.getopt(args, 'hlnqp:r:s:u:v',
                 ('delete', 'download-all', 'dry-run', 'filter=', 'help', 'list', 'password=', 'quiet',
-                 'release=', 'source', 'systemid=', 'username=', 'verbose', 'version' ))
+                 'release=', 'source', 'systemid=', 'username=', 'verbose', 'version'))
         except getopt.error, exc:
             print 'rhnget: %s, try rhnget -h for a list of all the options' % str(exc)
             sys.exit(1)
@@ -149,6 +158,7 @@ rhnget options:
   -vv, -vvv, -vvvv..      increase verbosity more
 '''
 
+
 class Set:
     def __init__(self):
         self.list = []
@@ -177,26 +187,32 @@ class Set:
     def __len__(self):
         return len(self.list)
 
+
 class MirrorException(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
+
 
 def error(level, str):
     "Output error message"
     if level <= op.verbose:
         sys.stderr.write('rhnget: %s\n' % str)
 
+
 def info(level, str):
     "Output info message"
     if level <= op.verbose:
         sys.stdout.write('%s\n' % str)
 
+
 def die(ret, str):
     "Print error and exit with errorcode"
     error(0, str)
     sys.exit(ret)
+
 
 def remove(file):
     "Remove files or directories"
@@ -217,9 +233,11 @@ def remove(file):
         for f in file:
             remove(f)
 
+
 def removedir(void, dir, files):
     for file in files:
         remove(os.path.join(dir, file))
+
 
 def mkdir(path):
     "Create a directory, and parents if needed"
@@ -229,6 +247,7 @@ def mkdir(path):
         os.unlink(path)
     if not os.path.exists(path):
         os.makedirs(path)
+
 
 def rhnlogin(url, path, force=False):
     'Log on to RHN and return cfg, loginInfo and systemid'
@@ -325,6 +344,7 @@ def rhnlogin(url, path, force=False):
 
     return systemid
 
+
 def rhngetchannel(channels, label):
     'Return the channel with given label, if found'
     for c in channels:
@@ -340,6 +360,7 @@ def rhngetchannel(channels, label):
                 'url': cfg['serverURL'],
             }
     return None
+
 
 def mirrorrhn(url, path):
     'Mirror a channel from RHN'
@@ -477,7 +498,7 @@ def mirrorrhn(url, path):
             if os.path.exists(file):
                 filename = os.path.basename(file)
                 filesize = os.stat(file).st_size
-                receiver.add( (filename, filesize) )
+                receiver.add((filename, filesize))
         receiver.sort()
 
         ### Collect sender side
@@ -485,7 +506,7 @@ def mirrorrhn(url, path):
         for pkg in package_list:
             filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
             filesize = int(pkg[5])
-            sender.add( (filename, filesize) )
+            sender.add((filename, filesize))
         sender.sort()
 
         ### Remove difference between receiver and sender
@@ -493,6 +514,7 @@ def mirrorrhn(url, path):
         for filename, filesize in cleanse.list:
             info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, filesize))
             remove(os.path.join(path, filename))
+
 
 def main():
     mirrorrhn(op.uri, op.destination)
@@ -503,10 +525,10 @@ sys.stderr = os.fdopen(2, 'w', 0)
 
 ### Workaround for python <= 2.2.1
 try:
-     True, False
+    True, False
 except NameError:
-     True = 1
-     False = 0
+    True = 1
+    False = 0
 
 ### Main entrance
 if __name__ == '__main__':
