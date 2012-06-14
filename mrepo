@@ -14,7 +14,7 @@
 ### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ### Copyright 2004-2007 Dag Wieers <dag@wieers.com>
 
-from __future__ import generators # for Python 2.2
+from __future__ import generators  # for Python 2.2
 
 import ConfigParser
 import getopt
@@ -33,7 +33,6 @@ except ImportError:
 import shutil
 import sys
 import time
-import traceback
 import types
 import urlparse
 
@@ -65,6 +64,7 @@ for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
+
 class Options:
     def __init__(self, args):
         self.configfile = '/etc/mrepo.conf'
@@ -82,7 +82,7 @@ class Options:
         self.verbose = 1
 
         try:
-            opts, args = getopt.getopt (args, 'c:d:fghnqr:t:uvx',
+            opts, args = getopt.getopt(args, 'c:d:fghnqr:t:uvx',
                 ('config=', 'dist=', 'dry-run', 'force', 'generate', 'help', 'quiet', 'repo=',
                 'remount', 'type=', 'umount', 'unmount', 'update', 'verbose', 'version', 'extras'))
         except getopt.error, exc:
@@ -170,6 +170,7 @@ mrepo options:
   -vv, -vvv, -vvvv..      increase verbosity more
       --unmount           unmount distribution ISOs
 '''
+
 
 class Config:
     def __init__(self):
@@ -273,7 +274,7 @@ class Config:
 
         info(4, 'Reading config file %s' % (configfile))
 
-        (s,b,p,q,f,o) = urlparse.urlparse(configfile)
+        (s, b, p, q, f, o) = urlparse.urlparse(configfile)
         if s in ('http', 'ftp', 'file'):
             configfh = urllib.urlopen(configfile)
             try:
@@ -302,7 +303,7 @@ class Config:
                 ### Check if section has appended arch
                 for arch in archs.keys():
                     if section.endswith('-%s' % arch):
-                        archlist = ( arch, )
+                        archlist = (arch,)
                         distname = section.split('-%s' % arch)[0]
                         break
                 else:
@@ -364,6 +365,7 @@ class Config:
             info(5, 'Setting option %s in section [%s] to: %s (default)' % (option, section, var))
         return var
 
+
 class Dist:
     def __init__(self, dist, arch, cf):
         self.arch = arch
@@ -390,8 +392,11 @@ class Dist:
     def rewrite(self):
         "Rewrite (string) attributes to replace variables by other (string) attributes"
         varlist = variables
-        varlist.update({ 'arch': self.arch, 'nick': self.nick, 'dist': self.dist,
-                'release': self.release, 'rhnrelease': self.rhnrelease })
+        varlist.update({'arch': self.arch,
+                        'nick': self.nick,
+                        'dist': self.dist,
+                        'release': self.release,
+                        'rhnrelease': self.rhnrelease})
         for key, value in vars(self).iteritems():
             if isinstance(value, types.StringType):
                 setattr(self, key, substitute(value, varlist))
@@ -401,7 +406,8 @@ class Dist:
 
     def findisos(self):
         "Return a list of existing ISO files"
-        if not self.iso: return
+        if not self.iso:
+            return
         if not self.isos:
             for file in self.iso.split(' '):
                 file = os.path.basename(file)
@@ -436,7 +442,7 @@ class Dist:
     def listrepos(self, names=None):
         ret = []
         if names:
-            return [ repo for repo in self.repos if repo.name in names ]
+            return [repo for repo in self.repos if repo.name in names]
         else:
             return self.repos
 
@@ -448,15 +454,14 @@ class Dist:
                 continue
             if repo.name in ('os', 'core') and self.isos:
                 repo.url = None
-                srcdirs = [ pathjoin(self.dir, disc) for disc in self.discs ]
+                srcdirs = [pathjoin(self.dir, disc) for disc in self.discs]
                 self.linksync(repo, srcdirs)
 
                 os_components = (
-                    glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) + # RHEL 4
-                    glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) + # RHEL 5
-                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) + # RHEL 6 / CentOS 6
-                    glob.glob(pathjoin(self.dir + '/disc1/repodata/comps.xml')) # Scientific Linux 6
-
+                    glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) +  # RHEL 4
+                    glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) +  # RHEL 5
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) +  # RHEL 6 / CentOS 6
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/comps.xml'))  # Scientific Linux 6
                 )
 
                 for file in os_components:
@@ -465,7 +470,7 @@ class Dist:
                     allsrcdirs.extend(srcdirs)
 
             else:
-                self.linksync(repo, [ repo.srcdir, repo.allsrcdir ])
+                self.linksync(repo, [repo.srcdir, repo.allsrcdir])
                 allsrcdirs.append(repo.srcdir)
                 allsrcdirs.append(repo.allsrcdir)
 
@@ -477,7 +482,7 @@ class Dist:
             repo.unlock('generate')
 
         # Finally generate 'all' repsitory
-        for repo in ( Repo('all', '', self, cf), ):
+        for repo in (Repo('all', '', self, cf),):
             if not repo.lock('generate'):
                 continue
 
@@ -493,13 +498,14 @@ class Dist:
 
     def linksync(self, repo, srcdirs=None):
         if not srcdirs:
-            srcdirs = [ repo.srcdir ]
+            srcdirs = [repo.srcdir]
         destdir = repo.wwwdir
-        srcfiles = listrpms(srcdirs, relative = destdir)
+        srcfiles = listrpms(srcdirs, relative=destdir)
         # srcfiles = [ (basename, relpath), ... ]
         srcfiles.sort()
         # uniq basenames
-        srcfiles = [f for i, f in enumerate(srcfiles) if not i or f[0] != srcfiles[i-1][0]]
+        srcfiles = [f for i, f in enumerate(srcfiles)
+                    if not i or f[0] != srcfiles[i - 1][0]]
 
         info(5, '%s: Symlink %s packages from %s to %s' % (repo.dist.nick, repo.name, srcdirs, destdir))
         mkdir(destdir)
@@ -515,7 +521,7 @@ class Dist:
             return x[0]
 
         changed = False
-        for srcfile, destfile in synciter(srcfiles, destfiles, key = keyfunc):
+        for srcfile, destfile in synciter(srcfiles, destfiles, key=keyfunc):
             if srcfile is None:
                 # delete the link
                 base, targetdir = destfile
@@ -534,17 +540,17 @@ class Dist:
                     os.symlink(target, linkname)
                     changed = True
             else:
-                 # same bases
-                 base, srcdir = srcfile
-                 base2, curtarget = destfile
-                 target = pathjoin(srcdir, base)
-                 if target != curtarget:
-                     info(5, 'Changed link %s: current: %s, should be: %s' % (base, curtarget, target))
-                     linkname = pathjoin(destdir, base)
-                     if not op.dryrun:
-                         os.unlink(linkname)
-                         os.symlink(target, linkname)
-                         changed = True
+                # same bases
+                base, srcdir = srcfile
+                base2, curtarget = destfile
+                target = pathjoin(srcdir, base)
+                if target != curtarget:
+                    info(5, 'Changed link %s: current: %s, should be: %s' % (base, curtarget, target))
+                    linkname = pathjoin(destdir, base)
+                    if not op.dryrun:
+                        os.unlink(linkname)
+                        os.symlink(target, linkname)
+                        changed = True
 
         if changed:
             repo.changed = True
@@ -582,7 +588,7 @@ class Dist:
             mount = os.path.join(self.dir, disc)
             if not os.path.isfile(cf.cmd['mount']):
                 die(4, 'mount command not %s' % cf.cmd['mount'])
-            mount2 = mountpoint(iso) 
+            mount2 = mountpoint(iso)
             if not mount2:
                 if os.path.exists(mount) and not os.path.isdir(mount):
                     os.rename(mount, os.tempnam(os.path.dirname(mount), 'bak-'))
@@ -607,8 +613,12 @@ class Dist:
                 ### Create the 'os' directory for the merged trees.
                 unionfs_mountpoint = os.path.join(self.dir, 'os')
                 mkdir(unionfs_mountpoint)
-                info(2, "%s -o allow_other,fsname=%s %s %s" % (cf.cmd['unionfs'], unionfs_name, ':'.join(mountpoints), unionfs_mountpoint))
-                run("%s -o allow_other,fsname=%s %s %s" % (cf.cmd['unionfs'], unionfs_name, ':'.join(mountpoints), unionfs_mountpoint))
+                info(2, "%s -o allow_other,fsname=%s %s %s" %
+                     (cf.cmd['unionfs'], unionfs_name,
+                      ':'.join(mountpoints), unionfs_mountpoint))
+                run("%s -o allow_other,fsname=%s %s %s" %
+                    (cf.cmd['unionfs'], unionfs_name,
+                     ':'.join(mountpoints), unionfs_mountpoint))
 
         return discs
 
@@ -664,6 +674,7 @@ class Dist:
             open(os.path.join(self.dir, '.title'), 'w').write(self.name)
         symlink(os.path.join(cf.htmldir, 'HEADER.repo.shtml'), os.path.join(self.dir, 'HEADER.shtml'))
         symlink(os.path.join(cf.htmldir, 'README.repo.shtml'), os.path.join(self.dir, 'README.shtml'))
+
 
 class Repo:
     def __init__(self, name, url, dist, cf):
@@ -751,7 +762,7 @@ class Repo:
             for file in files:
                 if os.path.exists(os.path.join(path, file)) and file.endswith('.rpm'):
                     size = os.stat(os.path.join(path, file)).st_size
-                    filelist.add( (file, size) )
+                    filelist.add((file, size))
 
         os.path.walk(self.srcdir, addfile, (filelist,))
         return filelist
@@ -853,7 +864,7 @@ class Repo:
             for md in self.dist.metadata:
                 if md in ('repoview',):
                     self.repoview()
-                elif md not in metadata: 
+                elif md not in metadata:
                     error(0, 'The %s index is unknown.' % md)
         except mrepoGenerateException, e:
             error(0, 'Generating repo failed for %s with message:\n  %s' % (self.name, e.value))
@@ -962,7 +973,7 @@ class Repo:
                 % (os.uname()[1], self.dist.name, self.dist.nick, self.dist.arch, self.dist.name))
 
         ### Write out /srcdir/nick/base/release.repo
-        releasefile = os.path.join(self.dist.dir, 'base', 'release.'+ self.name)
+        releasefile = os.path.join(self.dist.dir, 'base', 'release.' + self.name)
         if not os.path.exists(releasefile):
             open(releasefile, 'w').write(
                 'Archive: %s\n'\
@@ -1004,8 +1015,9 @@ class Repo:
 #           if ret:
 #               raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['repoview'], ret)))
 
+
 class mySet:
-    def __init__(self, seq = ()):
+    def __init__(self, seq=()):
         self._dict = dict([(a, True) for a in seq])
 
     def add(self, input):
@@ -1031,17 +1043,22 @@ class mySet:
     def __eq__(self, s):
         return self._dict == s._dict
 
+
 class mrepoMirrorException(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
+
 
 class mrepoGenerateException(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
+
 
 def sha1dir(dir):
     "Return sha1sum of a directory"
@@ -1052,6 +1069,7 @@ def sha1dir(dir):
         output = output + os.path.basename(file) + ' ' + str(os.stat(file).st_size) + '\n'
     return sha1hash(output).hexdigest()
 
+
 def writesha1(file, sha1sum=None):
     "Write out sha1sum"
     repodir = os.path.dirname(file)
@@ -1060,20 +1078,24 @@ def writesha1(file, sha1sum=None):
     if not op.dryrun:
         open(file, 'w').write(sha1sum)
 
+
 def error(level, str):
     "Output error message"
     if level <= op.verbose:
         sys.stderr.write('mrepo: %s\n' % str)
+
 
 def info(level, str):
     "Output info message"
     if level <= op.verbose:
         sys.stdout.write('%s\n' % str)
 
+
 def die(ret, str):
     "Print error and exit with errorcode"
     error(0, str)
     sys.exit(ret)
+
 
 def run(str, dryrun=False):
     "Run command, accept user input, and print output when needed."
@@ -1087,13 +1109,15 @@ def run(str, dryrun=False):
     else:
         info(1, 'Not execute: %s' % str)
 
-def readfile(file, len = 0):
+
+def readfile(file, len=0):
     "Return content of a file"
     if not os.path.isfile(file):
         return None
     if len:
         return open(file, 'r').read(len)
     return open(file, 'r').read()
+
 
 def writefile(file, str):
     if op.dryrun:
@@ -1104,7 +1128,8 @@ def writefile(file, str):
 
 _subst_sub = re.compile('\$\{?(\w+)\}?').sub
 
-def substitute(string, vars, recursion = 0):
+
+def substitute(string, vars, recursion=0):
     "Substitute variables from a string"
     if recursion > 10:
         raise RuntimeError, "variable substitution loop"
@@ -1118,6 +1143,7 @@ def substitute(string, vars, recursion = 0):
     string = _subst_sub(_substrepl, string)
     return string
 
+
 def mountpoint(dev):
     "Return the mountpoint of a mounted device/file"
     for entry in readfile('/etc/mtab').split('\n'):
@@ -1126,11 +1152,14 @@ def mountpoint(dev):
             if dev == cols[0]:
                 return cols[1]
 
+
 def distsort(a, b):
     return cmp(a.nick, b.nick)
 
+
 def reposort(a, b):
     return cmp(a.name, b.name)
+
 
 def vercmp(a, b):
     al = a.split('.')
@@ -1143,6 +1172,7 @@ def vercmp(a, b):
             return 1
     return cmp(len(al), len(bl))
 
+
 def symlinkglob(str, *targets):
     "Symlink files to multiple targets"
     for file in glob.glob(str):
@@ -1150,15 +1180,17 @@ def symlinkglob(str, *targets):
             mkdir(target)
             symlink(file, target)
 
+
 def abspath(path, reference):
     "Make absolute path from reference"
     return os.path.normpath(os.path.join(path, reference))
+
 
 def relpath(path, reference):
     """Make relative path from reference
        if reference is a directory, it must end with a /"""
     common = os.path.commonprefix([path, reference])
-    common = common[0:common.rfind('/')+1]
+    common = common[0:common.rfind('/') + 1]
     (uncommon, targetName) = os.path.split(reference.replace(common, '', 1))
     if uncommon:
         newpath = []
@@ -1168,6 +1200,7 @@ def relpath(path, reference):
         return '/'.join(newpath)
     else:
         return path
+
 
 def symlink(src, dst):
     "Create a symbolic link, force if dst exists"
@@ -1188,7 +1221,7 @@ def symlink(src, dst):
     elif os.path.isfile(dst):
         if os.path.samefile(src, dst):
             return
-        os.rename(dst, dst+'.mrepobak')
+        os.rename(dst, dst + '.mrepobak')
 
 ### Not using filecmp increases speed with 15%
 #   if os.path.isfile(dst) and filecmp.cmp(src, dst) == 0:
@@ -1198,6 +1231,7 @@ def symlink(src, dst):
     if not os.path.isdir(os.path.dirname(dst)):
         mkdir(os.path.dirname(dst))
     os.symlink(src, dst)
+
 
 def copy(src, dst):
     "Copy a file, force if dst exists"
@@ -1213,6 +1247,7 @@ def copy(src, dst):
             shutil.copy2(src, dst)
         elif os.path.isdir(src):
             shutil.copytree(src, dst)
+
 
 def remove(file):
     "Remove files or directories"
@@ -1233,9 +1268,11 @@ def remove(file):
         for f in file:
             remove(f)
 
+
 def removedir(void, dir, files):
     for file in files:
         remove(os.path.join(dir, file))
+
 
 def mkdir(path):
     "Create a directory, and parents if needed"
@@ -1245,6 +1282,7 @@ def mkdir(path):
         os.unlink(path)
     if not os.path.exists(path):
         os.makedirs(path)
+
 
 def mirrorrsync(url, path):
     "Mirror everything from an rsync:// URL"
@@ -1285,6 +1323,7 @@ def mirrorrsync(url, path):
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
+
 def mirrormirrordir(url, path):
     "Mirror everything from a ftp:// or mc:// URL"
     if not cf.cmd['mirrordir']:
@@ -1294,7 +1333,7 @@ def mirrormirrordir(url, path):
 
     opts = cf.mirrordiroptions
     if op.verbose >= 3:
-        opts = opts + ' -v' * (op.verbose - 3)  
+        opts = opts + ' -v' * (op.verbose - 3)
     if op.dryrun:
         opts = opts + ' --dry-run'
     if cf.mirrordircleanup:
@@ -1347,6 +1386,7 @@ def mirrorlftp(url, path):
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
+
 def mirrorfile(url, path):
     "Mirror everything from a file:// URL by symlinking"
     dir = url.replace('file://', '')
@@ -1363,6 +1403,7 @@ def mirrorfile(url, path):
 #           if os.path.isfile(iso):
 #               print 'Please mount %s to %s' % (iso, path)
 
+
 def mirrormrepo(url, path):
     "Mirror everything from a local mrepo mirror by symlinking"
     pathname = url.replace('mrepo://', '')
@@ -1374,6 +1415,7 @@ def mirrormrepo(url, path):
 #   basename = os.path.basename(pathname)
 #   symlink(os.path.join(cf.srcdir, pathname), os.path.join(path, basename))
 
+
 def mirrorrhnget(url, path, dist):
     "Mirror everything from a rhn:// or rhns:// URL"
     if not cf.cmd['rhnget']:
@@ -1383,7 +1425,7 @@ def mirrorrhnget(url, path, dist):
 
     opts = cf.rhngetoptions
     if op.verbose >= 3:
-        opts = opts + ' -v' * (op.verbose - 3)  
+        opts = opts + ' -v' * (op.verbose - 3)
     if op.dryrun:
         opts = opts + ' --dry-run'
     if cf.rhngetcleanup:
@@ -1417,6 +1459,7 @@ def mirrorrhnget(url, path, dist):
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
+
 def mirroryouget(url, path, dist):
     "Mirror everything from a you:// URL"
     if not cf.cmd['youget']:
@@ -1428,7 +1471,7 @@ def mirroryouget(url, path, dist):
 
     opts = cf.rhngetoptions
     if op.verbose >= 3:
-        opts = opts + ' -v' * (op.verbose - 3)  
+        opts = opts + ' -v' * (op.verbose - 3)
     if op.dryrun:
         opts = opts + ' --dry-run'
     if cf.rhngetcleanup:
@@ -1461,6 +1504,7 @@ def mirroryouget(url, path, dist):
     if ret:
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
+
 def mirrorreposync(url, path, reponame):
     "Mirror everything from a reposync:// URL"
     if not cf.cmd['reposync']:
@@ -1472,7 +1516,7 @@ def mirrorreposync(url, path, reponame):
     url = url.replace('reposync://', 'http://')
 
     opts = cf.reposyncoptions
-    if op.verbose < 3: 
+    if op.verbose < 3:
         opts = opts + ' -q'
     if op.dryrun:
         opts = opts + ' --urls'
@@ -1501,6 +1545,7 @@ enabled=1
     # remove the temporary config
     os.remove(reposync_conf_file)
 
+
 def hardlink(srcdir):
     info(1, 'Hardlinking duplicate packages in %s.' % srcdir)
     opts = ''
@@ -1524,6 +1569,7 @@ def hardlink(srcdir):
         info(1, 'hardlink was not found, hardlink support is therefore disabled.')
         return
 
+
 def rpmlink((dist, repo), dirpath, filelist):
     archlist = ['noarch', ]
     if archs.has_key(dist.arch):
@@ -1539,18 +1585,21 @@ def rpmlink((dist, repo), dirpath, filelist):
             elif regexp.match(file, 1):
                 symlink(src, os.path.join(dist.dir, 'RPMS.' + repo))
                 symlink(src, os.path.join(dist.dir, 'RPMS.all'))
-    
+
+
 def which(cmd):
     "Find executables in PATH environment"
-    for path in os.environ.get('PATH','$PATH').split(':'):
+    for path in os.environ.get('PATH', '$PATH').split(':'):
         if os.path.isfile(os.path.join(path, cmd)):
             info(5, 'Found command %s in path %s' % (cmd, path))
             return os.path.join(path, cmd)
     return ''
 
+
 def htmlindex():
     symlink(cf.htmldir + '/HEADER.index.shtml', cf.wwwdir + '/HEADER.shtml')
     symlink(cf.htmldir + '/README.index.shtml', cf.wwwdir + '/README.shtml')
+
 
 def mail(subject, msg):
     info(2, 'Sending mail to: %s' % cf.mailto)
@@ -1565,6 +1614,7 @@ def mail(subject, msg):
     except:
         info(1, 'Sending mail via %s failed.' % cf.smtpserver)
 
+
 def readconfig():
     cf = Config()
     if cf.confdir and os.path.isdir(cf.confdir):
@@ -1575,13 +1625,15 @@ def readconfig():
             cf.update(configfile)
     return cf
 
+
 def _nextNone(iterator):
     try:
         return iterator.next()
     except StopIteration:
         return None
 
-def synciter(a, b, key = None, keya = None, keyb = None):
+
+def synciter(a, b, key=None, keya=None, keyb=None):
     """returns an iterator that compares two ordered iterables a and b.
     If keya or keyb are specified, they are called with elements of the corresponding
     iterable. They should return a value that is used to compare two elements.
@@ -1623,11 +1675,12 @@ def synciter(a, b, key = None, keya = None, keyb = None):
         yield None, belem
         belem = _nextNone(bi)
 
-def listrpms(dirs, relative = ''):
+
+def listrpms(dirs, relative=''):
     """return a list of rpms in the given directories as a list of (name, path) tuples
     if relative is specified, return the paths relative to this directory"""
     if not isinstance(dirs, (list, tuple)):
-        dirs = ( dirs, )
+        dirs = (dirs,)
     if relative and not relative.endswith('/'):
         relative += '/'
     isdir = os.path.isdir
@@ -1652,6 +1705,7 @@ def listrpms(dirs, relative = ''):
     rpms.sort()
     return rpms
 
+
 def listrpmlinks(dir):
     islink = os.path.islink
     readlink = os.readlink
@@ -1662,6 +1716,7 @@ def listrpmlinks(dir):
         if islink(path) and f.endswith('.rpm'):
             links.append((f, readlink(path)))
     return links
+
 
 def main():
     ### Check availability of commands
@@ -1765,16 +1820,16 @@ def main():
                         info(4, '%s: New packages: %s' % (dist.nick, formatlist(pkglist)))
                         distnew += len(pkglist)
                         for element in pkglist:
-                            fd.write('%s %s/%s Added %s (%d kiB)\n' % (date, dist.nick, repo.name, element[0], element[1]/1024))
-                            msg = msg + '\n\t\t+ %s (%d kiB)' % (element[0], element[1]/1024)
+                            fd.write('%s %s/%s Added %s (%d kiB)\n' % (date, dist.nick, repo.name, element[0], element[1] / 1024))
+                            msg = msg + '\n\t\t+ %s (%d kiB)' % (element[0], element[1] / 1024)
 
                     if removed:
                         pkglist = sortedlist(removed)
                         info(4, '%s: Removed packages: %s' % (dist.nick, formatlist(pkglist)))
                         distremoved += len(pkglist)
                         for element in pkglist:
-                            fd.write('%s %s/%s Removed %s (%d kiB)\n' % (date, dist.nick, repo.name, element[0], element[1]/1024))
-                            msg = msg + '\n\t\t- %s (%d kiB)' % (element[0], element[1]/1024)
+                            fd.write('%s %s/%s Removed %s (%d kiB)\n' % (date, dist.nick, repo.name, element[0], element[1] / 1024))
+                            msg = msg + '\n\t\t- %s (%d kiB)' % (element[0], element[1] / 1024)
 
                     fd.close()
                     repo.changed = True
@@ -1814,7 +1869,7 @@ sys.stderr = os.fdopen(2, 'w', 0)
 try:
     True, False
 except NameError:
-    True, False = (0==0, 0!=0)
+    True, False = (0 == 0, 0 != 0)
 
 try:
     set()

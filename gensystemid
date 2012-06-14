@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
-import os, sys, getopt, getpass, urlparse
+import getopt
+import getpass
+import os
+import sys
+import urlparse
 
 if os.path.exists('/usr/share/mrepo/up2date_client/'):
     sys.path.insert(-1, '/usr/share/mrepo/')
@@ -9,13 +13,14 @@ elif os.path.exists('/usr/share/rhn/up2date_client/'):
     sys.path.insert(-1, '/usr/share/rhn/')
     sys.path.insert(-1, '/usr/share/rhn/up2date_client/')
 else:
-    print >>sys.stderr, 'rhnget: up2date libraries are not installed. Aborting execution'
+    print >> sys.stderr, 'rhnget: up2date libraries are not installed. Aborting execution'
     sys.exit(1)
 
 from up2date_client import config, rpcServer, up2dateErrors
 from rhn import rpclib
 
 global cfg, loginInfo
+
 
 def checkrelease(release, arch):
     ### We are not sure about the architectures below :-/
@@ -45,6 +50,7 @@ def checkrelease(release, arch):
         raise Exception, 'RHN release %s does not exist for architecture %s.' % (release, arch)
     return True
 
+
 def lowarch(arch):
     archs = {
         'i386': ['i486', 'i586', 'i686', 'athlon'],
@@ -63,6 +69,7 @@ def lowarch(arch):
         print 'gensystemid: Architecture %s unknown' % arch
         return None
 
+
 class Options:
     def __init__(self, args):
         self.arch = None
@@ -75,7 +82,7 @@ class Options:
         self.verbose = 1
 
         try:
-            opts, args = getopt.getopt (args, 'a:hqp:r:u:v',
+            opts, args = getopt.getopt(args, 'a:hqp:r:u:v',
                 ['arch=', 'hostname=', 'quiet', 'release=', 'help', 'verbose', 'version'])
         except getopt.error, exc:
             print 'gensystemid: %s, try gensystemid -h for a list of all the options' % str(exc)
@@ -158,20 +165,24 @@ gensystemid options:
 cfg = {}
 loginInfo = {}
 
+
 def error(level, str):
     "Output error message"
     if level <= op.verbose:
         sys.stdout.write('gensystemid: %s\n' % str)
+
 
 def info(level, str):
     "Output info message"
     if level <= op.verbose:
         sys.stdout.write('%s\n' % str)
 
+
 def die(ret, str):
     "Print error and exit with errorcode"
     error(0, str)
     sys.exit(ret)
+
 
 def main():
     if not op.rhnusername:
@@ -220,7 +231,6 @@ def main():
 #           cfg['proxyPassword'] = proxy.password
 #           cfg['proxyUser='] = proxy.username
 
-
     if op.verbose >= 5:
         cfg['debug'] = 10000
 
@@ -242,7 +252,7 @@ def main():
     except rpclib.Fault, f:
         error(0, 'Error registering user. %s' % f.faultString)
         sys.exit(1)
-        
+
     s = rpcServer.getServer()
     try:
         systemid = rpcServer.doCall(s.registration.new_system, auth)
@@ -261,10 +271,10 @@ sys.stderr = os.fdopen(2, 'w', 0)
 
 ### Workaround for python <= 2.2.1
 try:
-     True, False
+    True, False
 except NameError:
-     True = 1
-     False = 0
+    True = 1
+    False = 0
 Yes = yes = On = on = True
 No = no = Off = off = False
 
