@@ -39,7 +39,7 @@ import urlparse
 __version__ = "$Revision$"
 # $Source$
 
-VERSION = '0.8.7'
+VERSION = '0.8.7-with-autofs-support'
 
 archs = {
     'alpha': ('alpha', 'alphaev5', 'alphaev56', 'alphaev6', 'alphaev67'),
@@ -80,17 +80,20 @@ class Options:
         self.umount = False
         self.update = False
         self.verbose = 1
+	self.autofs = False
 
         try:
-            opts, args = getopt.getopt(args, 'c:d:fghnqr:t:uvx',
-                ('config=', 'dist=', 'dry-run', 'force', 'generate', 'help', 'quiet', 'repo=',
+            opts, args = getopt.getopt(args, 'ac:d:fghnqr:t:uvx',
+                ('autofs', 'config=', 'dist=', 'dry-run', 'force', 'generate', 'help', 'quiet', 'repo=',
                 'remount', 'type=', 'umount', 'unmount', 'update', 'verbose', 'version', 'extras'))
         except getopt.error, exc:
             print 'mrepo: %s, try mrepo -h for a list of all the options' % str(exc)
             sys.exit(1)
 
         for opt, arg in opts:
-            if opt in ('-c', '--config'):
+            if opt in ('-a', '--autofs'):
+                self.autofs = True
+            elif opt in ('-c', '--config'):
                 self.configfile = os.path.abspath(arg)
             elif opt in ('-d', '--dist'):
                 print 'mrepo: the use of -d or --dist as an option is deprecated, use the argument list'
@@ -158,6 +161,7 @@ class Options:
         print '''Set up a distribution server from ISO files
 
 mrepo options:
+  -a, --autofs            regenerate autofs configfile
   -c, --config=file       specify alternative configfile
   -f, --force             force repository generation
   -g, --generate          generate mrepo repositories
@@ -176,6 +180,7 @@ class Config:
     def __init__(self):
         self.read(op.configfile)
 
+        self.autofsfile = self.getoption('main', 'autofs', '/etc/auto.mrepo')
         self.cachedir = self.getoption('main', 'cachedir', '/var/cache/mrepo')
         self.lockdir = self.getoption('main', 'lockdir', '/var/cache/mrepo')
         self.confdir = self.getoption('main', 'confdir', '/etc/mrepo.conf.d')
@@ -576,6 +581,9 @@ class Dist:
             mount_cmd = cf.cmd['mount']
             if readfile('/selinux/enforce') == '1':
                 opts = opts + ',context=system_u:object_r:httpd_sys_content_t:s0'
+            if op.autofs:
+                autofs_opts = '-fstype=iso9660,loop,ro'
+                f = open(cf.autofsfile, 'a')
         for iso in self.isos:
             if cf.shareiso:
                 symlink(iso, os.path.join(self.dir, 'iso'))
@@ -586,6 +594,8 @@ class Dist:
             disc = '%s%s' % (discstr, discnr)
             discs.append(disc)
             mount = os.path.join(self.dir, disc)
+            if op.autofs:
+               f.write('%s %s :%s\n' % (mount, autofs_opts, iso))
             if not os.path.isfile(cf.cmd['mount']):
                 die(4, 'mount command not %s' % cf.cmd['mount'])
             mount2 = mountpoint(iso)
@@ -593,7 +603,7 @@ class Dist:
                 if os.path.exists(mount) and not os.path.isdir(mount):
                     os.rename(mount, os.tempnam(os.path.dirname(mount), 'bak-'))
                 mkdir(mount)
-                if not os.path.ismount(mount):
+                if not os.path.ismount(mount) and not op.autofs:
                     info(2, '%s: Mount ISO %s to %s' % (self.nick, os.path.basename(iso), mount))
                     run('%s %s %s %s %s' % (mount_cmd, opts, iso, mount, extra_opts))
                     mountpoints.append(mount)
@@ -603,6 +613,9 @@ class Dist:
 #                        remove(mount)
                     info(5, '%s: %s already mounted, symlink ISO to %s' % (self.nick, os.path.basename(iso), mount))
                     symlink(mount2, mount)
+
+        if op.autofs:
+            f.close()
 
         if cf.cmd['unionfs'] and cf.unionfs and self.unionfs:
             ### This will be the name of our filesystem (first column of /etc/mtab)
@@ -1764,6 +1777,11 @@ def main():
     sumremoved = 0
     msg = 'The following changes to mrepo\'s repositories on %s have been made:' % os.uname()[1]
 
+    ### Backup current autofs configfile
+    if op.autofs:
+        if os.path.isfile(cf.autofsfile):
+            os.rename(cf.autofsfile, cf.autofsfile + '.bak')
+
     ### Mounting and mirroring available distributions/repositories
     for dist in dists:
         dist.findisos()
@@ -1771,7 +1789,7 @@ def main():
         if dist.isos:
             if op.umount or op.remount:
                 dist.umount()
-            if not op.umount or op.remount:
+            if not op.umount or op.remount or op.autofs:
                 dist.discs = dist.mount()
 
         if op.update:
