@@ -165,8 +165,10 @@ mrepo options:
   -q, --quiet             minimal output
   -r, --repo=repo1,repo2  restrict action to specific repositories
       --remount           remount distribution ISOs
+  -t, --type=type1,type2  mirror types to use. Default: file, fish, ftp, http, https, mc, rhn, rhns, rsync, sftp, mrepo, you
   -u, --update            fetch OS updates
   -v, --verbose           increase verbosity
+      --version           print mrepo version information
   -vv, -vvv, -vvvv..      increase verbosity more
       --unmount           unmount distribution ISOs
 '''
