@@ -60,7 +60,7 @@ enable = ('yes', 'on', 'true', '1')
 disable = ('no', 'off', 'false', '0')
 
 ### Register rhn and rhns as a known schemes
-for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs'):
+for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs', 'ulns'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
@@ -129,7 +129,7 @@ class Options:
 
         if not self.types:
             self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn',
-                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs']
+                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs', 'ulns']
 
         for arg in args:
             self.dists = self.dists + arg.split(',')
@@ -165,7 +165,7 @@ mrepo options:
   -q, --quiet             minimal output
   -r, --repo=repo1,repo2  restrict action to specific repositories
       --remount           remount distribution ISOs
-  -t, --type=type1,type2  mirror types to use. Default: file, fish, ftp, http, https, mc, rhn, rhns, rsync, sftp, mrepo, you
+  -t, --type=type1,type2  mirror types to use. Default: file, fish, ftp, http, https, mc, rhn, rhns, rsync, sftp, mrepo, you, ulns
   -u, --update            fetch OS updates
   -v, --verbose           increase verbosity
       --version           print mrepo version information
@@ -231,6 +231,7 @@ class Config:
         self.cmd['umount'] = self.getoption('main', 'umountcmd', '/bin/umount')
         self.cmd['youget'] = self.getoption('main', 'yougetcmd', '/usr/bin/youget')
         self.cmd['yumarch'] = self.getoption('main', 'yumarchcmd', '/usr/bin/yum-arch')
+        self.cmd['ulnget'] = self.getoption('main', 'ulngetcmd', '/usr/bin/ulnget')
 
         self.createrepooptions = self.getoption('main', 'createrepo-options', '--pretty --database --update')
 
@@ -256,6 +257,11 @@ class Config:
         self.rhngetoptions = self.getoption('main', 'rhnget-options', '')
         self.rhngetcleanup = self.getoption('main', 'rhnget-cleanup', 'yes') not in disable
         self.rhngetdownloadall = self.getoption('main', 'rhnget-download-all', 'no') not in disable
+
+        self.ulnlogin = self.getoption('main', 'ulnlogin', None)
+        self.ulngetoptions = self.getoption('main', 'ulnget-options', '')
+        self.ulngetcleanup = self.getoption('main', 'ulnget-cleanup', 'yes') not in disable
+        self.ulngetdownloadall = self.getoption('main', 'ulnget-download-all', 'no') not in disable
 
         self.rsyncbwlimit = self.getoption('main', 'rsync-bandwidth-limit', None)
         self.rsynccleanup = self.getoption('main', 'rsync-cleanup', 'yes') not in disable
@@ -323,7 +329,7 @@ class Config:
                     dist.unionfs = True
                     dist.systemid = None
                     for option in self.cfg.options(section):
-                        if option in ('iso', 'name', 'release', 'repo', 'rhnrelease'):
+                        if option in ('iso', 'name', 'release', 'repo', 'rhnrelease', 'ulnrelease'):
                             setattr(dist, option, self.cfg.get(section, option))
                         elif option in ('arch', 'dist'):
                             pass
@@ -381,6 +387,7 @@ class Dist:
         self.release = None
         self.repos = []
         self.rhnrelease = None
+        self.ulnrelease = None
         self.srcdir = cf.srcdir
         self.discs = ()
         self.isos = []
@@ -398,7 +405,8 @@ class Dist:
                         'nick': self.nick,
                         'dist': self.dist,
                         'release': self.release,
-                        'rhnrelease': self.rhnrelease})
+                        'rhnrelease': self.rhnrelease,
+                        'ulnrelease': self.ulnrelease})
         for key, value in vars(self).iteritems():
             if isinstance(value, types.StringType):
                 setattr(self, key, substitute(value, varlist))
@@ -461,8 +469,8 @@ class Dist:
 
                 os_components = (
                     glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) +  # RHEL 4
-                    glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) +  # RHEL 5
-                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) +  # RHEL 6 / CentOS 6
+                    glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) +  # RHEL 5 / OL5
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) +  # RHEL 6 / CentOS 6 / OL6
                     glob.glob(pathjoin(self.dir + '/disc1/repodata/comps.xml'))  # Scientific Linux 6
                 )
 
@@ -732,6 +740,8 @@ class Repo:
                     mirrormirrordir(url, self.srcdir)
                 elif s in ('rhn', 'rhns'):
                     mirrorrhnget(url, self.srcdir, self.dist)
+                elif s in ('ulns'):
+                    mirrorulnget(url, self.srcdir, self.dist)
                 elif s in ('you', ):
                     mirroryouget(url, self.srcdir, self.dist)
                 elif s in ('reposync', 'reposyncs'):
@@ -1417,6 +1427,28 @@ def mirrormrepo(url, path):
 #   basename = os.path.basename(pathname)
 #   symlink(os.path.join(cf.srcdir, pathname), os.path.join(path, basename))
 
+def mirrorulnget(url, path, dist):
+    "Mirror everything from a ulns:// URL"
+    if not cf.cmd['ulnget']:
+        error(1, 'ulnget was not found so ulns support is therefore disabled.')
+        return
+    mkdir(path)
+    opts = cf.ulngetoptions
+    if op.verbose >= 3:
+        opts = opts + ' -v' * (op.verbose - 3)
+    if op.dryrun:
+        opts = opts + ' --dry-run'
+    if cf.ulngetcleanup:
+        opts = opts + ' --delete'
+    if cf.ulngetdownloadall:
+        opts = opts + ' --download-all'
+
+    if dist.ulnrelease:
+        opts = opts + ' --release="%s"' % dist.ulnrelease
+
+    ret = run("%s %s '%s' '%s'" % (cf.cmd['ulnget'], opts, url, path), dryrun=True)
+    if ret:
+        raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 def mirrorrhnget(url, path, dist):
     "Mirror everything from a rhn:// or rhns:// URL"

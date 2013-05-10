@@ -1,0 +1,504 @@
+#!/usr/bin/python
+
+### This program is free software; you can redistribute it and/or modify
+### it under the terms of the GNU Library General Public License as published by
+### the Free Software Foundation; version 2 only
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU Library General Public License for more details.
+###
+### You should have received a copy of the GNU Library General Public License
+### along with this program; if not, write to the Free Software
+### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+### Copyright 2004-2006 Dag Wieers <dag@wieers.com>
+
+import fnmatch
+import getopt
+import getpass
+import glob
+import os
+import signal
+import sys
+import types
+import urlparse
+import xmlrpclib
+
+# Oracle Linux should always ship with an up2date_client for ULN
+if os.path.exists('/usr/share/mrepo/up2date_client/'):
+    sys.path[:0] = ['/usr/share/mrepo/', '/usr/share/mrepo/up2date_client/']
+elif os.path.exists('/usr/share/rhn/up2date_client/'):
+    sys.path[:0] = ['/usr/share/rhn/', '/usr/share/rhn/up2date_client/']
+else:
+    print >> sys.stderr, 'ulnget: up2date libraries are not installed. Aborting execution'
+    sys.exit(1)
+
+from up2date_client import config, rpcServer, wrapperUtils, up2dateErrors, repoDirector
+from rhn import rpclib
+
+cfg = {}
+loginInfo = {}
+rd = None
+
+__version__ = "$Revision: 4786 $"
+# $Source$
+
+VERSION = '0.8.9git'
+
+### Register ulns as a known scheme
+for scheme in ('ulns'):
+    urlparse.uses_netloc.insert(0, scheme)
+    urlparse.uses_query.insert(0, scheme)
+
+
+class Options:
+    def __init__(self, args):
+        self.cleanup = False
+        self.downloadall = False
+        self.dryrun = False
+        self.filter = None
+        self.list = None
+        self.quiet = False
+        self.ulnrelease = None
+        self.source = False
+        self.systemid = '/etc/sysconfig/rhn/systemid'
+        self.verbose = 1
+
+        try:
+            opts, args = getopt.getopt(args, 'hlnq:r:v',
+                ('delete', 'download-all', 'dry-run', 'filter=', 'help', 'list', 'quiet',
+                 'release=', 'source', 'verbose', 'version'))
+        except getopt.error, exc:
+            print 'ulnget: %s, try ulnget -h for a list of all the options' % str(exc)
+            sys.exit(1)
+
+        for opt, arg in opts:
+            if opt in ('--delete', ):
+                self.cleanup = True
+            elif opt in ('--download-all', ):
+                self.downloadall = True
+            elif opt in ('--filter', ):
+                self.filter = arg
+                self.downloadall = True
+            elif opt in ('-h', '--help'):
+                self.usage()
+                print
+                self.help()
+                sys.exit(0)
+            elif opt in ('-l', '--list'):
+                self.list = True
+                self.downloadall = True
+            elif opt in ('-n', '--dry-run'):
+                self.dryrun = True
+            elif opt in ('-q', '--quiet'):
+                self.quiet = True
+            elif opt in ('-r', '--release'):
+                self.ulnrelease = arg
+            elif opt in ('--source', ):
+                self.source = True
+            elif opt in ('-v', '--verbose'):
+                self.verbose = self.verbose + 1
+            elif opt in ('--version', ):
+                self.version()
+                sys.exit(0)
+
+        if len(args) < 1:
+            self.usage()
+            print
+            self.help()
+            sys.exit(1)
+
+        self.uri = args[0]
+
+        if len(args) == 2:
+            self.destination = args[1]
+        else:
+            self.destination = os.getcwd()
+
+        if self.quiet:
+            self.verbose = 0
+
+        if self.verbose >= 3:
+            print 'Verbosity set to level %d' % (self.verbose - 1)
+
+    def version(self):
+        print 'ulnget %s' % VERSION
+        print 'Written by Dag Wieers <dag@wieers.com>'
+        print
+        print 'platform %s/%s' % (os.name, sys.platform)
+        print 'python %s' % sys.version
+        print
+        print 'build revision $Rev: 4786 $'
+
+    def usage(self):
+        print 'usage: ulnget [options] ulns://server/channel destination-path'
+
+    def help(self):
+        print '''Download packages from Oracle Linux Network (ULN)
+
+ulnget options:
+      --delete            delete files that are not on the sender side
+      --download-all      download all package versions available
+      --filter            filter packages based on regexp
+  -l, --list              list the available packages
+  -n, --dry-run           show what would have been done
+  -q, --quiet             minimal output
+  -r, --release=release   specify the ULN release
+      --source            download source packages
+  -v, --verbose           increase verbosity
+  -vv, -vvv, -vvvv..      increase verbosity more
+'''
+
+
+class Set:
+    def __init__(self):
+        self.list = []
+
+    def add(self, input):
+        if input not in self.list:
+            self.list.append(input)
+
+    def delete(self, input):
+        if input in self.list:
+            self.list.removed(input)
+
+    def difference(self, other):
+        newlist = Set()
+        for element in self.list:
+            if element not in other.list:
+                newlist.add(element)
+        return newlist
+
+    def sort(self):
+        return self.list.sort()
+
+    def __str__(self):
+        return '\n\t' + '\n\t'.join([element[0] for element in self.list])
+
+    def __len__(self):
+        return len(self.list)
+
+
+class MirrorException(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+def error(level, str):
+    "Output error message"
+    if level <= op.verbose:
+        sys.stderr.write('ulnget: %s\n' % str)
+
+
+def info(level, str):
+    "Output info message"
+    if level <= op.verbose:
+        sys.stdout.write('%s\n' % str)
+
+
+def die(ret, str):
+    "Print error and exit with errorcode"
+    error(0, str)
+    sys.exit(ret)
+
+
+def remove(file):
+    "Remove files or directories"
+    if isinstance(file, types.StringType):
+        if op.dryrun:
+            return
+        if os.path.islink(file):
+            os.unlink(file)
+        elif os.path.isdir(file):
+            try:
+                os.rmdir(file)
+            except:
+                os.path.walk(file, removedir, ())
+                os.rmdir(file)
+        elif os.path.isfile(file) or os.path.islink(file):
+            os.unlink(file)
+    else:
+        for f in file:
+            remove(f)
+
+
+def removedir(void, dir, files):
+    for file in files:
+        remove(os.path.join(dir, file))
+
+
+def mkdir(path):
+    "Create a directory, and parents if needed"
+    if op.dryrun:
+        return
+    if os.path.islink(path):
+        os.unlink(path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def ulnlogin(url, path, force=False):
+    'Log on to ULN and return cfg, loginInfo and systemid'
+    global cfg, loginInfo, rd, config, rpcServer
+
+    ### ULN uses a single systemid for all releases
+    if os.path.isfile('/etc/sysconfig/rhn/systemid'):
+        systemidpath = '/etc/sysconfig/rhn/systemid'
+    else:
+        info(1, 'No ULN systemid found, skipping download.')
+        return
+    info(3, 'Using ULN systemid from %s' % systemidpath)
+
+    systemid = open(systemidpath).read()
+
+    cfg['systemIdPath'] = systemidpath
+    cfg = config.initUp2dateConfig(distro = "oraclelinux")
+    cfg['systemIdPath'] = systemidpath
+    cfg['storageDir'] = path
+    cfg['retrieveOnly'] = 1
+    cfg['keepAfterInstall'] = 1
+    cfg['noReboot'] = 1
+    cfg['useRhn'] = 1
+    cfg['showChannels'] = 1
+    cfg['showAvailablePackages'] = 1
+    cfg['isatty'] = 1
+    cfg['networkRetries'] = 3
+#   cfg['headerFetchCount'] = 20
+    cfg['enableProxy'] = 0
+    cfg['enableProxyAuth'] = 0
+    cfg['httpProxy'] = ''
+    cfg['proxyUser='] = ''
+    cfg['proxyPassword'] = ''
+    cfg["sslCACert"] = '/usr/share/rhn/ULN-CA-CERT'
+
+    ### Override the version if forced in mrepo configuration (to allow single systemid usage)
+    if op.ulnrelease:
+        cfg['versionOverride'] = op.ulnrelease
+    else:
+        cfg['versionOverride'] = rpclib.xmlrpclib.loads(systemid)[0][0]['os_release']
+    info(3, 'Using ULN release %s' % cfg['versionOverride'])
+
+    ### Modify the logfile in case we have no rights to write in /var/log/up2date (non-root)
+    if os.access('/var/log/up2date', os.W_OK):
+        cfg['logFile'] = '/var/log/up2date'
+    else:
+        cfg['logFile'] = os.path.expanduser('~/up2date.log')
+
+    ### If we're not targetting the default ULN server, change the location
+    ulnscheme, ulnserver, t, t, t, t = urlparse.urlparse(url)
+    if not ulnserver:
+        ulnserver = 'linux-update.oracle.com'
+
+    cfg['serverURL'] = 'https://%s/XMLRPC' % ulnserver
+
+    ### Get proxy information from environment and set up2date config accordingly
+    proxy = None
+    if os.environ.has_key('https_proxy') and ulnscheme == 'ulns':
+        t, proxy, t, t, t, t = urlparse.urlparse(os.environ['https_proxy'])
+    if proxy:
+        cfg['enableProxy'] = 1
+        cfg['httpProxy'] = proxy
+        info(4, 'Setting proxy for %s to %s' % (ulnscheme, proxy))
+        ### FIXME: Implement proxy authentication
+#       if proxy.username and proxy.password:
+#           cfg['enableProxyAuth'] = 1
+#           cfg['proxyPassword'] = proxy.password
+#           cfg['proxyUser='] = proxy.username
+
+    ### Set debugging information to something very high (there seems to be no granularity)
+    if op.verbose >= 3:
+        cfg['debug'] = 1
+
+    info(4, '\nBEFORE LOGIN: logininfo: %s\n' % loginInfo)
+    try:
+        server = rpcServer.getServer()
+        li = rpcServer.doCall(server.up2date.login, systemid)
+        loginInfo.update(li)
+    except rpclib.Fault, f:
+        error(1, 'Error logging in with systemid %s. %s' % (systemidpath, f.faultString))
+        return None
+    info(4, '\nAFTER LOGIN: logininfo: %s\n' % loginInfo)
+
+    return systemid
+
+
+def ulngetchannel(channels, label):
+    'Return the channel with given label, if found'
+    for c in channels:
+        if isinstance(c, types.ListType):
+            l, v = c[0], c[1]
+        else:
+            l, v = c['label'], c['version']
+        if l == label:
+            return {
+                'label': l,
+                'version': v,
+                'type': 'up2date',
+                'url': cfg['serverURL'],
+            }
+    return None
+
+
+def mirroruln(url, path):
+    'Mirror a channel from ULN'
+    global cfg, loginInfo, rd, repoDirector, rpcServer
+
+    t, t, label, t, t, t = urlparse.urlparse(url)
+    label = label.strip('/')
+
+    ### Log on to ULN
+    systemid = ulnlogin(url, path)
+    if not systemid:
+        return
+
+    mkdir(cfg['storageDir'])
+
+    ### Try to find a channel with label
+    channel = ulngetchannel(loginInfo.get('X-RHN-Auth-Channels'), label)
+    if not channel:
+        raise(Exception('Error system not subscribe to channel %s, skipping.' % label))
+ 
+    ### Download packagelist for this channel
+    try:
+        repos = repoDirector.initRepoDirector()
+    except xmlrpclib.Fault, f:
+        raise(MirrorException('Problem setting up XML communication for channel %s.\n%s' % (label, f.faultString)))
+        return
+    except up2dateErrors.ServerCapabilityError, e:
+        raise(MirrorException('Problem negotiating capabilities for channel %s.\n%s' % (label, e)))
+        return
+
+    try:
+        if op.downloadall == True:
+            package_list, type = rpcServer.doCall(repos.listAllPackages, channel, None, None)
+        else:
+            package_list, type = rpcServer.doCall(repos.listPackages, channel, None, None)
+    except rpclib.Fault, f:
+        raise(MirrorException('Error listing packages from channel %s. Skipping. %s' % (label, f.faultString)))
+    except up2dateErrors.CommunicationError, e:
+        raise(MirrorException('Error listing packages from channel %s. Skipping.\n%s' % (label, e)))
+    except KeyError, e:
+        if e == "'up2date'":
+            raise(MirrorException('Missing up2date entry in /etc/sysconfig/rhn/sources.'))
+        else:
+            raise(MirrorException('Unknown error that needs more debugging occured with channel %s. Skipping.\n%s' % (label, e)))
+
+    ### Download packages from the packagelist
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    for pkg in package_list:
+        ### FIXME: Check if not already on ISO-file or repository as well
+        filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
+        filesize = int(pkg[5])
+
+        ### Filter packagelist
+        if op.filter and not fnmatch.fnmatch(filename, op.filter):
+            info(4, 'Packages %s excluded by filter' % filename)
+            continue
+
+        ### List only files if requested
+        if op.list:
+            info(0, filename)
+            continue
+
+        ### If file (or symlink target) exists
+        if os.path.isfile(os.path.join(path, filename)):
+            stat = os.stat(os.path.join(path, filename))
+            if stat.st_size == filesize:
+                info(3, 'File %s is already in %s' % (filename, path))
+                continue
+            else:
+                info(2, 'File %s has wrong size (found: %s, expected: %s), refetching.' % (filename, stat.st_size, filesize))
+                remove(os.path.join(path, filename))
+
+        ### If symlink target does not exist, remove symlink
+        elif os.path.islink(os.path.join(path, filename)):
+            remove(os.path.join(path, filename))
+
+        if op.dryrun:
+            info(1, 'Not downloading package %s' % filename)
+            continue
+
+        try:
+            if op.verbose <= 1:
+                rpcServer.doCall(repos.getPackage, pkg, None, None)
+            else:
+                rpcServer.doCall(repos.getPackage, pkg, wrapperUtils.printPkg, wrapperUtils.printRetrieveHash)
+        except rpclib.Fault, f:
+            error(0, 'rpcError: Error getting package %s from %s. %s' % (filename, label, f.faultString))
+        except TypeError, e:
+            error(0, 'TypeError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+        except up2dateErrors.CommunicationError, e:
+            error(0, 'CommunicationError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+
+        if op.source:
+            try:
+                hdr, call_type = rpcServer.doCall(repos.getHeader, pkg)
+                srcrpm = hdr['sourcerpm']
+                if op.verbose <= 1:
+                    rpcServer.doCall(repos.getPackageSource, channel, srcrpm, None, None)
+                else:
+                    rpcServer.doCall(repos.getPackageSource, channel, srcrpm, wrapperUtils.printPkg, wrapperUtils.printRetrieveHash)
+            except rpclib.Fault, f:
+                error(0, 'rpcError: Error getting package %s from %s. %s' % (filename, label, f.faultString))
+            except TypeError, e:
+                error(0, 'TypeError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+            except up2dateErrors.CommunicationError, e:
+                error(0, 'CommunicationError: Error downloading package %s from %s. Skipping.\n%s' % (filename, label, e))
+
+    ### Remove packages on the receiver side that are not on the sender side
+    if op.cleanup:
+
+        ### Collect receiver side
+        receiver = Set()
+        for file in glob.glob(os.path.join(path, '*.rpm')):
+            if os.path.exists(file):
+                filename = os.path.basename(file)
+                filesize = os.stat(file).st_size
+                receiver.add((filename, filesize))
+        receiver.sort()
+
+        ### Collect sender side
+        sender = Set()
+        for pkg in package_list:
+            filename = '%s-%s-%s.%s.rpm' % (pkg[0], pkg[1], pkg[2], pkg[4])
+            filesize = int(pkg[5])
+            sender.add((filename, filesize))
+        sender.sort()
+
+        ### Remove difference between receiver and sender
+        cleanse = receiver.difference(sender)
+        for filename, filesize in cleanse.list:
+            info(3, 'Cleaning up obsolete file %s (%d kiB)' % (filename, filesize))
+            remove(os.path.join(path, filename))
+
+
+def main():
+    mirroruln(op.uri, op.destination)
+
+### Unbuffered sys.stdout
+sys.stdout = os.fdopen(1, 'w', 0)
+sys.stderr = os.fdopen(2, 'w', 0)
+
+### Workaround for python <= 2.2.1
+try:
+    True, False
+except NameError:
+    True = 1
+    False = 0
+
+### Main entrance
+if __name__ == '__main__':
+    exitcode = 0
+
+    op = Options(sys.argv[1:])
+    try:
+        main()
+    except KeyboardInterrupt, e:
+        die(6, 'Exiting on user request')
+    sys.exit(exitcode)
+
+# vim:ts=4:sw=4:et

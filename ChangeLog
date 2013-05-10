@@ -1,3 +1,8 @@
+* 0.8.9
+- Added support for Oracle Unbreakable Linux Network (Avi Miller)
+- Added ulnget to mirror packages from ULN (Avi Miler)
+- Added sample dist configuration files for Oracle Linux (Avi Miller)
+
 * 0.8.8 - Summertime - released 19/09/2011
 - Renamed YAMCONFIG to MREPOCONFIG
 - Updated distribution config files

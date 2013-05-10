@@ -36,7 +36,7 @@ setup(
     author = 'Dag Wieers',
     author_email ='dag@wieers.com',
     url = "http://dag.wieers.com/home-made/mrepo/",
-    scripts=['mrepo', 'gensystemid'],
+    scripts=['mrepo', 'gensystemid', 'rhnget', 'youget', 'ulnget'],
     data_files=[
         ('/etc', ['config/mrepo.conf']),
         ('/etc/init.d', ['config/mrepo']),

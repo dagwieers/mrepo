@@ -26,6 +26,7 @@ install:
 	install -Dp -m0755 mrepo $(DESTDIR)$(bindir)/mrepo
 	install -Dp -m0755 rhnget $(DESTDIR)$(bindir)/rhnget
 	install -Dp -m0755 youget $(DESTDIR)$(bindir)/youget
+	install -Dp -m0755 ulnget $(DESTDIR)$(bindir)/ulnget
 	[ ! -f $(DESTDIR)$(sysconfdir)/mrepo.conf ] && install -D -m0600 config/mrepo.conf $(DESTDIR)$(sysconfdir)/mrepo.conf || :
 	install -d -m0755 $(DESTDIR)$(sysconfdir)/mrepo.conf.d/
 	install -Dp -m0644 config/httpd/mrepo.conf $(DESTDIR)$(httpddir)/mrepo.conf

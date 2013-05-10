@@ -1,0 +1,55 @@
+= Using ULN support in mrepo
+Avi Miller <avi.miller@oracle.com>
+0.8.9git, 10 May 2013
+
+// Please send me improvements to this document.
+
+This document describes how to set up an Oracle Unbreakable Linux Network (ULN) mirror 
+for various Oracle Linux (OL) versions and architectures and provide the packages to local clients.
+
+
+== Requirements
+For ULN support to work, you need to install the up2date package
+that comes with your OL distribution. It may not work with
+another up2date package (eg. Fedora Core).
+
+
+== ULN configuration
+Register your Oracle Linux server with ULN as documented on http://linux.oracle.com.
+
+Having done that, you can enable multiple channels for this system on the ULN website by 
+enabling the "Yum Server" option. And then configure mrepo to use these channels, eg.
+
+----
+[oraclelinux6]
+name = Oracle Linux $release ($arch)
+ulnrelease = 6
+arch = i386 x86_64
+metadata = repomd repoview
+iso = Enterprise-R6-U4-Server-$arch-dvd.iso
+latest = ulns:///ol6_${arch}_latest
+uek_latest = ulns:///ol6_${arch}_UEK_latest
+dtrace_latest = ulns:///ol6_${arch}_Dtrace_latest
+----
+
+After that, mrepo should be able to successfully log on and download
+all packages for the configured channels.
+
+
+== Downloading from unsubscribed channels
+mrepo is unable to subscribe to additional channels on ULN. You must use the ULN
+web interface to add any channel you want to mirror prior to configuring and
+running mrepo.
+
+
+== List of ULN channels
+For a complete and up-to-date list of available channels, check the RHN
+website. 
+
+
+== ulns:// URL scheme
+The only scheme available for ULN is ulns:// (HTTPS) as ULN does not permit non-SSL 
+connections.
+
+
+// vim: set syntax=asciidoc:
