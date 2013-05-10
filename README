@@ -4,7 +4,7 @@ setting up the ISO files, downloading the RPMs, generating metadata
 and providing PXE/TFTP resources for remote installations.
 
 RPM packages can be download by various means using ftp, http, rsync,
-reposync, sftp, RHN or YOU.
+reposync, sftp, RHN, ULN or YOU.
 
 It was primarily intended for doing remote network installations of various
 distributions from a laptop or USB disk without the need for CD media or
