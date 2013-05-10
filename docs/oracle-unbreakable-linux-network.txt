@@ -23,7 +23,7 @@ enabling the "Yum Server" option. And then configure mrepo to use these channels
 ----
 [oraclelinux6]
 name = Oracle Linux Server $release ($arch)
-rhnrelease = 6
+ulnrelease = 6
 arch = i386 x86_64
 metadata = repomd repoview
 iso = Enterprise-R6-U4-Server-$arch-dvd.iso
