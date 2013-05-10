@@ -98,13 +98,9 @@ the new updates from being downloaded.  You can also remove _all_ packages from
 the updates repository prior to doing this.
 
 
-== uln:// and ulns:// URL schemes
-The default scheme for ULN is ulns:// (HTTPS), but it was reported that
-in some cases (related to proxies or firewalls) the HTTPS connections
-fail, so there is a need to allow for HTTP connections. You can specify
-this by using the uln:// scheme instead of ulns://
-
-In this case, the authentication is not done using SSL either !
+== ulns:// URL scheme
+The only scheme available for ULN is ulns:// (HTTPS) as ULN does not permit non-SSL 
+connections.
 
 
 // vim: set syntax=asciidoc:

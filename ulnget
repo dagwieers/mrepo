@@ -46,8 +46,8 @@ __version__ = "$Revision: 4786 $"
 
 VERSION = '0.8.4svn'
 
-### Register uln and ulns as a known schemes
-for scheme in ('uln', 'ulns'):
+### Register ulns as a known scheme
+for scheme in ('ulns'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
@@ -293,17 +293,11 @@ def ulnlogin(url, path, force=False):
     if not ulnserver:
         ulnserver = 'linux-update.oracle.com'
 
-    cfg['noSSLServerURL'] = 'http://%s/XMLRPC' % ulnserver
-    if ulnscheme == 'uln':
-        cfg['serverURL'] = 'http://%s/XMLRPC' % ulnserver
-    else:
-        cfg['serverURL'] = 'https://%s/XMLRPC' % ulnserver
+    cfg['serverURL'] = 'https://%s/XMLRPC' % ulnserver
 
     ### Get proxy information from environment and set up2date config accordingly
     proxy = None
-    if os.environ.has_key('http_proxy') and ulnscheme == 'uln':
-        t, proxy, t, t, t, t = urlparse.urlparse(os.environ['http_proxy'])
-    elif os.environ.has_key('https_proxy') and ulnscheme == 'ulns':
+    if os.environ.has_key('https_proxy') and ulnscheme == 'ulns':
         t, proxy, t, t, t, t = urlparse.urlparse(os.environ['https_proxy'])
     if proxy:
         cfg['enableProxy'] = 1

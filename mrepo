@@ -60,7 +60,7 @@ enable = ('yes', 'on', 'true', '1')
 disable = ('no', 'off', 'false', '0')
 
 ### Register rhn and rhns as a known schemes
-for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs', 'uln', 'ulns'):
+for scheme in ('rhn', 'rhns', 'you', 'reposync', 'reposyncs', 'ulns'):
     urlparse.uses_netloc.insert(0, scheme)
     urlparse.uses_query.insert(0, scheme)
 
@@ -129,7 +129,7 @@ class Options:
 
         if not self.types:
             self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn',
-                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs', 'uln', 'ulns']
+                          'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs', 'ulns']
 
         for arg in args:
             self.dists = self.dists + arg.split(',')
@@ -165,7 +165,7 @@ mrepo options:
   -q, --quiet             minimal output
   -r, --repo=repo1,repo2  restrict action to specific repositories
       --remount           remount distribution ISOs
-  -t, --type=type1,type2  mirror types to use. Default: file, fish, ftp, http, https, mc, rhn, rhns, rsync, sftp, mrepo, you, uln, ulns
+  -t, --type=type1,type2  mirror types to use. Default: file, fish, ftp, http, https, mc, rhn, rhns, rsync, sftp, mrepo, you, ulns
   -u, --update            fetch OS updates
   -v, --verbose           increase verbosity
       --version           print mrepo version information
@@ -740,7 +740,7 @@ class Repo:
                     mirrormirrordir(url, self.srcdir)
                 elif s in ('rhn', 'rhns'):
                     mirrorrhnget(url, self.srcdir, self.dist)
-                elif s in ('uln', 'ulns'):
+                elif s in ('ulns'):
                     mirrorulnget(url, self.srcdir, self.dist)
                 elif s in ('you', ):
                     mirroryouget(url, self.srcdir, self.dist)
@@ -1428,9 +1428,9 @@ def mirrormrepo(url, path):
 #   symlink(os.path.join(cf.srcdir, pathname), os.path.join(path, basename))
 
 def mirrorulnget(url, path, dist):
-    "Mirror everything from a uln:// or ulns:// URL"
+    "Mirror everything from a ulns:// URL"
     if not cf.cmd['ulnget']:
-        error(1, 'ulnget was not found uln and ulns support is therefore disabled.')
+        error(1, 'ulnget was not found so ulns support is therefore disabled.')
         return
     mkdir(path)
     opts = cf.ulngetoptions
