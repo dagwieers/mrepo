@@ -313,7 +313,7 @@ class NetworkConfig(ConfigFile):
         self.fileName = "/etc/sysconfig/rhn/network"
 
 
-def initUp2dateConfig(file = "/etc/sysconfig/rhn/up2date"):
+def initUp2dateConfig(file = "/etc/sysconfig/rhn/up2date", distro = "rhel"):
     global cfg
     try:
         cfg = cfg
@@ -329,12 +329,13 @@ def initUp2dateConfig(file = "/etc/sysconfig/rhn/up2date"):
                 # pull this into the main cfg dict from the
         # seperate config file, so we dont have to munge
         # main config file in a post
-        uuidCfg = UuidConfig()
-        uuidCfg.load()
-        if uuidCfg['rhnuuid'] == None or uuidCfg['rhnuuid'] == "UNSPECIFIED":
-            print "No rhnuuid config option found in /etc/sysconfig/rhn/up2date-uuid."
-            sys.exit(1)
-        cfg['rhnuuid'] = uuidCfg['rhnuuid']
+	if distro == "rhel":
+            uuidCfg = UuidConfig()
+            uuidCfg.load()
+            if uuidCfg['rhnuuid'] == None or uuidCfg['rhnuuid'] == "UNSPECIFIED":
+                print "No rhnuuid config option found in /etc/sysconfig/rhn/up2date-uuid."
+                sys.exit(1)
+            cfg['rhnuuid'] = uuidCfg['rhnuuid']
 
         # set the HTTP_PROXY variable so urllib will find it
         # not a great, but a pretty close fix for bz #157070
