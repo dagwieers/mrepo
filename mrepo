@@ -261,7 +261,7 @@ class Config:
         self.ulnlogin = self.getoption('main', 'ulnlogin', None)
         self.ulngetoptions = self.getoption('main', 'ulnget-options', '')
         self.ulngetcleanup = self.getoption('main', 'ulnget-cleanup', 'yes') not in disable
-        self.rhngetdownloadall = self.getoption('main', 'ulnget-download-all', 'no') not in disable
+        self.ulngetdownloadall = self.getoption('main', 'ulnget-download-all', 'no') not in disable
 
         self.rsyncbwlimit = self.getoption('main', 'rsync-bandwidth-limit', None)
         self.rsynccleanup = self.getoption('main', 'rsync-cleanup', 'yes') not in disable
@@ -387,6 +387,7 @@ class Dist:
         self.release = None
         self.repos = []
         self.rhnrelease = None
+        self.ulnrelease = None
         self.srcdir = cf.srcdir
         self.discs = ()
         self.isos = []
