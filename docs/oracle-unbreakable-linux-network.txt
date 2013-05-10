@@ -47,57 +47,6 @@ For a complete and up-to-date list of available channels, check the RHN
 website. 
 
 
-== Ignore packages you already have elsewhere
-Run this script when you download new OL ISO files and make these available
-in mrepo, but before downloading any updates from ULN:
-
-----
-#!/bin/bash
-
-dists=$*
-srcdir=/var/mrepo
-wwwdir=/var/www/mrepo
-
-if [ -z "$dists" ]; then
-        cd $srcdir
-        dists=rhel[2-4][aew]s-*
-        cd -
-fi
-
-for dist in $dists; do
-        echo "Cleaning up $dist"
-
-    ### Remove dangling links
-    for link in $(find "$srcdir/$dist/updates" -type l); do
-        if [ ! -r "$(readlink $link)" ]; then
-            rm -f $link
-        fi
-    done
-
-    ### Relink existing files
-        for rpm in $wwwdir/$dist/disc?/RedHat/RPMS/*.rpm; do
-                file="$(basename $rpm)"
-                dstfile="$srcdir/$dist/updates/$file"
-                ln -sf "$rpm" "$dstfile"
-        done
-done
-----
-
- $ mrepo --umount
-
-Then download new ISO files and modify the mrepo config file(s) to reflect
-this change. And then do:
-
- $ mrepo -v
- $ ./clean.sh
- $ mrepo -uvg
-
-This will free up some space by symlinking duplicate RPM packages from the ISO
-files on top of the RPM packages on disk. As a side-effect it will also prevent
-the new updates from being downloaded.  You can also remove _all_ packages from
-the updates repository prior to doing this.
-
-
 == ulns:// URL scheme
 The only scheme available for ULN is ulns:// (HTTPS) as ULN does not permit non-SSL 
 connections.
