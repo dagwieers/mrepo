@@ -44,7 +44,7 @@ rd = None
 __version__ = "$Revision: 4786 $"
 # $Source$
 
-VERSION = '0.8.4svn'
+VERSION = '0.8.9git'
 
 ### Register ulns as a known scheme
 for scheme in ('ulns'):
