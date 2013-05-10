@@ -1,0 +1,110 @@
+= Using ULN support in mrepo
+Avi Miller <avi.miller@oracle.com>
+0.8.9git, 10 May 2013
+
+// Please send me improvements to this document.
+
+This document describes how to set up an Oracle Unbreakable Linux Network (ULN) mirror 
+for various Oracle Linux (OL) versions and architectures and provide the packages to local clients.
+
+
+== Requirements
+For ULN support to work, you need to install the up2date package
+that comes with your OL distribution. It may not work with
+another up2date package (eg. Fedora Core).
+
+
+== ULN configuration
+Register your Oracle Linux server with ULN as documented on http://linux.oracle.com.
+
+Having done that, you can enable multiple channels for this system on the ULN website by 
+enabling the "Yum Server" option. And then configure mrepo to use these channels, eg.
+
+----
+[oraclelinux6]
+name = Oracle Linux Server $release ($arch)
+rhnrelease = 6
+arch = i386 x86_64
+metadata = repomd repoview
+iso = Enterprise-R6-U4-Server-$arch-dvd.iso
+latest = ulns:///ol6_${arch}_latest
+uek_latest = ulns:///ol6_${arch}_UEK_latest
+dtrace_latest = ulns:///ol6_${arch}_Dtrace_latest
+----
+
+After that, mrepo should be able to successfully log on and download
+all packages for the configured channels.
+
+
+== Downloading from unsubscribed channels
+mrepo is unable to subscribe to additional channels on ULN. You must use the ULN
+web interface to add any channel you want to mirror prior to configuring and
+running mrepo.
+
+
+== List of ULN channels
+For a complete and up-to-date list of available channels, check the RHN
+website. 
+
+
+== Ignore packages you already have elsewhere
+Run this script when you download new OL ISO files and make these available
+in mrepo, but before downloading any updates from ULN:
+
+----
+#!/bin/bash
+
+dists=$*
+srcdir=/var/mrepo
+wwwdir=/var/www/mrepo
+
+if [ -z "$dists" ]; then
+        cd $srcdir
+        dists=rhel[2-4][aew]s-*
+        cd -
+fi
+
+for dist in $dists; do
+        echo "Cleaning up $dist"
+
+    ### Remove dangling links
+    for link in $(find "$srcdir/$dist/updates" -type l); do
+        if [ ! -r "$(readlink $link)" ]; then
+            rm -f $link
+        fi
+    done
+
+    ### Relink existing files
+        for rpm in $wwwdir/$dist/disc?/RedHat/RPMS/*.rpm; do
+                file="$(basename $rpm)"
+                dstfile="$srcdir/$dist/updates/$file"
+                ln -sf "$rpm" "$dstfile"
+        done
+done
+----
+
+ $ mrepo --umount
+
+Then download new ISO files and modify the mrepo config file(s) to reflect
+this change. And then do:
+
+ $ mrepo -v
+ $ ./clean.sh
+ $ mrepo -uvg
+
+This will free up some space by symlinking duplicate RPM packages from the ISO
+files on top of the RPM packages on disk. As a side-effect it will also prevent
+the new updates from being downloaded.  You can also remove _all_ packages from
+the updates repository prior to doing this.
+
+
+== uln:// and ulns:// URL schemes
+The default scheme for ULN is ulns:// (HTTPS), but it was reported that
+in some cases (related to proxies or firewalls) the HTTPS connections
+fail, so there is a need to allow for HTTP connections. You can specify
+this by using the uln:// scheme instead of ulns://
+
+In this case, the authentication is not done using SSL either !
+
+
+// vim: set syntax=asciidoc:
