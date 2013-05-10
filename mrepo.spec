@@ -2,9 +2,9 @@
 # Authority: dag
 # Upstream: Dag Wieers <dag$wieers,com>
 
-Summary: Set up repositories from various sources (ISO, RHN, YOU, rsync, http, ftp, ...)
+Summary: Set up repositories from various sources (ISO, RHN, ULN, YOU, rsync, http, ftp, ...)
 Name: mrepo
-Version: 0.8.8
+Version: 0.8.9
 Release: 1
 License: GPL
 Group: System Environment/Base
@@ -33,8 +33,9 @@ the repository structure and meta-data, enables HTTP access to
 the repository and creates a directory-structure for remote
 network installations using PXE/TFTP.
 
-mrepo supports ftp, http, sftp, rsync, Red Hat Network and YaST
-Online Update and other download methods.
+mrepo supports ftp, http, sftp, rsync, Red Hat Network,
+Oracle's Unbreakable Linux Network, Novell's YaST Online Update 
+and other download methods.
 
 With mrepo, you can enable your laptop or a local server to provide
 updates for the whole network and provide the proper files to
@@ -107,12 +108,17 @@ fi
 %{_bindir}/mrepo
 %{_bindir}/rhnget
 %{_bindir}/youget
+%{_bindir}/ulnget
 %{_datadir}/mrepo/
 %{_localstatedir}/cache/mrepo/
 %{_localstatedir}/mrepo/
 %{_localstatedir}/www/mrepo/
 
 %changelog
+* Fri May 10 2013 Avi Miller <avi.miller@oracle.com> - 0.8.9-1
+- Updated to release 0.8.9.
+- Added support for Oracle's Unbreakable Linux Network (ULN)
+
 * Mon Sep 19 2011 Dag Wieers <dag@wieers.com> - 0.8.8-1
 - Updated to release 0.8.8.
 
