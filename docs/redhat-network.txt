@@ -45,6 +45,8 @@ lb = rhns:///rhel-$arch-server-lb-6
 optional = rhns:///rhel-$arch-server-optional-6
 rs = rhns:///rhel-$arch-server-rs-6
 supplementary = rhns:///rhel-$arch-server-supplementary-6
+common = rhns:///rhel-$arch-server-rh-common-6
+tools = rhns:///rhn-tools-rhel-$arch-server-6
 ----
 
 After that, mrepo should be able to successfully log on and download
@@ -136,8 +138,10 @@ website. Here is a list of what we encountered, please send in more.
         rhel-$arch-server-ha-6
         rhel-$arch-server-lb-6
         rhel-$arch-server-optional-6
+        rhel-$arch-server-rh-common-6
         rhel-$arch-server-rs-6
         rhel-$arch-server-supplementary-6
+        rhn-tools-rhel-$arch-server-6
 
     RHEL5 Server
         rhel-$arch-server-5
