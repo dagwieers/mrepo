@@ -240,7 +240,7 @@ class Config:
         self.lftpexclsrpm = self.getoption('main', 'lftp-exclude-srpm', 'yes') not in disable
         self.lftpoptions = self.getoption('main', 'lftp-options', '')
         self.lftpcommands = self.getoption('main', 'lftp-commands', '')
-        self.lftpmirroroptions = self.getoption('main', 'lftp-mirror-options', '-c -P')
+        self.lftpmirroroptions = self.getoption('main', 'lftp-mirror-options', '-c')
         self.lftptimeout = self.getoption('main', 'lftp-timeout', None)
 
         self.mirrordircleanup = self.getoption('main', 'mirrordir-cleanup', 'yes') not in disable
