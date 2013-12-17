@@ -130,7 +130,7 @@ class Options:
         if not self.types:
             self.types = ['file', 'fish', 'ftp', 'http', 'https', 'mc', 'rhn',
                           'rhns', 'rsync', 'sftp', 'mrepo', 'you', 'reposync', 'reposyncs',
-                          reposyncf']
+                          'reposyncf']
 
         for arg in args:
             self.dists = self.dists + arg.split(',')
