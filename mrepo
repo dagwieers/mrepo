@@ -1541,11 +1541,12 @@ enabled=1
 
     ret = run("%s %s -t -c '%s' -r %s -p '%s'" % \
               (cf.cmd['reposync'], opts, reposync_conf_file, reponame, path))
-    if ret:
-        raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
     # remove the temporary config
     os.remove(reposync_conf_file)
+
+    if ret:
+        raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 
 def hardlink(srcdir):
