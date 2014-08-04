@@ -339,6 +339,10 @@ class Config:
                             dist.promoteepoch = self.cfg.get(section, option) not in disable
                         elif option in ('systemid',):
                             dist.systemid = self.cfg.get(section, option)
+                        elif option in ('sslcert',):
+                            dist.sslcert = self.cfg.get(section, option)
+                        elif option in ('sslkey',):
+                            dist.sslkey = self.cfg.get(section, option)
                         else:
                             dist.repos.append(Repo(option, self.cfg.get(section, option), dist, self))
 
