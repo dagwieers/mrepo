@@ -343,6 +343,8 @@ class Config:
                             dist.sslcert = self.cfg.get(section, option)
                         elif option in ('sslkey',):
                             dist.sslkey = self.cfg.get(section, option)
+                        elif option in ('sslca',):
+                            dist.sslca = self.cfg.get(section, option)
                         else:
                             dist.repos.append(Repo(option, self.cfg.get(section, option), dist, self))
 
@@ -391,6 +393,7 @@ class Dist:
         self.disabled = False
         self.sslcert = None
         self.sslkey = None
+        self.sslca = None
 
 #   def __repr__(self):
 #       for key, value in vars(self).iteritems():
@@ -1372,6 +1375,8 @@ def mirrorlftp(url, path, dist):
         cmds = cmds + ' set ssl:cert-file ' + dist.sslcert + ';'
     if dist.sslkey:
         cmds = cmds + ' set ssl:key-file ' + dist.sslkey + ';'    
+    if dist.sslca:
+        cmds = cmds + ' set ssl:ca-file ' + dist.sslca + ' ;'
     
 #   cmds = 'set dns:fatal-timeout 5'
     if cf.lftptimeout:
