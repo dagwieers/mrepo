@@ -21,6 +21,7 @@ BuildRequires: /usr/bin/python2
 Requires: createrepo
 Requires: python >= 2.0
 Requires: pyOpenSSL
+Requires: fuse
 Obsoletes: yam <= %{version}
 
 %description
