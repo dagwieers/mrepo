@@ -921,7 +921,7 @@ class Repo:
             groupfile = os.path.join(cf.srcdir, self.dist.nick, self.name + '-comps.xml')
             if os.path.isfile(groupfile):
                 symlink(groupfile, os.path.join(self.wwwdir, 'comps.xml'))
-                repoopts = repoopts + ' --groupfile "%s"' % groupfilename
+                repoopts = repoopts + ' --groupfile "%s"' % groupfile
             info(2, '%s: Create repomd repository for %s' % (self.dist.nick, self.name))
             ret = run('%s %s %s' % (cf.cmd['createrepo'], repoopts, self.wwwdir))
             if ret:
