@@ -1,0 +1,42 @@
+How to configure autofs to loop-mount ISOs
+==========================================
+
+Autofs can be used to automatically mount an ISO 
+whenever it's mountpoint is accessed.
+This limits the number of loop-devices needed.
+
+
+1. Configure autofs
+---------------------
+
+Add the following line in /etc/auto.master
+
+/-      /etc/auto.mrepo       --ghost
+
+
+2. Configure autofsfile in mrepo.conf
+-------------------------------------
+
+The default location of the mrepo autofsfile is /etc/auto.mrepo 
+You can be adjust it with the following setting in mrepo.conf:
+
+autofsfile=/etc/autofs/auto.mrepo
+
+
+3. Generate mrepo autofsfile
+----------------------------
+
+Running the following command will generate the autofsfile:
+
+mrepo -a|--autofs 
+
+
+4. Start autofs daemon
+----------------------
+
+Start the autofs daemon and make sure it gets started after a reboot:
+
+/etc/init.d/autofs start
+chkconfig autofs on
+
+
