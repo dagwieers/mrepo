@@ -226,6 +226,7 @@ class Config:
         self.cmd['repoview'] = self.getoption('main', 'repoviewcmd', '/usr/bin/repoview')
         self.cmd['reposync'] = self.getoption('main', 'reposynccmd', '/usr/bin/reposync')
         self.cmd['rhnget'] = self.getoption('main', 'rhngetcmd', '/usr/bin/rhnget')
+        self.cmd['rhnpush'] = self.getoption('main', 'rhnpushcmd', '/usr/bin/rhnpush')
         self.cmd['rsync'] = self.getoption('main', 'rsynccmd', '/usr/bin/rsync')
         self.cmd['unionfs'] = self.getoption('main', 'unionfscmd', '/usr/bin/unionfs')
         self.cmd['umount'] = self.getoption('main', 'umountcmd', '/bin/umount')
@@ -256,6 +257,13 @@ class Config:
         self.rhngetoptions = self.getoption('main', 'rhnget-options', '')
         self.rhngetcleanup = self.getoption('main', 'rhnget-cleanup', 'yes') not in disable
         self.rhngetdownloadall = self.getoption('main', 'rhnget-download-all', 'no') not in disable
+
+        self.rhnpushoptions = self.getoption('main', 'rhnpush-options', '')
+        self.rhnpushuser = self.getoption('main', 'rhnpush-user', None)
+        self.rhnpushpassword = self.getoption('main', 'rhnpush-password', None)
+        self.rhnpushserver = self.getoption('main', 'rhnpush-server', None)
+        self.rhnpushprefix = self.getoption('main', 'rhnpushprefix', None)
+        self.rhnpushskip = self.getoption('main', 'rhnpushskip', 'all')
 
         self.rsyncbwlimit = self.getoption('main', 'rsync-bandwidth-limit', None)
         self.rsynccleanup = self.getoption('main', 'rsync-cleanup', 'yes') not in disable
@@ -322,8 +330,10 @@ class Config:
                     dist.fuseiso = True
                     dist.unionfs = True
                     dist.systemid = None
+                    dist.rhnpushprefix = self.rhnpushprefix
+                    dist.rhnpushskip = self.rhnpushskip
                     for option in self.cfg.options(section):
-                        if option in ('iso', 'name', 'release', 'repo', 'rhnrelease'):
+                        if option in ('iso', 'name', 'release', 'repo', 'rhnrelease', 'rhnpushprefix', 'rhnpushskip'):
                             setattr(dist, option, self.cfg.get(section, option))
                         elif option in ('arch', 'dist'):
                             pass
@@ -844,7 +854,7 @@ class Repo:
             error(0, '%s: Lockfile %s does not exist. Cannot unlock. Something fishy here ?' % (self.dist.nick, lockfile))
 
     def createmd(self):
-        metadata = ('apt', 'createrepo', 'repomd', 'repoview', 'yum')
+        metadata = ('apt', 'createrepo', 'repomd', 'repoview', 'rhnpush', 'yum')
         index = ('repoview',)
 
         if not self.changed and not op.force:
@@ -859,6 +869,8 @@ class Repo:
                     self.yum()
                 elif md in ('apt',):
                     self.apt()
+                elif md in ('rhnpush',):
+                    self.rhnpush()
                 elif md not in index:
                     error(0, 'The %s metadata is unknown.' % md)
 
@@ -994,6 +1006,46 @@ class Repo:
         ret = run('%s %s --flat --bloat --bz2only --partial %s %s' % (cf.cmd['genbasedir'], opts, self.dist.dir, self.name))
         if ret:
             raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['genbasedir'], ret)))
+
+    def rhnpush(self):
+        "Do rhnpush to spacewalk/Satellite Server"
+
+        # Build the Channelname to push to
+        channelname = '%s-%s-%s-%s' % (self.dist.rhnpushprefix, self.dist.arch, self.name, self.dist.release)
+
+        if not cf.cmd['rhnpush']:
+            raise mrepoGenerateException('Command rhnpush is not found. Skipping.')
+
+        if not cf.rhnpushserver:
+            raise mrepoGenerateException('No server to rhnpush to configured. Skipping.')
+
+        if not cf.rhnpushuser:
+            raise mrepoGenerateException('No user for rhnpush configured. Skipping.')
+
+        if not cf.rhnpushpassword:
+            raise mrepoGenerateException('No password for rhnpush configured. Skipping.')
+
+        if not self.dist.rhnpushprefix:
+            raise mrepoGenerateException('No rhnpushprefox configured. Skipping.')
+
+        if self.name in self.dist.rhnpushskip.split():
+            info(2, '%s: Pushing packages to RHN Server skipped for channel %s.' % (self.dist.nick, channelname))
+            return
+
+        opts = ' ' + cf.rhnpushoptions
+        opts = ' --server=%s --username=%s --password=%s' % (cf.rhnpushserver, cf.rhnpushuser, cf.rhnpushpassword) + opts
+        if op.force:
+            # opts = ' --force' + opts
+            pass
+        if op.verbose >= 4:
+           opts = ' -v -v -v -v' + opts
+        if op.dryrun:
+            opts = opts + ' --test'
+        if os.path.isdir(self.wwwdir):
+            info(2, '%s: Pushing packages to RHN Server channel %s' % (self.dist.nick, channelname))
+            ret = run('%s %s --channel=%s --dir=%s' % (cf.cmd['rhnpush'], opts, channelname, self.wwwdir))
+            if ret:
+                raise(mrepoGenerateException('%s failed with return code: %s' % (cf.cmd['rhnpush'], ret)))
 
     def repoview(self):
         "Create a repoview index"

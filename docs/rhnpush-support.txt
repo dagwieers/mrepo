@@ -1,0 +1,79 @@
+= Using rhnpush support in mrepo
+Andreas Thienemann <AThienemann@schubergphilis.com>
+0.8.7, 11 April 2013
+
+// Please send me improvements to this document.
+
+This document describes how to set up a mrepo so that downloaded packages
+are automatically pushed into a local Red Hat Satellite or a Spacewalk
+server.
+
+
+== Requirements
+For rhnpush support to work, you need to have the rhnpush client installed.
+
+
+== Overview
+rhnpush support is handled as a metadata handler in mrepo similar to repomd
+or repoview.
+It will push files downloaded by mrepo through whatever supported means into
+channels on a spacewalk server.
+
+
+== Channel names
+mrepo will build the channel name it pushes files to based on the user-
+configurable rhnpushprefix, the architecture, the distribution name and the
+release version.
+
+The channel name is build in the following manner:
+%{rhnpushprefix}-%{arch}-%{distribution-name}-%{release}.
+
+
+== mrepo configuration
+To have files pushed to to your local server you need to configure the server
+and a user and password combination which is allowed to push files to the
+server.
+
+This can be set either globally in /etc/mrepo.conf or more finegrained in a
+included file in the /etc/mrepo.conf.d/ directory:
+
+---
+[main]
+rhnpush-server = https://localhost/APP
+rhnpush-user = spacewalk
+rhnpush-password = spacewalk
+---
+
+To actually use rhnpush, configure it as the sole or an additional metadata
+handler as done in the example below.
+
+---
+[rhel-server-6]
+name = Red Hat Enterprise Linux Server $release ($arch)
+release = 6
+arch = x86_64
+metadata = rhnpush
+rhnpushprefix = rhel
+
+server = rhns:///rhel-$arch-server-6
+server-fastrack = rhns:///rhel-$arch-server-fastrack-6
+---
+
+The example above will mirror two RHN channels, the server and the server-
+fastrack channel.
+
+These two distributions will then be pushed to the channels
+rhel-x86_64-server-6 and rhel-x86_64-server-fastrack-6 respectively based
+on the channel naming rules described above.
+
+These channels need to be manually created before running mrepo.
+
+There is an option of skipping certain channels.
+
+---
+rhnpushskip = all
+---
+
+This would skip pushing the mrepo generated .all channel to the server.
+Skipping the "all" channel is activated by default but can be overwritten
+by the user.
