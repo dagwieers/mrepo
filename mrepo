@@ -251,6 +251,7 @@ class Config:
         self.reposyncoptions = self.getoption('main', 'reposync-options', '')
         self.reposynccleanup = self.getoption('main', 'reposync-cleanup', 'yes') not in disable
         self.reposyncnewestonly = self.getoption('main', 'reposync-newest-only', 'no') not in disable
+        self.reposyncexcldebug = self.getoption('main','reposync-exclude-debug', 'yes') not in diable
 
         self.rhnlogin = self.getoption('main', 'rhnlogin', None)
         self.rhngetoptions = self.getoption('main', 'rhnget-options', '')
@@ -1517,6 +1518,11 @@ def mirrorreposync(url, path, reponame):
     url = url.replace('reposyncs://', 'https://')
     url = url.replace('reposync://', 'http://')
 
+    if cf.reposyncexcldebug:
+        reposync_exclude = "*-debuginfo"
+    else:
+        reposync_exclude = ""
+        
     opts = cf.reposyncoptions
     if op.verbose < 3:
         opts = opts + ' -q'
@@ -1532,7 +1538,8 @@ def mirrorreposync(url, path, reponame):
 name=%s
 baseurl=%s
 enabled=1
-""" % (reponame, reponame, url)
+exclude=%s
+""" % (reponame, reponame, url, reposync_exclude)
 
     (fd, reposync_conf_file) = tempfile.mkstemp(text=True)
     handle = os.fdopen(fd, 'w')
