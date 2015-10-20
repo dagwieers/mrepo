@@ -462,7 +462,8 @@ class Dist:
                 os_components = (
                     glob.glob(pathjoin(self.dir + '/disc1/*/base/comps.xml')) +  # RHEL 4
                     glob.glob(pathjoin(self.dir + '/disc1/*/repodata/comps-*-core.xml')) +  # RHEL 5
-                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) +  # RHEL 6 / CentOS 6
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps*.xml')) +  # RHEL 6
+                    glob.glob(pathjoin(self.dir + '/disc1/repodata/*-comps.xml')) +  # CentOS 6
                     glob.glob(pathjoin(self.dir + '/disc1/repodata/comps.xml'))  # Scientific Linux 6
                 )
 
@@ -879,7 +880,7 @@ class Repo:
 
         ### Find the createrepo version we are using (due to groupfile usage changes)
         createrepo_version = None
-        groupfilename = 'RPMS.%s/comps.xml' % self.name
+        groupfilename = 'comps.xml'
 
         sys.path.append("/usr/share/createrepo")
         try:
@@ -898,8 +899,8 @@ class Repo:
         ### If version < 0.4.6, then use the old createrepo behaviour
         if not createrepo_version:
             error(0, '%s: Version of createrepo could not be found. Assuming newer than 0.4.6.' % self.dist.nick)
-        elif vercmp(createrepo_version, '0.4.6') > 0:
-            groupfilename = 'comps.xml'
+        elif vercmp(createrepo_version, '0.4.6') < 0:
+            groupfilename = 'RPMS.%s/comps.xml' % self.name
 
         opts = ' ' + cf.createrepooptions
         if op.force:
