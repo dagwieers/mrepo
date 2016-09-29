@@ -896,9 +896,9 @@ class Repo:
         sys.path.remove("/usr/share/createrepo")
 
         ### If version < 0.4.6, then use the old createrepo behaviour
-        if not createrepo_version:
-            error(0, '%s: Version of createrepo could not be found. Assuming newer than 0.4.6.' % self.dist.nick)
-        elif vercmp(createrepo_version, '0.4.6') > 0:
+        if not createrepo_version or vercmp(createrepo_version, '0.4.6') > 0:
+            if not createrepo_version:
+                error(0, '%s: Version of createrepo could not be found. Assuming newer than 0.4.6.' % self.dist.nick)
             groupfilename = 'comps.xml'
 
         opts = ' ' + cf.createrepooptions
