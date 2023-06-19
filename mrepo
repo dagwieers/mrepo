@@ -46,7 +46,7 @@ archs = {
     'i386': ('i386', 'i486', 'i586', 'i686', 'athlon'),
     'ia64': ('i386', 'i686', 'ia64'),
     'ppc': ('ppc', ),
-    'ppc64': ('ppc', 'ppc64', 'ppc64pseries', 'ppc64iseries'),
+    'ppc64': ('ppc', 'ppc64', 'ppc64le', 'ppc64pseries', 'ppc64iseries'),
     'x86_64': ('i386', 'i486', 'i586', 'i686', 'athlon', 'x86_64', 'amd64', 'ia32e'),
     'sparc64': ('sparc', 'sparcv8', 'sparcv9', 'sparc64'),
     'sparc64v': ('sparc', 'sparcv8', 'sparcv9', 'sparcv9v', 'sparc64', 'sparc64v'),
@@ -339,6 +339,12 @@ class Config:
                             dist.promoteepoch = self.cfg.get(section, option) not in disable
                         elif option in ('systemid',):
                             dist.systemid = self.cfg.get(section, option)
+                        elif option in ('sslcert',):
+                            dist.sslcert = self.cfg.get(section, option)
+                        elif option in ('sslkey',):
+                            dist.sslkey = self.cfg.get(section, option)
+                        elif option in ('sslca',):
+                            dist.sslca = self.cfg.get(section, option)
                         else:
                             dist.repos.append(Repo(option, self.cfg.get(section, option), dist, self))
 
@@ -385,6 +391,9 @@ class Dist:
         self.discs = ()
         self.isos = []
         self.disabled = False
+        self.sslcert = None
+        self.sslkey = None
+        self.sslca = None
 
 #   def __repr__(self):
 #       for key, value in vars(self).iteritems():
@@ -721,9 +730,9 @@ class Repo:
                     if cf.cmd['mirrordir']:
                         mirrormirrordir(url, self.srcdir)
                     else:
-                        mirrorlftp(url, self.srcdir)
+                        mirrorlftp(url, self.srcdir, self.dist)
                 elif s in ('fish', 'http', 'https', 'sftp'):
-                    mirrorlftp(url, self.srcdir)
+                    mirrorlftp(url, self.srcdir, self.dist)
                 elif s in ('file', ''):
                     mirrorfile(url, self.srcdir)
                 elif s in ('mrepo', ):
@@ -1353,7 +1362,7 @@ def mirrormirrordir(url, path):
         raise(mrepoMirrorException('Failed with return code: %s' % ret))
 
 
-def mirrorlftp(url, path):
+def mirrorlftp(url, path, dist):
     "Mirror everything from a http://, ftp://, sftp://, fish:// URL"
     if not cf.cmd['lftp']:
         error(1, 'lftp was not found. fish, ftp, http and sftp support (using lftp) is therefore disabled.')
@@ -1361,6 +1370,14 @@ def mirrorlftp(url, path):
     mkdir(path)
 
     cmds = cf.lftpcommands + ';'
+    
+    if dist.sslcert:
+        cmds = cmds + ' set ssl:cert-file ' + dist.sslcert + ';'
+    if dist.sslkey:
+        cmds = cmds + ' set ssl:key-file ' + dist.sslkey + ';'    
+    if dist.sslca:
+        cmds = cmds + ' set ssl:ca-file ' + dist.sslca + ' ;'
+    
 #   cmds = 'set dns:fatal-timeout 5'
     if cf.lftptimeout:
         cmds = cmds + ' set net:timeout %s;' % cf.lftptimeout
