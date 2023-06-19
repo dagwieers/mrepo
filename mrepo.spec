@@ -4,7 +4,7 @@
 
 Summary: Set up repositories from various sources (ISO, RHN, YOU, rsync, http, ftp, ...)
 Name: mrepo
-Version: 0.8.8
+Version: 0.8.7
 Release: 1
 License: GPL
 Group: System Environment/Base
